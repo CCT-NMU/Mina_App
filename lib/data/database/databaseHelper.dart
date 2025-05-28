@@ -197,9 +197,10 @@ class DatabaseHelper {
   ///
   /// If a day entry with the given [date] does not exist, returns `null`.
   /// Otherwise, returns the day entry.
-  Future<Day?> getDay(DateTime date) async {
+  Future<Day?> getDay(DateTime date, {Transaction? txn}) async {
     final db = await database;
-    final List<Map<String, dynamic>> result = await db.rawQuery('''
+    final executor = txn ?? db;
+    final List<Map<String, dynamic>> result = await executor.rawQuery('''
       SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.symptomList,Day.moodList,
       PeriodDay.FlowWeight,PeriodDay.IsPeriodStartDay,PeriodDay.IsPeriodEndDay
       FROM Day
@@ -309,6 +310,43 @@ class DatabaseHelper {
     }
   }
 
+//update a Day to a PeriodDay
+  Future<void> updateDayToPeriodDay(PeriodDay periodDay,
+      {Transaction? txn}) async {
+    final db = await database;
+    final executor = txn ?? db;
+    final List<Map<String, dynamic>> result = await executor.query(
+      'Day',
+      where: 'Date = ?',
+      whereArgs: [periodDay.date.toIso8601String()],
+    );
+
+    Map<String, dynamic> existing = result.isNotEmpty ? result.first : {};
+
+    // Merge existing fields if not set in periodDay
+    final updatedMap = {
+      ...existing,
+      ...periodDay.toMap(),
+      'IsPeriodDay': 1,
+      'note': periodDay.note ?? existing['note'],
+      'moodList': periodDay.moodList ?? existing['moodList'],
+      'symptomList': periodDay.symptomList ?? existing['symptomList'],
+    };
+
+    await executor.update(
+      'Day',
+      updatedMap,
+      where: 'Date = ?',
+      whereArgs: [periodDay.date.toIso8601String()],
+    );
+
+    await executor.insert(
+      'PeriodDay',
+      periodDay.toPeriodDayMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
 //updates existing PeriodDay entry
   Future<void> updatePeriodDay(PeriodDay periodDay, {Transaction? txn}) async {
     final db = await database;
@@ -359,6 +397,18 @@ class DatabaseHelper {
     final List<Map<String, dynamic>> maps = await db.query(
       'Day',
       where: 'Date BETWEEN ? AND ? AND IsPeriodDay = 1',
+      whereArgs: [start.toIso8601String(), end.toIso8601String()],
+    );
+    return List.generate(maps.length, (i) {
+      return Day.fromMap(maps[i]);
+    });
+  }
+
+  Future<List<Day>> getDaysInRange(DateTime start, DateTime end) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'Day',
+      where: 'Date BETWEEN ? AND ?',
       whereArgs: [start.toIso8601String(), end.toIso8601String()],
     );
     return List.generate(maps.length, (i) {

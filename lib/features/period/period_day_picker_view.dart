@@ -3,12 +3,16 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/model/day.dart';
+import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
+import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
+import 'package:mina_app/features/day_entry/view/day_entry_view.dart';
 import 'package:mina_app/features/period/period_picker_logic.dart';
 import 'package:mina_app/local_libraries/table_calendar/lib/table_calendar.dart';
 import 'package:mina_app/local_libraries/table_calendar/lib/src/shared/utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/period/period_picker_logic.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'bloc/period_day_picker_bloc.dart';
 import 'bloc/period_day_picker_event.dart';
 import 'bloc/period_day_picker_state.dart';
@@ -47,9 +51,17 @@ class PeriodDayPickerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => PeriodDayPickerBloc()..add(PeriodDaysFetched()),
-      child: _PeriodDayPickerBody(focusedDay: focusedDay),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<DashboardBloc>(
+          create: (context) => DashboardBloc(),
+        ),
+        BlocProvider<PeriodDayPickerBloc>(
+          create: (context) =>
+              PeriodDayPickerBloc()..add(PeriodDaysFetched(focusedDay!)),
+        )
+      ],
+      child: _PeriodDayPickerBody(focusedDay: focusedDay ?? DateTime.now()),
     );
   }
 }
@@ -63,35 +75,42 @@ class _PeriodDayPickerBody extends StatefulWidget {
 }
 
 class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
-  final ScrollController _scrollController = ScrollController();
-  late final months;
-  late final now;
+  final ItemScrollController _itemScrollController = ItemScrollController();
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
+
+  int _firstVisibleIndex = -1;
+  int _lastVisibleIndex = -1;
+
   @override
   void initState() {
     super.initState();
-    now = DateTime.now();
-    final startYear = 1960;
-    months = List<DateTime>.generate(
-      (now.year - startYear) * 12 + now.month,
-      (i) => DateTime(startYear + i ~/ 12, 1 + i % 12, 1),
-    ).map((date) => DateTime(date.year, date.month, 1)).toList();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.focusedDay != null) {
-        final focusedMonth =
-            DateTime(widget.focusedDay!.year, widget.focusedDay!.month, 1);
-        final index = months.indexWhere((m) =>
-            m.year == focusedMonth.year && m.month == focusedMonth.month);
-        if (index != -1) {
-          _scrollController
-              .jumpTo(MediaQuery.of(context).size.height * 0.45 * index);
-        }
-      } else {
-        _scrollController.jumpTo(MediaQuery.of(context).size.height * 0.45 * 3);
-      }
-    });
+    _itemPositionsListener.itemPositions.addListener(_updateFirstVisibleIndex);
   }
 
+  void _updateFirstVisibleIndex() {
+    final positions = _itemPositionsListener.itemPositions.value;
+    if (positions.isNotEmpty) {
+      //List is reversed.
+      //Trigger more months when first item comes into view
+      var listLength = context.read<PeriodDayPickerBloc>().state.months.length;
+
+      if (positions.last.index == listLength - 1) {
+        //Reached top of list,update the list with earlier months
+        context.read<PeriodDayPickerBloc>().add(LoadMoreMonthsBackward());
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _itemPositionsListener.itemPositions
+        .removeListener(_updateFirstVisibleIndex);
+    super.dispose();
+  }
+
+  var previousMonths;
+  var currentMonths;
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
@@ -108,7 +127,8 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
                   children: [
                     Text('My period started'),
                     Text(
-                        '${DateFormat.E().format(now)}, ${DateFormat.MMMd().format(now)}',
+                        //ToDO: Replace this with the date of the day being edited
+                        '${DateFormat.E().format(widget.focusedDay!)}, ${DateFormat.MMMd().format(widget.focusedDay!)}',
                         style: const TextStyle(fontSize: 20)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -132,14 +152,49 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
             body: Column(
               children: [
                 Expanded(
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    itemCount: months.length,
-                    itemBuilder: (context, index) {
-                      final month = months[index];
-                      return buildMonthCalendar(
-                          context, month, state.selectedDays);
+                  child:
+                      BlocListener<PeriodDayPickerBloc, PeriodDayPickerState>(
+                    listenWhen: (previous, current) {
+                      if (previous.months.isEmpty || current.months.isEmpty) {
+                        return false;
+                      } else {
+                        return current.months.first.month !=
+                            previous.months.first.month;
+                      }
                     },
+                    listener: (context, state) {
+                      // Find the new index of the previously first visible month
+                      /* final prevMonth = state.prevMonthListFirstMonth ?? null;
+                      if (prevMonth != null) {
+                        final newIndex = state.months.indexWhere((m) =>
+                            m.year == prevMonth.year &&
+                            m.month == prevMonth.month);
+                        if (newIndex != -1) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            _itemScrollController.jumpTo(index: newIndex);
+                          });
+                        } 
+                      }*/
+                      Future.delayed(const Duration(seconds: 1), () {
+                        _itemScrollController.jumpTo(index: 5);
+                      });
+                    },
+                    child:
+                        BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
+                      builder: (context, state) {
+                        return ScrollablePositionedList.builder(
+                          reverse: true,
+                          itemScrollController: _itemScrollController,
+                          itemPositionsListener: _itemPositionsListener,
+                          itemCount: state.months.length,
+                          itemBuilder: (context, index) {
+                            final month = state.months[index];
+                            return buildMonthCalendar(
+                                context, month, state.selectedDays, index);
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ),
                 Padding(
@@ -174,14 +229,12 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
                         padding: const EdgeInsets.all(8.0),
                         child: TextButton(
                             onPressed: () {
-                              final bloc = context.read<PeriodDayPickerBloc>();
-                              PeriodPicker periodPicker = PeriodPicker();
-                              periodPicker.saveEditedDays(
-                                bloc.state.selectedDays,
-                                bloc.state.oldDays,
-                              );
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => DashboardView()));
+                              context
+                                  .read<PeriodDayPickerBloc>()
+                                  .add(SavedPeriodDays(context));
+
+                              // Navigate to Day_Entry view with the current Day Entry
+                              Navigator.pop(context, true);
                             },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.symmetric(
@@ -212,106 +265,112 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
   }
 
   Widget buildMonthCalendar(BuildContext context, DateTime month,
-      Set<DateTime> selectedPeriodDateSet) {
+      Set<DateTime> selectedPeriodDateSet, int index) {
     final days = daysInMonth(month);
     final startWeekday = DateTime(month.year, month.month, 1).weekday % 7;
     final totalGridCount = startWeekday + days;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Padding(
-          padding: EdgeInsets.all(12),
-          child: Text(
-            DateFormat.yMMMM().format(month),
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Padding(
+            padding: EdgeInsets.all(12),
+            child: Text(
+              DateFormat.yMMMM().format(month),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ),
-        ),
-        GridView.builder(
-          padding: EdgeInsets.all(12),
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: totalGridCount,
-          gridDelegate:
-              SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7),
-          itemBuilder: (context, index) {
-            if (index < startWeekday) return Container();
+          GridView.builder(
+            padding: EdgeInsets.all(12),
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: totalGridCount,
+            gridDelegate:
+                SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7),
+            itemBuilder: (context, index) {
+              if (index < startWeekday) return Container();
 
-            final day = index - startWeekday + 1;
-            final date = DateTime(month.year, month.month, day);
-            var now = DateTime.now();
-            final isFutureDay =
-                date.isAfter(DateTime(now.year, now.month, now.day));
-            var isSelected = selectedPeriodDateSet
-                .contains(DateTime(date.year, date.month, date.day));
+              final day = index - startWeekday + 1;
+              final date = DateTime(month.year, month.month, day);
+              var now = DateTime.now();
+              //Disable future day selection
+              final isFutureDay =
+                  date.isAfter(DateTime(now.year, now.month, now.day));
+              var isSelected = selectedPeriodDateSet
+                  .contains(DateTime(date.year, date.month, date.day));
 
-            return GestureDetector(
-              onTap: () {
-                if (!isFutureDay) {
-                  context
-                      .read<PeriodDayPickerBloc>()
-                      .add(PeriodDayToggled(date));
-                }
-              },
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  ClipRect(
-                    child: Container(),
-                  ),
-                  Center(
-                    child: Container(
-                      child: Column(
-                        children: [
-                          Text('$day',
-                              style: TextStyle(
-                                color: isFutureDay
-                                    ? Colors.grey
+              return GestureDetector(
+                onTap: () {
+                  if (!isFutureDay) {
+                    //Only add to selected days if it is not a future day
+                    context
+                        .read<PeriodDayPickerBloc>()
+                        .add(PeriodDayToggled(date));
+                  }
+                },
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    ClipRect(
+                      child: Container(),
+                    ),
+                    Center(
+                      child: Container(
+                        child: Column(
+                          children: [
+                            Text('$day',
+                                style: TextStyle(
+                                  color: isFutureDay
+                                      ? Colors.grey
+                                      : isSelected
+                                          ? const Color.fromARGB(
+                                              255, 235, 43, 43)
+                                          : Colors.black87,
+                                  fontWeight: FontWeight.w600,
+                                )),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                border: isFutureDay
+                                    ? Border.all(color: Colors.grey, width: 2)
                                     : isSelected
-                                        ? const Color.fromARGB(255, 235, 43, 43)
-                                        : Colors.black87,
-                                fontWeight: FontWeight.w600,
-                              )),
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              border: isFutureDay
-                                  ? Border.all(color: Colors.grey, width: 2)
-                                  : isSelected
-                                      ? Border.all(
-                                          color: Colors.pinkAccent, width: 2)
-                                      : Border.all(
-                                          color: const Color.fromARGB(
-                                              255, 116, 103, 107),
-                                          width: 2),
-                              color: isFutureDay
-                                  ? Colors.grey.shade200
-                                  : isSelected
-                                      ? Colors.pinkAccent
-                                      : Colors.transparent,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Icon(
-                                isSelected ? Icons.check : null,
-                                color: isSelected ? Colors.white : Colors.black,
-                                size: 15,
+                                        ? Border.all(
+                                            color: Colors.pinkAccent, width: 2)
+                                        : Border.all(
+                                            color: const Color.fromARGB(
+                                                255, 116, 103, 107),
+                                            width: 2),
+                                color: isFutureDay
+                                    ? Colors.grey.shade200
+                                    : isSelected
+                                        ? Colors.pinkAccent
+                                        : Colors.transparent,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  isSelected ? Icons.check : null,
+                                  color:
+                                      isSelected ? Colors.white : Colors.black,
+                                  size: 15,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 10),
-        const Divider(),
-        const SizedBox(height: 10),
-      ],
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 10),
+          const Divider(),
+          const SizedBox(height: 10),
+        ],
+      ),
     );
   }
 

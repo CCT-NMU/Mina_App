@@ -36,7 +36,9 @@ class SymptomList extends Equatable {
   }
 
   static SymptomList fromString(String? symptomsString) {
-    if (symptomsString == null || symptomsString.isEmpty) {
+    if (symptomsString == null ||
+        symptomsString.isEmpty ||
+        symptomsString == "") {
       return const SymptomList();
     }
     return SymptomList(symptoms: symptomsString.split(','));

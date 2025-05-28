@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/model/model.dart';
+import 'package:sqflite/sqflite.dart';
 
 class DayEntryRepository {
   DayEntryRepository._privateConstructor();
@@ -18,10 +19,11 @@ class DayEntryRepository {
     }
   }
 
-  Future<void> insertPeriodDayEntry(PeriodDay periodDay) async {
+  Future<void> insertPeriodDayEntry(
+      PeriodDay periodDay, Transaction? txn) async {
     try {
-      await DatabaseHelper()
-          .insertPeriodDay(periodDay); //method handles the insertion in
+      await DatabaseHelper().insertPeriodDay(periodDay,
+          txn: txn); //method handles the insertion in
       //both Day table and PeriodDay table.
     } catch (e) {
       // Log the error and rethrow a custom exception
@@ -79,6 +81,30 @@ class DayEntryRepository {
       // Log the error and rethrow a custom exception
       debugPrint('Error deleting PeriodDay entry: $e');
       throw Exception('Failed to delete PeriodDay entry');
+    }
+  }
+
+  Future<List<Day>> getDaysInRange(
+      DateTime firstDayOfPrevMonth, DateTime lastDayOfNextMonth) async {
+    try {
+      return await DatabaseHelper()
+          .getDaysInRange(firstDayOfPrevMonth, lastDayOfNextMonth);
+    } catch (e) {
+      // Log the error and rethrow a custom exception
+      print('Error retrieving Days in range: $e');
+      throw Exception('Failed to retrieve Days in range');
+    }
+  }
+
+  //update Day to a PeriodDay
+  Future<void> updateDayToPeriodDay(
+      PeriodDay periodDay, Transaction? txn) async {
+    try {
+      await DatabaseHelper().updateDayToPeriodDay(periodDay, txn: txn);
+    } catch (e) {
+      // Log the error and rethrow a custom exception
+      print('Error updating Day to PeriodDay: $e');
+      throw Exception('Failed to update Day to PeriodDay');
     }
   }
 }

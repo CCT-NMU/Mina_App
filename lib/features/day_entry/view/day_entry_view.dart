@@ -301,7 +301,7 @@ class _DayEntryViewState extends State<DayEntryView> {
           listSymptoms: SymptomList(symptoms: _selectedSymptoms),
           listMoods: MoodList(moods: _selectedMoods),
         );
-        DayEntryRepository.instance.insertPeriodDayEntry(periodDay);
+        DayEntryRepository.instance.insertPeriodDayEntry(periodDay, null);
       } else {
         DayEntryRepository.instance.deletePeriodDayEntry(widget.focusedDay);
         final day = Day(

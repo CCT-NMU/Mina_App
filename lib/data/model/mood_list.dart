@@ -39,7 +39,7 @@ class MoodList extends Equatable {
   }
 
   static MoodList fromString(String? moodsString) {
-    if (moodsString == null) {
+    if (moodsString == null || moodsString.isEmpty || moodsString == "") {
       return const MoodList();
     }
     return MoodList(moods: moodsString.split(','));
