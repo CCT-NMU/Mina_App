@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
+import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
+import 'package:mina_app/features/period/bloc/period_day_picker_bloc.dart';
 import 'package:mina_app/features/period/period_day_picker_view.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
@@ -38,7 +42,18 @@ class MinaApp extends StatelessWidget {
           //return const DashboardView();
           //DatabaseHelper().clearAllData();
 
-          return DashboardView();
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<DashboardBloc>(
+                create: (context) => DashboardBloc(),
+              ),
+              BlocProvider<PeriodDayPickerBloc>(
+                create: (context) => PeriodDayPickerBloc(),
+              ),
+              BlocProvider(create: (context) => DayEntryBloc()),
+            ],
+            child: DashboardView(),
+          );
           // }
 
           // return const LoginView();

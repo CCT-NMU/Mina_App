@@ -2,6 +2,8 @@
 
 import 'package:equatable/equatable.dart';
 import 'package:mina_app/data/model/day.dart';
+import 'package:mina_app/data/model/period_day.dart';
+
 abstract class DayEntryBlocState extends Equatable {
   const DayEntryBlocState();
 
@@ -27,6 +29,15 @@ class DayEntryLoadedState extends DayEntryBlocState {
 
   @override
   List<Object> get props => [day];
+}
+
+class PeriodDayEntryLoadedState extends DayEntryBlocState {
+  final PeriodDay periodDay;
+
+  const PeriodDayEntryLoadedState(this.periodDay);
+
+  @override
+  List<Object> get props => [periodDay];
 }
 
 //New Day entry to be created

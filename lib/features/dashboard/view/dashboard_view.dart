@@ -3,6 +3,8 @@ import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_states.dart';
+import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
+import 'package:mina_app/features/day_entry/bloc/day_entry_event.dart';
 import 'package:mina_app/features/widgets/common/menu/menu_drawer.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:mina_app/features/day_entry/view/day_entry_view.dart';
@@ -31,7 +33,8 @@ class _DashboardViewState extends State<DashboardView> {
   void initState() {
     super.initState();
     _focusedDay = DateTime.now();
-    _loadEventsFromDatabase();
+
+    context.read<DashboardBloc>().add(LoadDashboard(_focusedDay));
   }
 
   Future<void> _loadEventsFromDatabase() async {
@@ -167,11 +170,15 @@ class _DashboardViewState extends State<DashboardView> {
                                   return CircularProgressIndicator();
                                 }
                                 if (state is DashboardLoadSuccess) {
-                                  return MyCalendar(state.days);
+                                  periodDays = state.days;
+                                  return BlocProvider.value(
+                                    value: context.read<DashboardBloc>(),
+                                    child: myCalendar(),
+                                  );
                                 } else if (state is DashboardLoadFailure) {
                                   return Text('Failed to load events');
                                 }
-                                return Container();
+                                return CircularProgressIndicator();
                               },
                             ),
 
@@ -296,27 +303,36 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  Route _createRoute(DateTime focusedDay) {
+  Route _createRoute(DateTime focusedDay, DashboardBloc dashboardBloc) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) {
         return FutureBuilder<Day?>(
-            future: DayEntryRepository.instance.getDayEntry(focusedDay),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Scaffold(
-                  body: Center(child: Text('Error: ${snapshot.error}')),
-                );
-              }
-              if (snapshot.hasData) {
-                return DayEntryView(
-                  focusedDay: focusedDay,
-                  existingDay: snapshot.data,
-                );
-              }
-              return DayEntryView(focusedDay: focusedDay);
-            });
+          future: DayEntryRepository.instance.getDayEntry(focusedDay),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Scaffold(
+                body: Center(child: Text('Error: ${snapshot.error}')),
+              );
+            }
+            // Wrap DayEntryView in MultiBlocProvider
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider.value(
+                  value: dashboardBloc,
+                ),
+                BlocProvider(
+                  create: (_) => DayEntryBloc()..add(DayEntryFetch(focusedDay)),
+                ),
+              ],
+              child: DayEntryView(
+                focusedDay: focusedDay,
+                existingDay: snapshot.data,
+              ),
+            );
+          },
+        );
       },
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         const begin = Offset(0.0, 1.0);
@@ -331,7 +347,12 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  Widget MyCalendar(List<Day> days) {
+  Widget myCalendar() {
+    final dashboardState = context.watch<DashboardBloc>().state;
+    List<Day> periodDays = [];
+    if (dashboardState is DashboardLoadSuccess) {
+      periodDays = dashboardState.days;
+    }
     return TableCalendar(
       firstDay: DateTime.utc(1670, 1, 1),
       lastDay: DateTime.utc(DateTime.now().year + 10, 12, 31),
@@ -347,15 +368,15 @@ class _DashboardViewState extends State<DashboardView> {
           _selectedDay = selectedDay;
           _focusedDay = focusedDay;
         });
-        //########################################ToDo implement BlocBuilder
-        final result = await Navigator.of(context)
-            .push(_createRoute(normalizeDate(_focusedDay)));
+        final dashboardBloc = context.read<DashboardBloc>();
 
+        final result = await Navigator.of(context)
+            .push(_createRoute(normalizeDate(_focusedDay), dashboardBloc));
         if (result == true) {
-          _loadEventsFromDatabase();
-          //context.read<DashboardBloc>().add(RefreshDashboard());
+          dashboardBloc.add(LoadDashboard(_focusedDay));
         }
       },
+
       onPageChanged: (focusedDay) {
         //Change the focused day and reload days from the
         //database
@@ -363,7 +384,7 @@ class _DashboardViewState extends State<DashboardView> {
         setState(() {
           _focusedDay = focusedDay;
         });
-        _loadEventsFromDatabase();
+        // _loadEventsFromDatabase();
       },
       //eventLoader: _getEventsForDay,
       calendarBuilders: CalendarBuilders(
@@ -438,15 +459,15 @@ class _DashboardViewState extends State<DashboardView> {
           shape: BoxShape.circle,
         ),
         /*todayDecoration: periodDayDatesSet
-                                            .contains(normalizeDate(DateTime.now()))
-                                        ? BoxDecoration(
-                                            color: Colors.red,
-                                            shape: BoxShape.circle,
-                                          )
-                                        : BoxDecoration(
-                                            color: Color.fromARGB(180, 33, 149, 243),
-                                            shape: BoxShape.circle,
-                                          ), */
+                                                .contains(normalizeDate(DateTime.now()))
+                                            ? BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                              )
+                                            : BoxDecoration(
+                                                color: Color.fromARGB(180, 33, 149, 243),
+                                                shape: BoxShape.circle,
+                                              ), */
         selectedDecoration: const BoxDecoration(
           color: Color.fromARGB(0, 76, 175, 79),
           shape: BoxShape.circle,

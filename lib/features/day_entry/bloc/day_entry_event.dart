@@ -1,13 +1,14 @@
-//A class that contains the events for the Day entry bloc 
+//A class that contains the events for the Day entry bloc
 import 'package:mina_app/data/model/day.dart';
-sealed class DayEntryBlocEvent{
-  const DayEntryBlocEvent():super();
+
+sealed class DayEntryBlocEvent {
+  const DayEntryBlocEvent() : super();
 }
 
-//Fetch a Day Entry for a specific date 
+//Fetch a Day Entry for a specific date
 class DayEntryFetch extends DayEntryBlocEvent {
   final DateTime date;
-  const DayEntryFetch( this.date);
+  const DayEntryFetch(this.date);
 }
 
 //Day Entry Fetched for a specific date
@@ -15,7 +16,7 @@ class DayEntryFetched extends DayEntryBlocEvent {
   const DayEntryFetched();
 }
 
-//Update a Day Entry for a specific date 
+//Update a Day Entry for a specific date
 class DayEntryUpdate extends DayEntryBlocEvent {
   final Day dayEntry;
   const DayEntryUpdate(this.dayEntry);
@@ -29,4 +30,9 @@ class DayEntryClose extends DayEntryBlocEvent {
 //Delete Day Entry
 class DayEntryDelete extends DayEntryBlocEvent {
   const DayEntryDelete();
+}
+
+class DayEntryReloadRequest extends DayEntryBlocEvent {
+  final DateTime date;
+  const DayEntryReloadRequest(this.date);
 }

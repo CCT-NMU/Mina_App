@@ -6,6 +6,8 @@ import 'package:mina_app/data/model/day.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
+import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
+import 'package:mina_app/features/day_entry/bloc/day_entry_event.dart';
 import 'package:mina_app/features/day_entry/view/day_entry_view.dart';
 import 'package:mina_app/features/period/period_picker_logic.dart';
 import 'package:mina_app/local_libraries/table_calendar/lib/table_calendar.dart';
@@ -51,18 +53,7 @@ class PeriodDayPickerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<DashboardBloc>(
-          create: (context) => DashboardBloc(),
-        ),
-        BlocProvider<PeriodDayPickerBloc>(
-          create: (context) =>
-              PeriodDayPickerBloc()..add(PeriodDaysFetched(focusedDay!)),
-        )
-      ],
-      child: _PeriodDayPickerBody(focusedDay: focusedDay ?? DateTime.now()),
-    );
+    return _PeriodDayPickerBody(focusedDay: focusedDay ?? DateTime.now());
   }
 }
 
@@ -232,7 +223,8 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
                               context
                                   .read<PeriodDayPickerBloc>()
                                   .add(SavedPeriodDays(context));
-
+                              context.read<DayEntryBloc>().add(
+                                  DayEntryReloadRequest(widget.focusedDay!));
                               // Navigate to Day_Entry view with the current Day Entry
                               Navigator.pop(context, true);
                             },
