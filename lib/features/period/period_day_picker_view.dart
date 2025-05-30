@@ -9,6 +9,7 @@ import 'package:mina_app/local_libraries/table_calendar/lib/table_calendar.dart'
 import 'package:mina_app/local_libraries/table_calendar/lib/src/shared/utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/period/period_picker_logic.dart';
+import 'package:mina_app/services/auth_service.dart';
 import 'bloc/period_day_picker_bloc.dart';
 import 'bloc/period_day_picker_event.dart';
 import 'bloc/period_day_picker_state.dart';
@@ -43,12 +44,16 @@ It will only appear for days that:
         number month*/
 class PeriodDayPickerView extends StatelessWidget {
   final DateTime? focusedDay;
-  const PeriodDayPickerView({Key? key, this.focusedDay}) : super(key: key);
+
+  final String userId = AuthService.instance.requireUserId;
+  PeriodDayPickerView({Key? key, this.focusedDay}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => PeriodDayPickerBloc()..add(PeriodDaysFetched()),
+  create: (context) => PeriodDayPickerBloc(
+    userId: userId,
+  )..add(PeriodDaysFetched()),
       child: _PeriodDayPickerBody(focusedDay: focusedDay),
     );
   }
@@ -175,7 +180,7 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
                         child: TextButton(
                             onPressed: () {
                               final bloc = context.read<PeriodDayPickerBloc>();
-                              PeriodPicker periodPicker = PeriodPicker();
+                              PeriodPicker periodPicker = PeriodPicker( userId: bloc.userId);
                               periodPicker.saveEditedDays(
                                 bloc.state.selectedDays,
                                 bloc.state.oldDays,

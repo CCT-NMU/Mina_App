@@ -28,8 +28,8 @@ class NotificationService {
     await _notifications.initialize(initSettings);
   }
 
-  Future<void> schedulePeriodReminder(DateTime periodDate) async {
-    final settings = await _dbHelper.getAllSettings();
+  Future<void> schedulePeriodReminder(DateTime periodDate, String userId) async {
+    final settings = await _dbHelper.getAllSettings(userId);
     final enableReminders = settings['enable_period_reminders'] == 'true';
     final reminderDays = int.parse(settings['reminder_days'] ?? '2');
 

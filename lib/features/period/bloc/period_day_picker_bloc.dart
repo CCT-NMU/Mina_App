@@ -1,4 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mina_app/data/repositories/day_entry_repository.dart';
+import 'package:mina_app/services/auth_service.dart';
 import 'period_day_picker_event.dart';
 import 'period_day_picker_state.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
@@ -7,7 +9,10 @@ import 'package:flutter/foundation.dart';
 
 class PeriodDayPickerBloc
     extends Bloc<PeriodDayPickerEvent, PeriodDayPickerState> {
-  PeriodDayPickerBloc() : super(const PeriodDayPickerState()) {
+  final String userId;
+
+  PeriodDayPickerBloc({required this.userId})
+      : super(const PeriodDayPickerState()) {
     on<PeriodDaysFetched>(_onFetched);
     on<PeriodDayToggled>(_onToggled);
   }
@@ -18,10 +23,20 @@ class PeriodDayPickerBloc
   ) async {
     emit(state.copyWith(status: PeriodDayPickerStatus.loading));
     try {
+      // Check authentication before proceeding
+      if (!AuthService.instance.isLoggedIn) {
+        debugPrint('User not authenticated in PeriodDayPickerBloc');
+        emit(state.copyWith(status: PeriodDayPickerStatus.failure));
+        return;
+      }
+
       final now = DateTime.now();
-      List<Day> periodDays = await DatabaseHelper().getPeriodDaysInRange(
+      // Use DayEntryRepository instead of DatabaseHelper directly
+      List<Day> periodDays =
+          await DayEntryRepository.instance.getPeriodDaysInRange(
         DateTime(1960, 1, 1),
         DateTime(now.year + 1, now.month + 2, 0),
+        userId,
       );
       final Set<DateTime> processed =
           await compute(_processPeriodDaySetIsolate, periodDays);
@@ -30,7 +45,12 @@ class PeriodDayPickerBloc
         oldDays: processed,
         selectedDays: processed,
       ));
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Error in PeriodDayPickerBloc._onFetched: $e');
+      // Check if it's an authentication error
+      if (e.toString().contains('No authenticated user found')) {
+        debugPrint('Authentication error in period picker');
+      }
       emit(state.copyWith(status: PeriodDayPickerStatus.failure));
     }
   }

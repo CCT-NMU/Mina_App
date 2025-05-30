@@ -10,7 +10,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
    
       emit(const DayEntryLoadingState());
         try{
-          final day = await DayEntryRepository.instance.getDayEntry(event.date);
+          final day = await DayEntryRepository.instance.getDayEntry(event.date, event.userId);
           if(day!=null){
           emit(DayEntryLoadedState(day));}
           else{

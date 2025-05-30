@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:mina_app/features/period/period_day_picker_view.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:mina_app/data/database/databaseHelper.dart';
-import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/auth/view/login_view.dart';
-import 'package:mina_app/services/notification_service.dart';
-import 'package:mina_app/data/database/databaseHelper.dart';
+import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize Supabase
+  // TODO: (refactor to be more secure)
+  await Supabase.initialize(
+    url: 'https://qvlfvktdzzpcuximbdic.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2bGZ2a3RkenpwY3V4aW1iZGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0MjQ1OTcsImV4cCI6MjA2NDAwMDU5N30.gJbrV1oFuczqPUhs9RMn2ofc6BP1gYGml97jDEfFwzg',
+  );
   // Initialize notifications
   // await NotificationService().initialize();
 
@@ -21,28 +26,37 @@ class MinaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    return BlocProvider(
+      create: (context) => AuthBloc()..add(AuthStarted()),
+      child: MaterialApp(
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        debugShowCheckedModeBanner: false,
+        home: const AuthWrapper(),
       ),
-      debugShowCheckedModeBanner: true,
-      home: StreamBuilder<bool>(
-        stream: Stream.value(true), // Placeholder stream
-        builder: (context, snapshot) {
-          /*if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }*/
+    );
+  }
+}
 
-          //if (snapshot.hasData && snapshot.data == true) {
-          //return const DashboardView();
-          //DatabaseHelper().clearAllData();
-          return DashboardView();
-          // }
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
 
-          // return const LoginView();
-        },
-      ),
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is AuthLoading || state is AuthInitial) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (state is AuthAuthenticated) {
+          return const DashboardView();
+        } else {
+          return const LoginView();
+        }
+      },
     );
   }
 }

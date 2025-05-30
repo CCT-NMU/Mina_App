@@ -17,9 +17,9 @@ class DataExportService {
   })  : _dbHelper = dbHelper ?? DatabaseHelper(),
         _cycleRepository = cycleRepository ?? CycleRepository();
 
-  Future<String> exportToCsv() async {
-    final days = await _dbHelper.getCombinedDayAndPeriodDayRecords();
-    final cycles = await _cycleRepository.calculateCycleHistory();
+  Future<String> exportToCsv( String userId) async {
+    final days = await _dbHelper.getCombinedDayAndPeriodDayRecords(userId);
+    final cycles = await _cycleRepository.calculateCycleHistory(userId);
 
     // Prepare data for CSV
     List<List<dynamic>> cycleRows = [
@@ -84,9 +84,9 @@ class DataExportService {
     return exportDir.path;
   }
 
-  Future<void> shareExport() async {
+  Future<void> shareExport(String userId) async {
     try {
-      final exportPath = await exportToCsv();
+      final exportPath = await exportToCsv(userId);
       final directory = Directory(exportPath);
       final files = directory.listSync().whereType<File>().toList();
 

@@ -27,21 +27,28 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5, // Increment version to trigger onUpgrade
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade, // Add this line
+      onUpgrade: _onUpgrade,
     );
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 5) {
+      // Add Cycle table if upgrading from version < 4
       await db.execute('''CREATE TABLE IF NOT EXISTS Cycle (
           id INTEGER PRIMARY KEY AUTOINCREMENT, 
           startDate STRING, 
           periodEndDate STRING, 
-          endDate STRING
+          endDate STRING,
+          userId STRING
           )
           ''');
+
+      // Add userId column to existing tables
+      await db.execute('ALTER TABLE Day ADD COLUMN userId STRING');
+      await db.execute('ALTER TABLE PeriodDay ADD COLUMN userId STRING');
+      await db.execute('ALTER TABLE UserSettings ADD COLUMN userId STRING');
     }
   }
 
@@ -61,27 +68,33 @@ class DatabaseHelper {
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE UserSettings(
-      Key STRING PRIMARY KEY,
-      Value STRING
+      Key STRING,
+      Value STRING,
+      userId STRING,
+      PRIMARY KEY (Key, userId)
       )
     ''');
 
     await db.execute('''CREATE TABLE Day(
-    Date STRING PRIMARY KEY,
+    Date STRING,
     IsPeriodDay INTEGER,
     Note STRING,
     symptomList STRING,
-    moodlist STRING
+    moodlist STRING,
+    userId STRING,
+    PRIMARY KEY (Date, userId)
     )
     ''');
 
     await db.execute('''
   CREATE TABLE PeriodDay(
-    Date STRING PRIMARY KEY,
+    Date STRING,
     FlowWeight INTEGER,
     IsPeriodStartDay INTEGER,
     IsPeriodEndDay INTEGER,
-    FOREIGN KEY (Date) REFERENCES Day(Date)
+    userId STRING,
+    PRIMARY KEY (Date, userId),
+    FOREIGN KEY (Date, userId) REFERENCES Day(Date, userId)
   )
 ''');
 
@@ -90,7 +103,8 @@ class DatabaseHelper {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     startDate STRING,
     periodEndDate STRING,
-    endDate STRING
+    endDate STRING,
+    userId STRING
   )
 ''');
 
@@ -109,39 +123,41 @@ class DatabaseHelper {
 
 //##CRUD operations for UserSettings
 
-  /// Inserts or updates a user setting.
+  /// Inserts or updates a user setting for a specific user.
   ///
-  /// If a setting with the given [key] does not exist, it is inserted.
+  /// If a setting with the given [key] and [userId] does not exist, it is inserted.
   /// Otherwise, the existing setting is updated with the new [value].
   ///
   /// This method is asynchronous because it may need to wait for the database
   /// to initialize.
-  Future<void> insertOrUpdateUserSetting(String key, String value) async {
+  Future<void> insertOrUpdateUserSetting(
+      String key, String value, String userId) async {
     final db = await database;
     await db.insert(
       'UserSettings',
-      {'Key': key, 'Value': value},
+      {'Key': key, 'Value': value, 'userId': userId},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  /// Retrieves a setting from the database.
+  /// Retrieves a setting from the database for a specific user.
   ///
   /// The [key] parameter is the name of the setting to retrieve.
+  /// The [userId] parameter identifies which user's setting to retrieve.
   ///
   /// Returns the value of the setting if it exists, or `null` if it does not.
   ///
   /// This method is asynchronous because it may need to wait for the database
   /// to initialize.
 
-  Future<String?> getUserSetting(String key) async {
+  Future<String?> getUserSetting(String key, String userId) async {
     final db = await database;
 
     // Query the setting
     final List<Map<String, dynamic>> result = await db.query(
       'UserSettings',
-      where: 'Key = ?',
-      whereArgs: [key],
+      where: 'Key = ? AND userId = ?',
+      whereArgs: [key, userId],
     );
 
     if (result.isNotEmpty) {
@@ -151,16 +167,20 @@ class DatabaseHelper {
     }
   }
 
-  /// Retrieves all settings from the database as a map.
+  /// Retrieves all settings from the database as a map for a specific user.
   ///
   /// The returned map will have the setting names as keys and the
   /// corresponding setting values as values.
   ///
   /// This method is asynchronous because it may need to wait for the database
   /// to initialize.
-  Future<Map<String, String>> getAllSettings() async {
+  Future<Map<String, String>> getAllSettings(String userId) async {
     final db = await database;
-    final List<Map<String, dynamic>> settings = await db.query('UserSettings');
+    final List<Map<String, dynamic>> settings = await db.query(
+      'UserSettings',
+      where: 'userId = ?',
+      whereArgs: [userId],
+    );
     return Map.fromEntries(
       settings
           .map((row) => MapEntry(row['Key'] as String, row['Value'] as String)),
@@ -169,19 +189,22 @@ class DatabaseHelper {
 
 //CRUD operations for Day table
   //CREATE DAY Record
-  /// Inserts a day entry into the database.
+  /// Inserts a day entry into the database for a specific user.
   ///
-  /// If a day entry with the same date already exists, it will be replaced.
+  /// If a day entry with the same date and userId already exists, it will be replaced.
   /// The [day] parameter contains the details of the day entry to be inserted.
+  /// The [userId] parameter identifies which user this entry belongs to.
   /// This operation uses [ConflictAlgorithm.replace] to handle conflicts.
 
-  Future<void> insertDay(Day day) async {
+  Future<void> insertDay(Day day, String userId) async {
     final db = await database;
     try {
       db.transaction((txn) async {
+        var dayMap = day.toMap();
+        dayMap['userId'] = userId;
         await txn.insert(
           'Day',
-          day.toMap(),
+          dayMap,
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       });
@@ -193,19 +216,19 @@ class DatabaseHelper {
   }
 
   //READ DAY Record
-  /// Retrieves a day entry from the database.
+  /// Retrieves a day entry from the database for a specific user.
   ///
-  /// If a day entry with the given [date] does not exist, returns `null`.
+  /// If a day entry with the given [date] and [userId] does not exist, returns `null`.
   /// Otherwise, returns the day entry.
-  Future<Day?> getDay(DateTime date) async {
+  Future<Day?> getDay(DateTime date, String userId) async {
     final db = await database;
     final List<Map<String, dynamic>> result = await db.rawQuery('''
-      SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.symptomList,Day.moodList,
+      SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.symptomList,Day.moodList,Day.userId,
       PeriodDay.FlowWeight,PeriodDay.IsPeriodStartDay,PeriodDay.IsPeriodEndDay
       FROM Day
-      LEFT JOIN PeriodDay ON Day.Date = PeriodDay.Date
-      WHERE Day.Date=?
-      ''', [date.toIso8601String()]);
+      LEFT JOIN PeriodDay ON Day.Date = PeriodDay.Date AND Day.userId = PeriodDay.userId
+      WHERE Day.Date=? AND Day.userId=?
+      ''', [date.toIso8601String(), userId]);
     if (result.isNotEmpty) {
       final Map<String, dynamic> row = result.first;
       if (row['IsPeriodDay'] == 1) {
@@ -219,88 +242,98 @@ class DatabaseHelper {
   }
 
 //UPDATE DAY Record
-  Future<void> updateDay(Day day) async {
+  Future<void> updateDay(Day day, String userId) async {
     final db = await database;
 
     await db.transaction((txn) async {
+      var dayMap = day.toMap();
+      dayMap['userId'] = userId;
+
       if (!day.isPeriodDay) {
         await txn.update(
           'Day',
-          day.toMap(),
-          where: 'Date = ?',
-          whereArgs: [day.date.toIso8601String()],
+          dayMap,
+          where: 'Date = ? AND userId = ?',
+          whereArgs: [day.date.toIso8601String(), userId],
         );
         // Delete Period information if day is changed from a Period Day to a non-Period Day
         await txn.delete(
           'PeriodDay',
-          where: 'Date = ?',
-          whereArgs: [day.date.toIso8601String()],
+          where: 'Date = ? AND userId = ?',
+          whereArgs: [day.date.toIso8601String(), userId],
         );
       } else {
         await txn.update(
           'Day',
-          day.toMap(),
-          where: 'Date = ?',
-          whereArgs: [day.date.toIso8601String()],
+          dayMap,
+          where: 'Date = ? AND userId = ?',
+          whereArgs: [day.date.toIso8601String(), userId],
         );
       }
     });
   }
 
   //DELETE DAY Record
-  /// Deletes a day entry and its corresponding period day entry from the database for a given date.
+  /// Deletes a day entry and its corresponding period day entry from the database for a given date and user.
   ///
-  /// This method removes the records associated with the specified [date] from both the 'Day' and
+  /// This method removes the records associated with the specified [date] and [userId] from both the 'Day' and
   /// 'PeriodDay' tables. It first deletes the entry from the 'PeriodDay' table to ensure referential
   /// integrity, then deletes the entry from the 'Day' table. Returns the number of rows affected
   /// in the 'Day' table.
 
-  Future<int> deleteDayEntry(DateTime date) async {
+  Future<int> deleteDayEntry(DateTime date, String userId) async {
     final db = await database;
 
     return await db.transaction((txn) async {
       // Delete corresponding PeriodDay
       await txn.delete(
         'PeriodDay',
-        where: 'Date = ?',
-        whereArgs: [date.toIso8601String()],
+        where: 'Date = ? AND userId = ?',
+        whereArgs: [date.toIso8601String(), userId],
       );
 
       // Delete from Day table and return the number of rows affected
       return await txn.delete(
         'Day',
-        where: 'Date = ?',
-        whereArgs: [date.toIso8601String()],
+        where: 'Date = ? AND userId = ?',
+        whereArgs: [date.toIso8601String(), userId],
       );
     });
   }
 
 //CRUD operations for PeriodDay
-  Future<void> insertPeriodDay(PeriodDay periodDay, {Transaction? txn}) async {
+  Future<void> insertPeriodDay(PeriodDay periodDay, String userId,
+      {Transaction? txn}) async {
     final db = await database;
     final executor = txn ?? db;
 
+    var dayMap = periodDay.toMap();
+    dayMap['userId'] = userId;
+
+    var periodDayMap = periodDay.toPeriodDayMap();
+    periodDayMap['userId'] = userId;
+
     await executor.insert(
       'Day',
-      periodDay.toMap(),
+      dayMap,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
     // Insert into PeriodDay table
     await executor.insert(
       'PeriodDay',
-      periodDay.toPeriodDayMap(), // Includes only PeriodDay-specific columns
+      periodDayMap, // Includes only PeriodDay-specific columns + userId
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  Future<PeriodDay?> getPeriodDayByDate(DateTime date,
+  Future<PeriodDay?> getPeriodDayByDate(DateTime date, String userId,
       {Transaction? txn}) async {
     final db = await database;
     final executor = txn ?? db;
     final List<Map<String, dynamic>> result = await executor.query(
       'PeriodDay',
-      where: 'Date = ?',
-      whereArgs: [date.toIso8601String()],
+      where: 'Date = ? AND userId = ?',
+      whereArgs: [date.toIso8601String(), userId],
     );
     if (result.isNotEmpty) {
       return PeriodDay.fromMap(result.first);
@@ -310,27 +343,32 @@ class DatabaseHelper {
   }
 
 //updates existing PeriodDay entry
-  Future<void> updatePeriodDay(PeriodDay periodDay, {Transaction? txn}) async {
+  Future<void> updatePeriodDay(PeriodDay periodDay, String userId,
+      {Transaction? txn}) async {
     final db = await database;
 
     final executor = txn ?? db;
+    var periodDayMap = periodDay.toPeriodDayMap();
+    periodDayMap['userId'] = userId;
+
     await executor.update(
       'PeriodDay',
-      periodDay.toPeriodDayMap(),
-      where: 'Date = ?',
-      whereArgs: [periodDay.date.toIso8601String()],
+      periodDayMap,
+      where: 'Date = ? AND userId = ?',
+      whereArgs: [periodDay.date.toIso8601String(), userId],
     );
   }
 
-  /// Deletes a PeriodDay entry for a given date from the database.
+  /// Deletes a PeriodDay entry for a given date and user from the database.
   ///
   /// This method removes the corresponding PeriodDay record from the 'PeriodDay'
-  /// table based on the provided [date]. Additionally, it updates the 'Day' table
+  /// table based on the provided [date] and [userId]. Additionally, it updates the 'Day' table
   /// to set the 'IsPeriodDay' flag to false, indicating that the day is no longer
   /// considered a period day.
   ///
 
-  Future<int> deletePeriodDay(DateTime date, {Transaction? txn}) async {
+  Future<int> deletePeriodDay(DateTime date, String userId,
+      {Transaction? txn}) async {
     final db = await database;
     final executor = txn ?? db;
 
@@ -339,14 +377,14 @@ class DatabaseHelper {
       await executor.update(
         'Day',
         {'IsPeriodDay': 0}, // Set IsPeriodDay to false
-        where: 'Date = ?',
-        whereArgs: [date.toIso8601String()],
+        where: 'Date = ? AND userId = ?',
+        whereArgs: [date.toIso8601String(), userId],
       );
       // Delete the PeriodDay entry
       return await executor.delete(
         'PeriodDay',
-        where: 'Date = ?',
-        whereArgs: [date.toIso8601String()],
+        where: 'Date = ? AND userId = ?',
+        whereArgs: [date.toIso8601String(), userId],
       );
     } catch (e) {
       debugPrint('Error deleting PeriodDay: $e');
@@ -354,27 +392,29 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<Day>> getPeriodDaysInRange(DateTime start, DateTime end) async {
+  Future<List<Day>> getPeriodDaysInRange(
+      DateTime start, DateTime end, String userId) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'Day',
-      where: 'Date BETWEEN ? AND ? AND IsPeriodDay = 1',
-      whereArgs: [start.toIso8601String(), end.toIso8601String()],
+      where: 'Date BETWEEN ? AND ? AND IsPeriodDay = 1 AND userId = ?',
+      whereArgs: [start.toIso8601String(), end.toIso8601String(), userId],
     );
     return List.generate(maps.length, (i) {
       return Day.fromMap(maps[i]);
     });
   }
 
-  //READ ALL DAY Records
-  Future<List<Day>> getCombinedDayAndPeriodDayRecords() async {
+  //READ ALL DAY Records for a specific user
+  Future<List<Day>> getCombinedDayAndPeriodDayRecords(String userId) async {
     final db = await database;
     final List<Map<String, dynamic>> result = await db.rawQuery('''
-      SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.symptomList,Day.moodList,
+      SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.symptomList,Day.moodList,Day.userId,
       PeriodDay.FlowWeight,PeriodDay.IsPeriodStartDay,PeriodDay.IsPeriodEndDay
       FROM Day
-      LEFT JOIN PeriodDay ON Day.Date = PeriodDay.Date
-      ORDER BY Day.Date ASC''');
+      LEFT JOIN PeriodDay ON Day.Date = PeriodDay.Date AND Day.userId = PeriodDay.userId
+      WHERE Day.userId = ?
+      ORDER BY Day.Date ASC''', [userId]);
     return result.map<Day>((row) {
       if (row['IsPeriodDay'] == 1) {
         // If IsPeriodDay is 1, create a PeriodDay object
@@ -393,10 +433,50 @@ class DatabaseHelper {
       await txn.delete('Day');
       await txn.delete('PeriodDay');
       await txn.delete('UserSettings');
+      await txn.delete('Cycle');
     });
   }
 
-  Future<List<Day>> getAllDays() async {
-    return getCombinedDayAndPeriodDayRecords();
+  Future<void> clearUserData(String userId) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      // Clear data for specific user only
+      await txn.delete('Day', where: 'userId = ?', whereArgs: [userId]);
+      await txn.delete('PeriodDay', where: 'userId = ?', whereArgs: [userId]);
+      await txn
+          .delete('UserSettings', where: 'userId = ?', whereArgs: [userId]);
+      await txn.delete('Cycle', where: 'userId = ?', whereArgs: [userId]);
+    });
+  }
+
+  Future<List<Day>> getAllDays(String userId) async {
+    return getCombinedDayAndPeriodDayRecords(userId);
+  }
+
+  // Cycle operations with userId
+  Future<void> insertCycle(Map<String, dynamic> cycle, String userId) async {
+    final db = await database;
+    cycle['userId'] = userId;
+    await db.insert('Cycle', cycle,
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<Map<String, dynamic>>> getCycles(String userId) async {
+    final db = await database;
+    return await db.query('Cycle', where: 'userId = ?', whereArgs: [userId]);
+  }
+
+  Future<void> updateCycle(
+      int id, Map<String, dynamic> cycle, String userId) async {
+    final db = await database;
+    cycle['userId'] = userId;
+    await db.update('Cycle', cycle,
+        where: 'id = ? AND userId = ?', whereArgs: [id, userId]);
+  }
+
+  Future<void> deleteCycle(int id, String userId) async {
+    final db = await database;
+    await db.delete('Cycle',
+        where: 'id = ? AND userId = ?', whereArgs: [id, userId]);
   }
 }

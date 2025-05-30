@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
+import 'package:mina_app/services/auth_service.dart';
 import 'package:mina_app/services/notification_service.dart';
 import 'package:mina_app/services/backup_service.dart';
 import 'package:mina_app/services/export_service.dart';
@@ -16,6 +17,7 @@ class _SettingsViewState extends State<SettingsView> {
   final NotificationService _notificationService = NotificationService();
   final BackupService _backupService = BackupService();
   final ExportService _exportService = ExportService();
+  final String userId = AuthService.instance.requireUserId;
 
   bool _enableReminders = true;
   int _reminderDays = 2;
@@ -30,7 +32,7 @@ class _SettingsViewState extends State<SettingsView> {
   Future<void> _loadSettings() async {
     setState(() => _isLoading = true);
     try {
-      final settings = await _dbHelper.getAllSettings();
+      final settings = await _dbHelper.getAllSettings(userId);
       setState(() {
         _enableReminders = settings['enable_period_reminders'] == 'true';
         _reminderDays = int.parse(settings['reminder_days'] ?? '2');
@@ -49,9 +51,15 @@ class _SettingsViewState extends State<SettingsView> {
   Future<void> _saveSettings() async {
     try {
       await _dbHelper.insertOrUpdateUserSetting(
-          'enable_period_reminders', _enableReminders.toString());
+        'enable_period_reminders',
+        _enableReminders.toString(),
+        userId,
+      );
       await _dbHelper.insertOrUpdateUserSetting(
-          'reminder_days', _reminderDays.toString());
+        'reminder_days',
+        _reminderDays.toString(),
+        userId,
+      );
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -178,7 +186,7 @@ class _SettingsViewState extends State<SettingsView> {
             subtitle: const Text('Save your data locally'),
             onTap: () async {
               try {
-                await _backupService.backupToLocal();
+                await _backupService.backupToLocal(userId);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Local backup completed')),

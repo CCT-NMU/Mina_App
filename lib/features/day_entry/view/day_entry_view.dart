@@ -8,8 +8,9 @@ import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
 import 'package:mina_app/features/period/period_day_picker_view.dart';
 
 class DayEntryView extends StatefulWidget {
-  const DayEntryView({super.key, required this.focusedDay, this.existingDay});
+  const DayEntryView({super.key, required this.focusedDay, this.existingDay, required this.userId});
   final DateTime focusedDay;
+  final String userId;
   final Day? existingDay; // Optional existing day entry
 
   @override
@@ -301,9 +302,9 @@ class _DayEntryViewState extends State<DayEntryView> {
           listSymptoms: SymptomList(symptoms: _selectedSymptoms),
           listMoods: MoodList(moods: _selectedMoods),
         );
-        DayEntryRepository.instance.insertPeriodDayEntry(periodDay);
+        DayEntryRepository.instance.insertPeriodDayEntry(periodDay, widget.userId);
       } else {
-        DayEntryRepository.instance.deletePeriodDayEntry(widget.focusedDay);
+        DayEntryRepository.instance.deletePeriodDayEntry(widget.focusedDay, widget.userId);
         final day = Day(
           date: widget.focusedDay,
           isPeriodDay: _isPeriodDaySelected,
@@ -311,7 +312,7 @@ class _DayEntryViewState extends State<DayEntryView> {
           symptomList: SymptomList(symptoms: _selectedSymptoms),
           moodList: MoodList(moods: _selectedMoods),
         );
-        DayEntryRepository.instance.insertDayEntry(day);
+        DayEntryRepository.instance.insertDayEntry(day, widget.userId);
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -332,7 +333,7 @@ class _DayEntryViewState extends State<DayEntryView> {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) {
         return FutureBuilder<Day?>(
-            future: DayEntryRepository.instance.getDayEntry(focusedDay),
+            future: DayEntryRepository.instance.getDayEntry(focusedDay, widget.userId),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -345,9 +346,10 @@ class _DayEntryViewState extends State<DayEntryView> {
                 return DayEntryView(
                   focusedDay: focusedDay,
                   existingDay: snapshot.data,
+                  userId: widget.userId,
                 );
               }
-              return DayEntryView(focusedDay: focusedDay);
+              return DayEntryView(focusedDay: focusedDay, userId: widget.userId,);
             });
       },
       transitionsBuilder: (context, animation, secondaryAnimation, child) {

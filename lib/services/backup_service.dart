@@ -12,11 +12,11 @@ class BackupService {
     DatabaseHelper? dbHelper,
   }) : _dbHelper = dbHelper ?? DatabaseHelper();
 
-  Future<void> backupToLocal() async {
+  Future<void> backupToLocal(String userId) async {
     try {
       // Get all data
-      final days = await _dbHelper.getCombinedDayAndPeriodDayRecords();
-      final settings = await _dbHelper.getAllSettings();
+      final days = await _dbHelper.getCombinedDayAndPeriodDayRecords(userId);
+      final settings = await _dbHelper.getAllSettings(userId);
 
       // Convert data to JSON
       final backupData = {
@@ -66,7 +66,7 @@ class BackupService {
     }
   }
 
-  Future<void> restoreFromLocal(String filePath) async {
+  Future<void> restoreFromLocal(String filePath, String userId) async {
     try {
       final file = File(filePath);
       if (!await file.exists()) {
@@ -74,29 +74,30 @@ class BackupService {
       }
 
       final backupData = jsonDecode(await file.readAsString());
-      await _restoreFromBackup(backupData);
+      await _restoreFromBackup(backupData, userId);
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<void> _restoreFromBackup(Map<String, dynamic> backupData) async {
+  Future<void> _restoreFromBackup(
+      Map<String, dynamic> backupData, String userId) async {
     // Clear existing data
     await _dbHelper.clearAllData();
 
     // Restore settings
     final settings = Map<String, String>.from(backupData['settings']);
     for (final entry in settings.entries) {
-      await _dbHelper.insertOrUpdateUserSetting(entry.key, entry.value);
+      await _dbHelper.insertOrUpdateUserSetting(entry.key, entry.value, userId);
     }
 
     // Restore days
     final days = List<Map<String, dynamic>>.from(backupData['days']);
     for (final dayData in days) {
       if (dayData['type'] == 'period') {
-        await _dbHelper.insertPeriodDay(PeriodDay.fromMap(dayData));
+        await _dbHelper.insertPeriodDay(PeriodDay.fromMap(dayData), userId);
       } else {
-        await _dbHelper.insertDay(Day.fromMap(dayData));
+        await _dbHelper.insertDay(Day.fromMap(dayData), userId);
       }
     }
   }

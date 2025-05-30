@@ -7,7 +7,8 @@ sealed class DayEntryBlocEvent{
 //Fetch a Day Entry for a specific date 
 class DayEntryFetch extends DayEntryBlocEvent {
   final DateTime date;
-  const DayEntryFetch( this.date);
+  final String userId;
+  const DayEntryFetch( this.date, this.userId);
 }
 
 //Day Entry Fetched for a specific date

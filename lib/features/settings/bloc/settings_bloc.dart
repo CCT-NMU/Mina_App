@@ -86,10 +86,12 @@ class SettingsError extends SettingsState {
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   final DatabaseHelper _dbHelper;
   final NotificationService _notificationService;
+  final String userId;
 
   SettingsBloc({
     DatabaseHelper? dbHelper,
     NotificationService? notificationService,
+    required this.userId,
   })  : _dbHelper = dbHelper ?? DatabaseHelper(),
         _notificationService = notificationService ?? NotificationService(),
         super(SettingsLoading()) {
@@ -101,7 +103,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   Future<void> _onLoadSettings(
       LoadSettings event, Emitter<SettingsState> emit) async {
     try {
-      final settings = await _dbHelper.getAllSettings();
+      final settings = await _dbHelper.getAllSettings(userId);
       emit(SettingsLoaded(
         enablePeriodReminders: settings['enable_period_reminders'] == 'true',
         reminderDays: int.parse(settings['reminder_days'] ?? '2'),
@@ -120,10 +122,12 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       await _dbHelper.insertOrUpdateUserSetting(
         'enable_period_reminders',
         event.enablePeriodReminders.toString(),
+        userId,
       );
       await _dbHelper.insertOrUpdateUserSetting(
         'reminder_days',
         event.reminderDays.toString(),
+        userId,
       );
 
       if (state is SettingsLoaded) {
@@ -140,7 +144,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   Future<void> _onUpdateTheme(
       UpdateTheme event, Emitter<SettingsState> emit) async {
     try {
-      await _dbHelper.insertOrUpdateUserSetting('theme', event.theme);
+      await _dbHelper.insertOrUpdateUserSetting('theme', event.theme, userId);
 
       if (state is SettingsLoaded) {
         emit((state as SettingsLoaded).copyWith(theme: event.theme));

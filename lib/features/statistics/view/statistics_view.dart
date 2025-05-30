@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/model/cycle.dart';
 import 'package:intl/intl.dart';
+import 'package:mina_app/services/auth_service.dart';
 
 class StatisticsView extends StatefulWidget {
   const StatisticsView({super.key});
@@ -15,6 +16,7 @@ class _StatisticsViewState extends State<StatisticsView> {
   final CycleRepository _cycleRepository = CycleRepository();
   List<Cycle> _cycles = [];
   bool _isLoading = true;
+  final String userId = AuthService.instance.requireUserId;
 
   @override
   void initState() {
@@ -25,7 +27,7 @@ class _StatisticsViewState extends State<StatisticsView> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final cycles = await _cycleRepository.calculateCycleHistory();
+      final cycles = await _cycleRepository.calculateCycleHistory(userId);
       setState(() {
         _cycles = cycles;
         _isLoading = false;

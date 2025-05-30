@@ -66,9 +66,11 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   final PredictionService _predictionService;
   final NotificationService _notificationService;
   final DatabaseHelper _dbHelper;
+  final String userId;
 
   DashboardBloc({
     required this.cycleRepository,
+    required this.userId,
     PredictionService? predictionService,
     NotificationService? notificationService,
     DatabaseHelper? dbHelper,
@@ -86,17 +88,17 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   ) async {
     try {
       emit(DashboardLoading());
-      final stats = await _predictionService.getPredictionStats();
-      final nextPeriod = await _predictionService.predictNextPeriod();
-      final cycles = await cycleRepository.calculateCycleHistory();
+      final stats = await _predictionService.getPredictionStats(userId);
+      final nextPeriod = await _predictionService.predictNextPeriod(userId);
+      final cycles = await cycleRepository.calculateCycleHistory(userId);
 
       // Schedule notification if enabled
-      final settings = await _dbHelper.getAllSettings();
+      final settings = await _dbHelper.getAllSettings(userId);
       final enableReminders = settings['enable_period_reminders'] == 'true';
       final reminderDays = int.parse(settings['reminder_days'] ?? '2');
 
       if (enableReminders && nextPeriod != null) {
-        await _notificationService.schedulePeriodReminder(nextPeriod);
+        await _notificationService.schedulePeriodReminder(nextPeriod, userId);
       }
 
       emit(DashboardLoaded(

@@ -7,11 +7,10 @@ import 'package:mina_app/data/model/period_day.dart';
 class CycleRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
-//
-  Future<List<Cycle>> calculateCycleHistory() async {
+  Future<List<Cycle>> calculateCycleHistory(String userId) async {
     try {
       List<Cycle> cycles = [];
-      final days = await _dbHelper.getCombinedDayAndPeriodDayRecords();
+      final days = await _dbHelper.getCombinedDayAndPeriodDayRecords(userId);
 
       // Sort days by date to ensure proper order
       days.sort((a, b) => a.date.compareTo(b.date));
@@ -62,9 +61,9 @@ class CycleRepository {
     }
   }
 
-  Future<int> calculateAvgCycleLength() async {
+  Future<int> calculateAvgCycleLength(String userId) async {
     try {
-      final cycles = await calculateCycleHistory();
+      final cycles = await calculateCycleHistory(userId);
       if (cycles.isEmpty || cycles.length < 2) return 0;
 
       int totalLength = 0;
@@ -81,9 +80,9 @@ class CycleRepository {
   }
 
 /* 
-  Future<int> calculateAvgPeriodLength() async {
+  Future<int> calculateAvgPeriodLength(String userId) async {
     try {
-      final cycles = await calculateCycleHistory();
+      final cycles = await calculateCycleHistory(userId);
       if (cycles.isEmpty) return 0;
 
       int totalLength = 0;
@@ -103,12 +102,13 @@ class CycleRepository {
     }
   }
  */
-  Future<DateTime?> predictNextPeriod() async {
+
+  Future<DateTime?> predictNextPeriod(String userId) async {
     try {
-      final cycles = await calculateCycleHistory();
+      final cycles = await calculateCycleHistory(userId);
       if (cycles.isEmpty) return null;
 
-      final avgCycleLength = await calculateAvgCycleLength();
+      final avgCycleLength = await calculateAvgCycleLength(userId);
       if (avgCycleLength == 0) return null;
 
       final lastPeriod = cycles.last;
@@ -116,6 +116,45 @@ class CycleRepository {
     } catch (e) {
       debugPrint('Error predicting next period: $e');
       return null;
+    }
+  }
+
+  // Additional methods for cycle CRUD operations using database helper
+
+  Future<void> insertCycle(Map<String, dynamic> cycle, String userId) async {
+    try {
+      await _dbHelper.insertCycle(cycle, userId);
+    } catch (e) {
+      debugPrint('Error inserting cycle: $e');
+      throw Exception('Failed to insert cycle');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getCycles(String userId) async {
+    try {
+      return await _dbHelper.getCycles(userId);
+    } catch (e) {
+      debugPrint('Error retrieving cycles: $e');
+      throw Exception('Failed to retrieve cycles');
+    }
+  }
+
+  Future<void> updateCycle(
+      int id, Map<String, dynamic> cycle, String userId) async {
+    try {
+      await _dbHelper.updateCycle(id, cycle, userId);
+    } catch (e) {
+      debugPrint('Error updating cycle: $e');
+      throw Exception('Failed to update cycle');
+    }
+  }
+
+  Future<void> deleteCycle(int id, String userId) async {
+    try {
+      await _dbHelper.deleteCycle(id, userId);
+    } catch (e) {
+      debugPrint('Error deleting cycle: $e');
+      throw Exception('Failed to delete cycle');
     }
   }
 }

@@ -8,77 +8,88 @@ class DayEntryRepository {
       DayEntryRepository._privateConstructor();
   static DayEntryRepository get instance => _instance;
 
-  Future<void> insertDayEntry(Day day) async {
+  Future<void> insertDayEntry(Day day, String userId) async {
     try {
-      await DatabaseHelper().insertDay(day);
+      await DatabaseHelper().insertDay(day, userId);
     } catch (e) {
-      // Log the error and rethrow a custom exception
       print('Error inserting Day entry: $e');
       throw Exception('Failed to insert Day entry');
     }
   }
 
-  Future<void> insertPeriodDayEntry(PeriodDay periodDay) async {
+  Future<void> insertPeriodDayEntry(PeriodDay periodDay, String userId) async {
     try {
-      await DatabaseHelper()
-          .insertPeriodDay(periodDay); //method handles the insertion in
-      //both Day table and PeriodDay table.
+      await DatabaseHelper().insertPeriodDay(periodDay, userId);
     } catch (e) {
-      // Log the error and rethrow a custom exception
       print('Error inserting PeriodDay entry: $e');
       throw Exception('Failed to insert PeriodDay entry');
     }
   }
 
-  getPeriodDaysInRange(DateTime startDate, DateTime endDate) async {
+  getPeriodDaysInRange(DateTime startDate, DateTime endDate, String userId) async {
     try {
-      return await DatabaseHelper().getPeriodDaysInRange(startDate, endDate);
+      return await DatabaseHelper().getPeriodDaysInRange(startDate, endDate, userId);
     } catch (e) {
-      // Log the error and rethrow a custom exception
       print('Error retrieving PeriodDays in range: $e');
       throw Exception('Failed to retrieve PeriodDays in range');
     }
   }
 
-  Future<Day?> getDayEntry(DateTime date) async {
+  Future<Day?> getDayEntry(DateTime date, String userId) async {
     try {
-      var day = await DatabaseHelper().getDay(date);
+      var day = await DatabaseHelper().getDay(date, userId);
       return day;
     } catch (e) {
-      // Log the error and rethrow a custom exception
       print('Error retrieving Day entry: $e');
       throw Exception('Failed to retrieve Day entry');
     }
   }
 
-  Future<List<Day>> getAllDaysandPeriodDays() async {
+   Future<List<Day>> getAllDaysandPeriodDays(String userId) async {
     try {
-      final result = await DatabaseHelper().getCombinedDayAndPeriodDayRecords();
+      final result = await DatabaseHelper().getCombinedDayAndPeriodDayRecords(userId);
       return result;
     } catch (e) {
-      // Log the error and rethrow a custom exception
       print('Error retrieving all Days and PeriodDays: $e');
       throw Exception('Failed to retrieve all Days and PeriodDays');
     }
   }
 
-  Future<int> deleteDayEntry(DateTime date) async {
+  Future<int> deleteDayEntry(DateTime date, String userId) async {
     try {
-      return await DatabaseHelper().deleteDayEntry(date);
+      return await DatabaseHelper().deleteDayEntry(date, userId);
     } catch (e) {
-      // Log the error and rethrow a custom exception
       print('Error deleting Day entry: $e');
       throw Exception('Failed to delete Day entry');
     }
   }
 
-  Future<int> deletePeriodDayEntry(DateTime date) async {
+  Future<int> deletePeriodDayEntry(DateTime date, String userId) async {
     try {
-      return await DatabaseHelper().deletePeriodDay(date);
+      return await DatabaseHelper().deletePeriodDay(date, userId);
     } catch (e) {
-      // Log the error and rethrow a custom exception
       debugPrint('Error deleting PeriodDay entry: $e');
       throw Exception('Failed to delete PeriodDay entry');
+    }
+  }
+
+  // NEW: Add updateDay method 
+  Future<void> updateDayEntry(Day day, String userId) async {
+    try {
+      await DatabaseHelper().updateDay(day, userId);
+    } catch (e) {
+      print('Error updating Day entry: $e');
+      throw Exception('Failed to update Day entry');
+    }
+  }
+
+  // NEW: Add updatePeriodDay method 
+  Future<void> updatePeriodDayEntry(PeriodDay periodDay, String userId) async {
+    try {
+      await DatabaseHelper().updatePeriodDay(periodDay, userId);
+    } catch (e) {
+      print('Error updating PeriodDay entry: $e');
+      throw Exception('Failed to update PeriodDay entry');
     }
   }
 }

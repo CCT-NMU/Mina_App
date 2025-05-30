@@ -7,9 +7,9 @@ class PredictionService {
   PredictionService({CycleRepository? cycleRepository})
       : _cycleRepository = cycleRepository ?? CycleRepository();
 
-  Future<DateTime?> predictNextPeriod() async {
+  Future<DateTime?> predictNextPeriod(String userId) async {
     try {
-      final cycles = await _cycleRepository.calculateCycleHistory();
+      final cycles = await _cycleRepository.calculateCycleHistory(userId);
       if (cycles.isEmpty) return null;
 
       // Calculate average cycle length from the last 6 cycles or all available cycles
@@ -37,9 +37,9 @@ class PredictionService {
     }
   }
 
-  Future<Map<String, dynamic>> getPredictionStats() async {
+  Future<Map<String, dynamic>> getPredictionStats(String userId) async {
     try {
-      final cycles = await _cycleRepository.calculateCycleHistory();
+      final cycles = await _cycleRepository.calculateCycleHistory(userId);
       if (cycles.isEmpty) {
         return {
           'averageCycleLength': 0,
