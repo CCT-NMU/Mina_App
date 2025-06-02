@@ -36,3 +36,28 @@ class DayEntryReloadRequest extends DayEntryBlocEvent {
   final DateTime date;
   const DayEntryReloadRequest(this.date);
 }
+
+class FlowChanged extends DayEntryBlocEvent {
+  final String? flow;
+  const FlowChanged(this.flow);
+}
+
+class SymptomsChanged extends DayEntryBlocEvent {
+  final List<String> symptoms;
+  const SymptomsChanged(this.symptoms);
+}
+
+class MoodsChanged extends DayEntryBlocEvent {
+  final List<String> moods;
+  const MoodsChanged(this.moods);
+}
+
+class PeriodDaySelectedChanged extends DayEntryBlocEvent {
+  final bool isPeriodDaySelected;
+  PeriodDaySelectedChanged(this.isPeriodDaySelected);
+}
+
+class NotesChanged extends DayEntryBlocEvent {
+  final String notes;
+  NotesChanged(this.notes);
+}

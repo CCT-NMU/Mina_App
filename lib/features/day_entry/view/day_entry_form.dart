@@ -1,269 +1,174 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_event.dart';
-import 'package:mina_app/features/period/bloc/period_day_picker_bloc.dart';
-import 'package:mina_app/features/period/bloc/period_day_picker_event.dart';
-import 'package:mina_app/features/period/period_day_picker_view.dart';
-import 'package:mina_app/data/model/period_day.dart';
-import 'package:mina_app/data/model/day.dart';
+import 'package:mina_app/features/day_entry/bloc/day_entry_state.dart';
 import 'package:mina_app/data/model/symptom_list.dart';
 import 'package:mina_app/data/model/mood_list.dart';
-import 'package:mina_app/data/repositories/day_entry_repository.dart';
+import 'package:mina_app/features/period_picker/bloc/period_day_picker_bloc.dart';
+import 'package:mina_app/features/period_picker/bloc/period_day_picker_event.dart';
+import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
 
-class DayEntryForm extends StatefulWidget {
+class DayEntryForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
-  final String? selectedFlow;
-  final bool isPeriodDaySelected;
-  final List<String> selectedSymptoms;
-  final List<String> selectedMoods;
-  final TextEditingController notesController;
   final DateTime focusedDay;
+  final TextEditingController notesController;
 
   const DayEntryForm({
     super.key,
     required this.formKey,
-    required this.selectedFlow,
-    required this.isPeriodDaySelected,
-    required this.selectedSymptoms,
-    required this.selectedMoods,
-    required this.notesController,
     required this.focusedDay,
+    required this.notesController,
   });
 
   @override
-  State<DayEntryForm> createState() => _DayEntryFormState();
-}
-
-class _DayEntryFormState extends State<DayEntryForm> {
-  late String? _selectedFlow;
-  late bool _isPeriodDaySelected;
-  late List<String> _selectedSymptoms;
-  late List<String> _selectedMoods;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedFlow = widget.selectedFlow;
-    _isPeriodDaySelected = widget.isPeriodDaySelected;
-    _selectedSymptoms = List<String>.from(widget.selectedSymptoms);
-    _selectedMoods = List<String>.from(widget.selectedMoods);
-  }
-
-  void _saveEntry() {
-    if (widget.formKey.currentState!.validate()) {
-      if (_isPeriodDaySelected) {
-        final periodDay = PeriodDay(
-          date: widget.focusedDay,
-          flowWeight: _selectedFlow != null
-              ? PeriodDay.flowWeightValues[int.parse(_selectedFlow!)]
-              : FlowWeight.none,
-          isPeriodStartDay: false,
-          isPeriodEndDay: false,
-          note: widget.notesController.text,
-          listSymptoms: SymptomList(symptoms: _selectedSymptoms),
-          listMoods: MoodList(moods: _selectedMoods),
-        );
-        DayEntryRepository.instance.insertPeriodDayEntry(periodDay, null);
-      } else {
-        DayEntryRepository.instance.deletePeriodDayEntry(widget.focusedDay);
-        final day = Day(
-          date: widget.focusedDay,
-          isPeriodDay: _isPeriodDaySelected,
-          note: widget.notesController.text,
-          symptomList: SymptomList(symptoms: _selectedSymptoms),
-          moodList: MoodList(moods: _selectedMoods),
-        );
-        DayEntryRepository.instance.insertDayEntry(day);
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Entry saved successfully!")),
-      );
-
-      Navigator.pop(context, true);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(top: 16.0),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color.fromARGB(55, 225, 194, 230),
-            Color.fromARGB(55, 241, 188, 206)
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      height: double.infinity,
-      width: double.infinity,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: widget.formKey,
+    final cycleTrackerBloc = context.read<CycleTrackerBloc>();
+    final cycleTrackerstate = cycleTrackerBloc.state;
+    cycleTrackerBloc.add(FetchCurrentCycle());
+    return BlocBuilder<DayEntryBloc, DayEntryBlocState>(
+      builder: (context, state) {
+        if (state is DayEntryLoadingState) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state is DayEntryLoadedState) {
+          notesController.text = state.notes;
+        }
+        if (state is PeriodDayEntryLoadedState) {
+          notesController.text = state.notes ?? '';
+        }
+        return Form(
+          key: formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: [
-                TextButton(
-                  onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => MultiBlocProvider(
-                          providers: [
-                            BlocProvider.value(
-                              value: context.read<DayEntryBloc>(),
-                            ),
-                            BlocProvider(
-                              create: (_) => PeriodDayPickerBloc()
-                                ..add(PeriodDaysFetched(widget.focusedDay)),
-                            ),
-                          ],
-                          child: PeriodDayPickerView(
-                              focusedDay: widget.focusedDay),
+              // Removed cycleTrackerBloc.add(FetchCurrentCycle as CycleTrackerEvent),
+              if (cycleTrackerstate is CycleTrackerCurrent)
+                if (cycleTrackerstate.currentCycle.startDate
+                    .isBefore(focusedDay))
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MultiBlocProvider(
+                            providers: [
+                              BlocProvider.value(
+                                value: context.read<DayEntryBloc>(),
+                              ),
+                              BlocProvider(
+                                create: (_) => PeriodDayPickerBloc()
+                                  ..add(PeriodDaysFetched(focusedDay)),
+                              )
+                            ],
+                            child: PeriodDayPickerView(focusedDay: focusedDay),
+                          ),
                         ),
-                      ),
-                    );
-                    if (result == true) {
+                      );
+                    },
+                    child: Row(children: [
+                      Text("Period ends today"),
+                      Icon(focusedDay == cycleTrackerstate.currentCycle.endDate
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off),
+                    ]),
+                  ),
+              // Flow Intensity
+              if (state is PeriodDayEntryLoadedState)
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: "0", label: Text("None")),
+                    ButtonSegment(value: "1", label: Text("Light")),
+                    ButtonSegment(value: "2", label: Text("Medium")),
+                    ButtonSegment(value: "3", label: Text("Heavy")),
+                  ],
+                  selected: state is PeriodDayEntryLoadedState
+                      ? {state.selectedFlow!}
+                      : {},
+                  emptySelectionAllowed: true,
+                  onSelectionChanged: state is PeriodDayEntryLoadedState
+                      ? (Set<String> newSelection) {
+                          context.read<DayEntryBloc>().add(
+                                FlowChanged(newSelection.isNotEmpty
+                                    ? newSelection.first
+                                    : null),
+                              );
+                        }
+                      : null,
+                ),
+              // Symptoms
+              Wrap(
+                children: SymptomList.predefinedSymptoms.map((symptom) {
+                  List<String> selectedSymptoms = [];
+                  if (state is PeriodDayEntryLoadedState) {
+                    selectedSymptoms = state.selectedSymptoms;
+                  }
+                  if (state is DayEntryLoadedState) {
+                    selectedSymptoms = state.selectedSymptoms;
+                  }
+                  final isSelected = selectedSymptoms.contains(symptom);
+                  return FilterChip(
+                    label: Text(symptom),
+                    selected: isSelected,
+                    onSelected: (bool selected) {
+                      List<String> newSymptoms =
+                          List<String>.from(selectedSymptoms);
+                      if (selected) {
+                        newSymptoms.add(symptom);
+                      } else {
+                        newSymptoms.remove(symptom);
+                      }
                       context
                           .read<DayEntryBloc>()
-                          .add(DayEntryReloadRequest(widget.focusedDay));
-                      setState(() {});
-                    }
-                  },
-                  child: const Text("Period Day Picker"),
-                )
-              ]),
-              //TODO: Fix Flow Intensity inactivity
-              const SizedBox(height: 20),
-              const Text("Flow Intensity",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: "0", label: Text("None")),
-                  ButtonSegment(value: "1", label: Text("Light")),
-                  ButtonSegment(value: "2", label: Text("Medium")),
-                  ButtonSegment(value: "3", label: Text("Heavy")),
-                ],
-                selected: _selectedFlow != null ? {_selectedFlow!} : {},
-                emptySelectionAllowed: true,
-                onSelectionChanged: _isPeriodDaySelected
-                    ? (Set<String> newSelection) {
-                        setState(() {
-                          _selectedFlow = newSelection.isNotEmpty
-                              ? newSelection.first
-                              : null;
-                        });
-                      }
-                    : null,
-              ),
-              const SizedBox(height: 24),
-              const Text("Symptoms",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: SymptomList.predefinedSymptoms.map((symptom) {
-                  final isSelected = _selectedSymptoms.contains(symptom);
-                  final symptomEmojis = {
-                    'Cramps': '🤕',
-                    'Headache': '🤯',
-                    'Bloating': '🫃',
-                    'Fatigue': '😴',
-                    'Breast Tenderness': '🤱',
-                    'Back Pain': '🦴',
-                    'Acne': '😶‍🌫️',
-                    'Nausea': '🤢',
-                    'Dizziness': '😵',
-                    'Food Cravings': '🍫',
-                    'Insomnia': '🌙',
-                    'Muscle Pain': '💪',
-                  };
-                  return FilterChip(
-                    label: Text('${symptomEmojis[symptom] ?? ''} $symptom'),
-                    selected: isSelected,
-                    onSelected: (bool selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedSymptoms.add(symptom);
-                        } else {
-                          _selectedSymptoms.remove(symptom);
-                        }
-                      });
+                          .add(SymptomsChanged(newSymptoms));
                     },
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 24),
-              const Text("Moods",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
+              // Moods
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
                 children: MoodList.predefinedMoods.map((mood) {
-                  final isSelected = _selectedMoods.contains(mood);
-                  final moodEmojis = {
-                    'Happy': '😊',
-                    'Sad': '😢',
-                    'Irritable': '😤',
-                    'Anxious': '😨',
-                    'Calm': '😌',
-                    'Energetic': '⚡',
-                    'Tired': '😴',
-                    'Emotional': '😭',
-                    'Motivated': '🚀',
-                    'Stressed': '😰',
-                    'Relaxed': '😌',
-                    'Angry': '😡',
-                    'Excited': '🤩',
-                    'Disappointed': '😞',
-                    'Confused': '😕',
-                  };
+                  List<String> selectedMoods = [];
+                  if (state is PeriodDayEntryLoadedState) {
+                    selectedMoods = state.selectedMoods;
+                  } else if (state is DayEntryLoadedState) {
+                    selectedMoods = state.selectedMoods;
+                  }
+                  final isSelected = selectedMoods.contains(mood);
                   return FilterChip(
-                    label: Text('${moodEmojis[mood] ?? ''} $mood'),
+                    label: Text(mood),
                     selected: isSelected,
                     onSelected: (bool selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedMoods.add(mood);
-                        } else {
-                          _selectedMoods.remove(mood);
-                        }
-                      });
+                      final newMoods = List<String>.from(selectedMoods);
+                      if (selected) {
+                        newMoods.add(mood);
+                      } else {
+                        newMoods.remove(mood);
+                      }
+                      context.read<DayEntryBloc>().add(MoodsChanged(newMoods));
                     },
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 24),
+              // Notes
               TextFormField(
-                controller: widget.notesController,
-                decoration: const InputDecoration(
-                  labelText: "Notes",
-                  hintText: "Add any additional notes here...",
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
+                controller: notesController,
+                onChanged: (value) {
+                  context.read<DayEntryBloc>().add(NotesChanged(value));
+                },
               ),
-              const SizedBox(height: 24),
-              Center(
-                child: FilledButton.icon(
-                  onPressed: _saveEntry,
-                  icon: const Icon(Icons.save),
-                  label: const Text("Save Entry"),
-                ),
+              // Save Button
+              FilledButton.icon(
+                onPressed: () {
+                  // Save logic: use state values
+                },
+                icon: const Icon(Icons.save),
+                label: const Text("Save Entry"),
               ),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -25,8 +25,8 @@ class Cycle extends Equatable {
   factory Cycle.fromMap(Map<String, dynamic> map) {
     return Cycle(
       startDate: DateTime.parse(map['startDate']),
-      endDate: DateTime.parse(map['endDate']),
-      periodEndDate: map['periodEndDate'],
+      endDate: map['endDate'] != "" ? DateTime.parse(map['endDate']) : null,
+      periodEndDate: DateTime.parse(map['periodEndDate']),
     );
   }
 }

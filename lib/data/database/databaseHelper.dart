@@ -196,7 +196,7 @@ class DatabaseHelper {
   /// Retrieves a day entry from the database.
   ///
   /// If a day entry with the given [date] does not exist, returns `null`.
-  /// Otherwise, returns the day entry.
+  /// Otherwise, returns the Day object or a Period Day object
   Future<Day?> getDay(DateTime date, {Transaction? txn}) async {
     final db = await database;
     final executor = txn ?? db;
@@ -448,5 +448,37 @@ class DatabaseHelper {
 
   Future<List<Day>> getAllDays() async {
     return getCombinedDayAndPeriodDayRecords();
+  }
+
+//Cycle operations
+  Future<Cycle?> getCurrentCycle() async {
+    final db = await database;
+
+    final result = await db.query("Cycle", orderBy: "id DESC", limit: 1);
+
+    if (result.isNotEmpty) {
+      return Cycle.fromMap(result.first);
+    } else {
+      return null;
+    }
+  }
+
+  Future<Cycle?> getCycle(DateTime date) async {
+    final db = await database;
+    final result = await db.query(
+      "Cycle",
+      where: "startDate <= ? AND (endDate IS NULL OR endDate >= ?)",
+      whereArgs: [date.toIso8601String(), date.toIso8601String()],
+    );
+    if (result.isNotEmpty) {
+      return Cycle.fromMap(result.first);
+    } else {
+      return null;
+    }
+  }
+
+  Future<int> insertCycle(Cycle cycle) async {
+    final db = await database;
+    return db.insert("Cycle", cycle.toMap());
   }
 }

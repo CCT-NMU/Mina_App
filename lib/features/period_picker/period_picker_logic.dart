@@ -12,14 +12,14 @@ import 'package:mina_app/data/model/period_day.dart';
 import 'package:mina_app/data/model/day.dart';
 import 'package:flutter/foundation.dart';
 
-class PeriodPicker {
-  PeriodPicker();
+class PeriodPickerLogic {
+  PeriodPickerLogic();
   List<DateTime> deselecetedPeriodDates = [];
 
   //selectedDates are a list of all the dates that have been selected.
-  void saveEditedDays(Set<DateTime> selectedDates, Set<DateTime> oldPeriodSet,
-      BuildContext context) {
-    if (selectedDates.isEmpty) return;
+  Future<bool> saveEditedDays(Set<DateTime> selectedDates,
+      Set<DateTime> oldPeriodSet, BuildContext context) async {
+    if (selectedDates.isEmpty) return Future.value(null);
 
     //  Sort the selected dates
     final sortedDates = selectedDates.toList()..sort();
@@ -27,7 +27,8 @@ class PeriodPicker {
     //
     deselecetedPeriodDates = oldPeriodSet.difference(selectedDates).toList()
       ..sort();
-    saveCycles(sortedDates);
+    await saveCycles(sortedDates);
+    return true;
   }
 
   Future<void> saveCycles(List<DateTime> sortedDates) async {
@@ -64,7 +65,7 @@ class PeriodPicker {
           endDate: endDate != null ? normalizeDate(endDate) : null));
     }
 //Process periodDays into database
-    savePeriodDays(newCycleRecords, cycles);
+    await savePeriodDays(newCycleRecords, cycles);
 
     // Delete existing Cycle records for the affected months
     final affectedMonths =
@@ -100,7 +101,7 @@ class PeriodPicker {
 
   /*List<Cycle> startDate_and_endDate_CycleRecords and
       List<List<DateTime>> cycleDateTimeRangeList will always have the same size*/
-  savePeriodDays(List<Cycle> startDate_and_endDate_CycleRecords,
+  Future<void> savePeriodDays(List<Cycle> startDate_and_endDate_CycleRecords,
       List<List<DateTime>> cycleDateTimeRangeList) async {
     List<List<DateTime>> cycles = cycleDateTimeRangeList;
 

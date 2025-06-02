@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum PeriodDayPickerStatus { initial, loading, success, failure }
+enum PeriodDayPickerStatus { initial, loading, saving, success, failure }
 
 class PeriodDayPickerState extends Equatable {
   final PeriodDayPickerStatus status;

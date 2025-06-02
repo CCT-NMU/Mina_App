@@ -1,6 +1,7 @@
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
+import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_states.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
@@ -35,57 +36,6 @@ class _DashboardViewState extends State<DashboardView> {
     _focusedDay = DateTime.now();
 
     context.read<DashboardBloc>().add(LoadDashboard(_focusedDay));
-  }
-
-  Future<void> _loadEventsFromDatabase() async {
-    try {
-      // Get the current 3 month's range
-      int previousMonth = _focusedDay.month - 1;
-      int previousMonthYear = _focusedDay.year;
-      if (previousMonth < 1) {
-        previousMonth = 12;
-        previousMonthYear -= 1;
-      }
-      final DateTime firstDayOfPrevMonth = DateTime(
-        previousMonthYear,
-        previousMonth,
-        1,
-      );
-
-      // Calculate the last day of the month after the focused month
-      int nextMonth = _focusedDay.month + 1;
-      int nextMonthYear = _focusedDay.year;
-      if (nextMonth > 12) {
-        nextMonth = 1;
-        nextMonthYear += 1;
-      }
-      final DateTime lastDayOfNextMonth = DateTime(
-        nextMonthYear,
-        nextMonth + 1,
-        0,
-      );
-
-      // Fetch period days from repository
-      periodDays = await DayEntryRepository.instance
-          .getDaysInRange(firstDayOfPrevMonth, lastDayOfNextMonth);
-
-      // Update state with new events
-      setState(() {
-        // _events = newEvents;
-        periodDays = periodDays;
-      });
-    } catch (e) {
-      debugPrint('Error loading events: $e');
-      // Optionally show an error message to the user
-      /* if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to load period days'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      } */
-    }
   }
 
   @override
@@ -171,8 +121,14 @@ class _DashboardViewState extends State<DashboardView> {
                                 }
                                 if (state is DashboardLoadSuccess) {
                                   periodDays = state.days;
-                                  return BlocProvider.value(
-                                    value: context.read<DashboardBloc>(),
+                                  return MultiBlocProvider(
+                                    providers: [
+                                      BlocProvider.value(
+                                          value: context.read<DashboardBloc>()),
+                                      BlocProvider.value(
+                                          value:
+                                              context.read<CycleTrackerBloc>()),
+                                    ],
                                     child: myCalendar(),
                                   );
                                 } else if (state is DashboardLoadFailure) {
@@ -303,7 +259,8 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  Route _createRoute(DateTime focusedDay, DashboardBloc dashboardBloc) {
+  Route _createRoute(DateTime focusedDay, DashboardBloc dashboardBloc,
+      CycleTrackerBloc cycleTrackerBloc) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) {
         return FutureBuilder<Day?>(
@@ -319,6 +276,7 @@ class _DashboardViewState extends State<DashboardView> {
             // Wrap DayEntryView in MultiBlocProvider
             return MultiBlocProvider(
               providers: [
+                BlocProvider.value(value: cycleTrackerBloc),
                 BlocProvider.value(
                   value: dashboardBloc,
                 ),
@@ -369,9 +327,9 @@ class _DashboardViewState extends State<DashboardView> {
           _focusedDay = focusedDay;
         });
         final dashboardBloc = context.read<DashboardBloc>();
-
-        final result = await Navigator.of(context)
-            .push(_createRoute(normalizeDate(_focusedDay), dashboardBloc));
+        final cycleTrackerBloc = context.read<CycleTrackerBloc>();
+        final result = await Navigator.of(context).push(_createRoute(
+            normalizeDate(_focusedDay), dashboardBloc, cycleTrackerBloc));
         if (result == true) {
           dashboardBloc.add(LoadDashboard(_focusedDay));
         }
@@ -396,6 +354,7 @@ class _DashboardViewState extends State<DashboardView> {
           );
 
           bool isPeriodDay = false;
+          bool isToday = normalizeDate(day) == normalizeDate(DateTime.now());
           bool hasNote = false;
           bool hasMood_or_Symptoms = false;
 
@@ -408,15 +367,14 @@ class _DashboardViewState extends State<DashboardView> {
           return Container(
             width: 50,
             decoration: BoxDecoration(
-              color: isPeriodDay ? Color.fromARGB(120, 244, 67, 54) : null,
-              shape: isPeriodDay ? BoxShape.circle : BoxShape.rectangle,
-              border: normalizeDate(day) == normalizeDate(DateTime.now())
-                  ? Border.all(
-                      color: const Color.fromARGB(255, 54, 111, 244),
-                      width: 2,
-                    )
-                  : null,
-            ),
+                color: isPeriodDay ? Color.fromARGB(120, 244, 67, 54) : null,
+                shape: BoxShape.circle,
+                border: isToday
+                    ? Border.all(
+                        color: const Color.fromARGB(255, 54, 111, 244),
+                        width: 2,
+                      )
+                    : null),
             child: Stack(alignment: Alignment.center, children: [
               Center(
                 child: Text(

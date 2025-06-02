@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mina_app/features/period/period_picker_logic.dart';
+import 'package:mina_app/features/period_picker/period_picker_logic.dart';
 import 'period_day_picker_event.dart';
 import 'period_day_picker_state.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
@@ -57,12 +57,15 @@ class PeriodDayPickerBloc
   /// Call PeriodPicker().saveEditedDays() with the state.selectedDays and
   /// state.oldDays. This is a wrapper for the method that is used to save the
   /// selected period days.
-  void _onSavedPeriodDays(
+  Future<void> _onSavedPeriodDays(
     SavedPeriodDays event,
     Emitter<PeriodDayPickerState> emit,
-  ) {
-    PeriodPicker()
+  ) async {
+    emit(state.copyWith(status: PeriodDayPickerStatus.saving));
+    final result = await PeriodPickerLogic()
         .saveEditedDays(state.selectedDays, state.oldDays, event.context);
+    if (result == true)
+      emit(state.copyWith(status: PeriodDayPickerStatus.success));
   }
 
   void _onToggled(

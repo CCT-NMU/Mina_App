@@ -9,11 +9,13 @@ import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_event.dart';
 import 'package:mina_app/features/day_entry/view/day_entry_view.dart';
-import 'package:mina_app/features/period/period_picker_logic.dart';
+import 'package:mina_app/features/onboarding/bloc/onboarding_bloc.dart';
+import 'package:mina_app/features/period_picker/period_picker_logic.dart';
 import 'package:mina_app/local_libraries/table_calendar/lib/table_calendar.dart';
 import 'package:mina_app/local_libraries/table_calendar/lib/src/shared/utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mina_app/features/period/period_picker_logic.dart';
+import 'package:mina_app/features/period_picker/period_picker_logic.dart';
+import 'package:path/path.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'bloc/period_day_picker_bloc.dart';
 import 'bloc/period_day_picker_event.dart';
@@ -67,8 +69,6 @@ class _PeriodDayPickerBody extends StatefulWidget {
 
 class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
   final ItemScrollController _itemScrollController = ItemScrollController();
-  final ItemPositionsListener _itemPositionsListener =
-      ItemPositionsListener.create();
 
   int _firstVisibleIndex = -1;
   int _lastVisibleIndex = -1;
@@ -76,27 +76,10 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
   @override
   void initState() {
     super.initState();
-    _itemPositionsListener.itemPositions.addListener(_updateFirstVisibleIndex);
-  }
-
-  void _updateFirstVisibleIndex() {
-    final positions = _itemPositionsListener.itemPositions.value;
-    if (positions.isNotEmpty) {
-      //List is reversed.
-      //Trigger more months when first item comes into view
-      var listLength = context.read<PeriodDayPickerBloc>().state.months.length;
-
-      if (positions.last.index == listLength - 1) {
-        //Reached top of list,update the list with earlier months
-        context.read<PeriodDayPickerBloc>().add(LoadMoreMonthsBackward());
-      }
-    }
   }
 
   @override
   void dispose() {
-    _itemPositionsListener.itemPositions
-        .removeListener(_updateFirstVisibleIndex);
     super.dispose();
   }
 
@@ -104,155 +87,176 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
   var currentMonths;
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
-      builder: (context, state) {
-        if (state.status == PeriodDayPickerStatus.loading) {
-          return const Center(child: CircularProgressIndicator());
+    final DayEntryBloc dayEntryBloc = context.read<DayEntryBloc>();
+    final OnboardingBloc onboardingBloc =
+        context.read<OnboardingBloc>(); //OnboardingBloc
+    return BlocListener<PeriodDayPickerBloc, PeriodDayPickerState>(
+      listenWhen: (previous, current) =>
+          previous.status == PeriodDayPickerStatus.saving &&
+          current.status == PeriodDayPickerStatus.success,
+      listener: (context, state) {
+        if (onboardingBloc.state is OnboardingInProgress) {
+          onboardingBloc.add(LastPeriodPickerViewSubmitted());
+          Navigator.of(context).push(
+            MaterialPageRoute(
+                builder: (context) => BlocProvider.value(
+                      value: onboardingBloc,
+                      child: const DashboardView(),
+                    )),
+          );
+        } else {
+          dayEntryBloc.add(DayEntryFetch(widget.focusedDay!));
+          Navigator.pop(context);
         }
-        return Scaffold(
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              toolbarHeight: 120,
-              title: Container(
-                child: Column(
-                  children: [
-                    Text('My period started'),
-                    Text(
-                        //ToDO: Replace this with the date of the day being edited
-                        '${DateFormat.E().format(widget.focusedDay!)}, ${DateFormat.MMMd().format(widget.focusedDay!)}',
-                        style: const TextStyle(fontSize: 20)),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children:
-                          ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-                              .map((d) => Expanded(
-                                      child: Center(
-                                          child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    child: Text(
-                                      d,
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                  ))))
-                              .toList(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            body: Column(
-              children: [
-                Expanded(
-                  child:
-                      BlocListener<PeriodDayPickerBloc, PeriodDayPickerState>(
-                    listenWhen: (previous, current) {
-                      if (previous.months.isEmpty || current.months.isEmpty) {
-                        return false;
-                      } else {
-                        return current.months.first.month !=
-                            previous.months.first.month;
-                      }
-                    },
-                    listener: (context, state) {
-                      // Find the new index of the previously first visible month
-                      /* final prevMonth = state.prevMonthListFirstMonth ?? null;
-                      if (prevMonth != null) {
-                        final newIndex = state.months.indexWhere((m) =>
-                            m.year == prevMonth.year &&
-                            m.month == prevMonth.month);
-                        if (newIndex != -1) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            _itemScrollController.jumpTo(index: newIndex);
-                          });
-                        } 
-                      }*/
-                      Future.delayed(const Duration(seconds: 1), () {
-                        _itemScrollController.jumpTo(index: 5);
-                      });
-                    },
-                    child:
-                        BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
-                      builder: (context, state) {
-                        return ScrollablePositionedList.builder(
-                          reverse: true,
-                          itemScrollController: _itemScrollController,
-                          itemPositionsListener: _itemPositionsListener,
-                          itemCount: state.months.length,
-                          itemBuilder: (context, index) {
-                            final month = state.months[index];
-                            return buildMonthCalendar(
-                                context, month, state.selectedDays, index);
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 32.0, top: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      },
+      child: BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
+        builder: (context, state) {
+          if (state.status == PeriodDayPickerStatus.loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return Scaffold(
+              appBar: AppBar(
+                automaticallyImplyLeading: false,
+                toolbarHeight: 120,
+                title: Container(
+                  child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 42.0, vertical: 16.0),
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(5)),
-                              ),
-                              backgroundColor:
-                                  const Color.fromARGB(84, 33, 149, 243),
-                              foregroundColor: Colors.white,
-                            ),
-                            child: Text("Close",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black,
-                                ))),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: TextButton(
-                            onPressed: () {
-                              context
-                                  .read<PeriodDayPickerBloc>()
-                                  .add(SavedPeriodDays(context));
-                              context.read<DayEntryBloc>().add(
-                                  DayEntryReloadRequest(widget.focusedDay!));
-                              // Navigate to Day_Entry view with the current Day Entry
-                              Navigator.pop(context, true);
-                            },
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 42.0, vertical: 16.0),
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(5)),
-                              ),
-                              backgroundColor:
-                                  const Color.fromARGB(81, 243, 33, 180),
-                              foregroundColor:
-                                  const Color.fromARGB(255, 0, 0, 0),
-                            ),
-                            child: Text(
-                              "Save",
-                              style: TextStyle(
-                                fontSize: 16,
-                              ),
-                            )),
+                      Text('My period started'),
+                      Text(
+                          //ToDO: Replace this with the date of the day being edited
+                          '${DateFormat.E().format(widget.focusedDay!)}, ${DateFormat.MMMd().format(widget.focusedDay!)}',
+                          style: const TextStyle(fontSize: 20)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children:
+                            ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                                .map((d) => Expanded(
+                                        child: Center(
+                                            child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      child: Text(
+                                        d,
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ))))
+                                .toList(),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ));
-      },
+              ),
+              body: Column(
+                children: [
+                  Expanded(
+                    child:
+                        //ToDo remove the dead bloc Listener code
+                        BlocListener<PeriodDayPickerBloc, PeriodDayPickerState>(
+                      listenWhen: (previous, current) {
+                        if (previous.months.isEmpty || current.months.isEmpty) {
+                          return false;
+                        } else {
+                          return current.months.first.month !=
+                              previous.months.first.month;
+                        }
+                      },
+                      listener: (context, state) {
+                        // Find the new index of the previously first visible month
+                        /* final prevMonth = state.prevMonthListFirstMonth ?? null;
+                          if (prevMonth != null) {
+                            final newIndex = state.months.indexWhere((m) =>
+                                m.year == prevMonth.year &&
+                                m.month == prevMonth.month);
+                            if (newIndex != -1) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                _itemScrollController.jumpTo(index: newIndex);
+                              });
+                            } 
+                          }*/
+                        Future.delayed(const Duration(seconds: 1), () {
+                          _itemScrollController.jumpTo(index: 5);
+                        });
+                      },
+                      child: BlocBuilder<PeriodDayPickerBloc,
+                          PeriodDayPickerState>(
+                        builder: (context, state) {
+                          return ScrollablePositionedList.builder(
+                            reverse: true,
+                            itemScrollController: _itemScrollController,
+                            itemCount: state.months.length,
+                            itemBuilder: (context, index) {
+                              final month = state.months[index];
+                              return buildMonthCalendar(
+                                  context, month, state.selectedDays, index);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 32.0, top: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 42.0, vertical: 16.0),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(5)),
+                                ),
+                                backgroundColor:
+                                    const Color.fromARGB(84, 33, 149, 243),
+                                foregroundColor: Colors.white,
+                              ),
+                              child: Text("Close",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ))),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextButton(
+                              onPressed: () {
+                                context
+                                    .read<PeriodDayPickerBloc>()
+                                    .add(SavedPeriodDays(context));
+
+                                // Navigate to Day_Entry view with the current Day Entry
+                              },
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 42.0, vertical: 16.0),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(5)),
+                                ),
+                                backgroundColor:
+                                    const Color.fromARGB(81, 243, 33, 180),
+                                foregroundColor:
+                                    const Color.fromARGB(255, 0, 0, 0),
+                              ),
+                              child: Text(
+                                "Save",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              )),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ));
+        },
+      ),
     );
   }
 
@@ -304,9 +308,6 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    ClipRect(
-                      child: Container(),
-                    ),
                     Center(
                       child: Container(
                         child: Column(

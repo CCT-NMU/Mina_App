@@ -23,26 +23,46 @@ class DayEntryLoadingState extends DayEntryBlocState {
 
 // Loaded state
 class DayEntryLoadedState extends DayEntryBlocState {
-  final Day day;
+  final bool isPeriodDaySelected;
+  final List<String> selectedSymptoms;
+  final List<String> selectedMoods;
+  final String notes;
 
-  const DayEntryLoadedState(this.day);
+  const DayEntryLoadedState({
+    required this.isPeriodDaySelected,
+    required this.selectedSymptoms,
+    required this.selectedMoods,
+    required this.notes,
+  });
 
   @override
-  List<Object> get props => [day];
+  List<Object> get props =>
+      [isPeriodDaySelected, selectedSymptoms, selectedMoods, notes];
 }
 
 class PeriodDayEntryLoadedState extends DayEntryBlocState {
-  final PeriodDay periodDay;
+  final bool isPeriodDaySelected;
+  final List<String> selectedSymptoms;
+  final String? selectedFlow;
+  final List<String> selectedMoods;
+  final String notes;
 
-  const PeriodDayEntryLoadedState(this.periodDay);
+  const PeriodDayEntryLoadedState({
+    required this.isPeriodDaySelected,
+    required this.selectedFlow,
+    required this.selectedSymptoms,
+    required this.selectedMoods,
+    required this.notes,
+  });
 
   @override
-  List<Object> get props => [periodDay];
-}
-
-//New Day entry to be created
-class NewDayEntryState extends DayEntryBlocState {
-  const NewDayEntryState();
+  List<Object> get props => [
+        isPeriodDaySelected,
+        selectedFlow ?? "0",
+        selectedSymptoms,
+        selectedMoods,
+        notes
+      ];
 }
 
 // Saved state
