@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mina_app/features/note_taking/note_view.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/settings/view/settings_view.dart';
@@ -72,6 +73,17 @@ class MenuDrawer extends StatelessWidget {
                 },
               ),
               ListTile(
+            leading: const Icon(Icons.padding_rounded),
+            title: const Text('Notes'),
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotesView()),
+              );
+            },
+          ),
+          ListTile(
                 leading: const Icon(Icons.settings),
                 title: const Text('Settings'),
                 onTap: () {

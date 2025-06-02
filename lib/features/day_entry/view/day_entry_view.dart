@@ -4,7 +4,7 @@ import 'package:mina_app/data/model/period_day.dart';
 import 'package:mina_app/data/model/mood_list.dart';
 import 'package:mina_app/data/model/symptom_list.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
-import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
+import 'package:mina_app/features/day_entry/bloc/day_entry_note.dart';
 import 'package:mina_app/features/period/period_day_picker_view.dart';
 
 class DayEntryView extends StatefulWidget {
@@ -258,17 +258,32 @@ class _DayEntryViewState extends State<DayEntryView> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Notes Section
-                  TextFormField(
-                    controller: _notesController,
-                    decoration: const InputDecoration(
-                      labelText: "Notes",
-                      hintText: "Add any additional notes here...",
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
+              // Notes Section with Popup
+              const Text("Notes",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: _openNotesPopup,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(height: 24),
+                  child: Text(
+                    _notesController.text.isEmpty
+                        ? "Tap to add notes..."
+                        : _notesController.text,
+                    style: TextStyle(
+                      color: _notesController.text.isEmpty
+                          ? Colors.grey
+                          : Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
 
                   // Save Button
                   Center(
@@ -327,6 +342,18 @@ class _DayEntryViewState extends State<DayEntryView> {
   void dispose() {
     _notesController.dispose();
     super.dispose();
+  }
+
+  void _openNotesPopup() async {
+    final result = await showNotesPopup(
+      context: context,
+      initialNote: _notesController.text,
+    );
+    if (result != null) {
+      setState(() {
+        _notesController.text = result;
+      });
+    }
   }
 
   Route _createRoute(DateTime focusedDay) {
