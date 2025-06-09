@@ -6,21 +6,21 @@ class MoodList extends Equatable {
   const MoodList({this.moods = const []});
 
   static const List<String> predefinedMoods = [
-    'Happy',
-    'Sad',
-    'Irritable',
-    'Anxious',
-    'Calm',
-    'Energetic',
-    'Tired',
-    'Emotional',
-    'Motivated',
-    'Stressed',
-    'Relaxed',
-    'Angry',
-    'Excited',
-    'Disappointed',
-    'Confused',
+    'Happy 😀',
+    'Sad 😢',
+    'Irritable 😠',
+    'Anxious 😰',
+    'Calm 😌',
+    'Energetic ⚡',
+    'Tired 😴',
+    'Emotional 😭',
+    'Motivated 💪',
+    'Stressed 😫',
+    'Relaxed 🧘',
+    'Angry 😡',
+    'Excited 🤩',
+    'Disappointed 😞',
+    'Confused 😕',
   ];
 
   @override

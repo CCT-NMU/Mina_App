@@ -16,10 +16,9 @@ class DayEntryFetched extends DayEntryBlocEvent {
   const DayEntryFetched();
 }
 
-//Update a Day Entry for a specific date
-class DayEntryUpdate extends DayEntryBlocEvent {
-  final Day dayEntry;
-  const DayEntryUpdate(this.dayEntry);
+//Insert or Update a Day Entry for a specific date
+class DayEntryInsertOrUpdate extends DayEntryBlocEvent {
+  const DayEntryInsertOrUpdate();
 }
 
 //Close Day Entry Page

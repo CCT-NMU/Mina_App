@@ -17,22 +17,23 @@ class PeriodDay extends Day {
     required this.isPeriodStartDay,
     required this.isPeriodEndDay,
     String? note,
-    SymptomList? listSymptoms,
-    MoodList? listMoods,
+    SymptomList? symptomList,
+    MoodList? moodList,
   }) : super(
           date: date,
           isPeriodDay: true,
           note: note,
-          symptomList: listSymptoms,
-          moodList: listMoods,
+          symptomList: symptomList,
+          moodList: moodList,
         );
   static List<FlowWeight> get flowWeightValues => FlowWeight.values;
 
   Map<String, dynamic> toPeriodDayMap() {
     return {
-      'flowWeight': flowWeight.index,
-      'isPeriodStartDay': isPeriodStartDay ? 1 : 0,
-      'isPeriodEndDay': isPeriodEndDay ? 1 : 0,
+      'Date': date.toIso8601String(),
+      'FlowWeight': '${flowWeight.index}',
+      'IsPeriodStartDay': isPeriodStartDay ? '1' : '0',
+      'IsPeriodEndDay': isPeriodEndDay ? '1' : '0',
     };
   }
 
@@ -51,8 +52,8 @@ class PeriodDay extends Day {
             ? false
             : intToBool(map['IsPeriodEndDay']),
         note: map['Note'],
-        listSymptoms: SymptomList.fromString(map['symptomList']),
-        listMoods: MoodList.fromString(map['moodlist']));
+        symptomList: SymptomList.fromString(map['symptomList']),
+        moodList: MoodList.fromString(map['moodlist']));
   }
 
   PeriodDay copyWith({
@@ -66,8 +67,8 @@ class PeriodDay extends Day {
       isPeriodStartDay: isPeriodStartDay ?? this.isPeriodStartDay,
       isPeriodEndDay: isPeriodEndDay ?? this.isPeriodEndDay,
       note: note,
-      listSymptoms: symptomList,
-      listMoods: moodList,
+      symptomList: symptomList,
+      moodList: moodList,
     );
   }
 }

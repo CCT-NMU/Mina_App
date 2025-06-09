@@ -23,12 +23,14 @@ class DayEntryLoadingState extends DayEntryBlocState {
 
 // Loaded state
 class DayEntryLoadedState extends DayEntryBlocState {
+  final DateTime date;
   final bool isPeriodDaySelected;
   final List<String> selectedSymptoms;
   final List<String> selectedMoods;
   final String notes;
 
   const DayEntryLoadedState({
+    required this.date,
     required this.isPeriodDaySelected,
     required this.selectedSymptoms,
     required this.selectedMoods,
@@ -37,18 +39,38 @@ class DayEntryLoadedState extends DayEntryBlocState {
 
   @override
   List<Object> get props =>
-      [isPeriodDaySelected, selectedSymptoms, selectedMoods, notes];
+      [date, isPeriodDaySelected, selectedSymptoms, selectedMoods, notes];
+
+  copyWith({
+    DateTime? date,
+    bool? isPeriodDaySelected,
+    List<String>? selectedSymptoms,
+    List<String>? selectedMoods,
+    String? notes,
+  }) =>
+      DayEntryLoadedState(
+          date: date ?? this.date,
+          isPeriodDaySelected: isPeriodDaySelected ?? this.isPeriodDaySelected,
+          selectedSymptoms: selectedSymptoms ?? this.selectedSymptoms,
+          selectedMoods: selectedMoods ?? this.selectedMoods,
+          notes: notes ?? this.notes);
 }
 
 class PeriodDayEntryLoadedState extends DayEntryBlocState {
+  final DateTime date;
   final bool isPeriodDaySelected;
+  final bool isPeriodEndDay;
+  final bool isPeriodStartDay;
   final List<String> selectedSymptoms;
   final String? selectedFlow;
   final List<String> selectedMoods;
   final String notes;
 
   const PeriodDayEntryLoadedState({
+    required this.date,
     required this.isPeriodDaySelected,
+    required this.isPeriodEndDay,
+    required this.isPeriodStartDay,
     required this.selectedFlow,
     required this.selectedSymptoms,
     required this.selectedMoods,
@@ -58,11 +80,33 @@ class PeriodDayEntryLoadedState extends DayEntryBlocState {
   @override
   List<Object> get props => [
         isPeriodDaySelected,
+        isPeriodEndDay,
+        isPeriodStartDay,
         selectedFlow ?? "0",
         selectedSymptoms,
         selectedMoods,
         notes
       ];
+
+  copyWith({
+    DateTime? date,
+    bool? isPeriodDaySelected,
+    bool? isPeriodEndDay,
+    bool? isPeriodStartDay,
+    String? selectedFlow,
+    List<String>? selectedSymptoms,
+    List<String>? selectedMoods,
+    String? notes,
+  }) =>
+      PeriodDayEntryLoadedState(
+          date: date ?? this.date,
+          isPeriodDaySelected: isPeriodDaySelected ?? this.isPeriodDaySelected,
+          isPeriodEndDay: isPeriodEndDay ?? this.isPeriodEndDay,
+          isPeriodStartDay: isPeriodStartDay ?? this.isPeriodStartDay,
+          selectedFlow: selectedFlow ?? this.selectedFlow,
+          selectedSymptoms: selectedSymptoms ?? this.selectedSymptoms,
+          selectedMoods: selectedMoods ?? this.selectedMoods,
+          notes: notes ?? this.notes);
 }
 
 // Saved state

@@ -1,5 +1,6 @@
 import 'dart:io' as io;
 import 'package:flutter/material.dart';
+import 'package:mina_app/common/utils.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:mina_app/data/model/model.dart';
@@ -443,6 +444,7 @@ class DatabaseHelper {
       await txn.delete('Day');
       await txn.delete('PeriodDay');
       await txn.delete('UserSettings');
+      await txn.delete('Cycle');
     });
   }
 
@@ -451,7 +453,14 @@ class DatabaseHelper {
   }
 
 //Cycle operations
-  Future<Cycle?> getCurrentCycle() async {
+
+  /// Retrieves the latest Cycle record from the database.
+  //
+  /// Returns a Cycle object if a record is found, otherwise returns null.
+  ///
+  /// The query is sorted by the 'id' column in descending order (newest first),
+  /// and limited to a single record (the latest one).
+  Future<Cycle?> getGlobalCycle() async {
     final db = await database;
 
     final result = await db.query("Cycle", orderBy: "id DESC", limit: 1);
@@ -463,12 +472,25 @@ class DatabaseHelper {
     }
   }
 
+  /// Retrieves the Cycle record from the database that contains the given [date].
+  ///
+  /// The query is filtered by the condition that the Cycle's 'startDate' is
+  /// less than or equal to the given [date], and its 'endDate' is either null
+  /// or greater than or equal to the given [date].
+  ///
+  /// Returns a Cycle object if a record is found, otherwise returns null.
   Future<Cycle?> getCycle(DateTime date) async {
     final db = await database;
+    print(
+        "getting Cycle with ${Utils().normalizedDate(date).toIso8601String()}");
     final result = await db.query(
       "Cycle",
-      where: "startDate <= ? AND (endDate IS NULL OR endDate >= ?)",
-      whereArgs: [date.toIso8601String(), date.toIso8601String()],
+      where:
+          'date(?) >= date(startDate) AND (date(endDate) IS NULL OR date(?) <= date(endDate))',
+      whereArgs: [
+        Utils().normalizedDate(date).toIso8601String(),
+        Utils().normalizedDate(date).toIso8601String()
+      ],
     );
     if (result.isNotEmpty) {
       return Cycle.fromMap(result.first);

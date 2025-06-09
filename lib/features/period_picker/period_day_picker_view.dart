@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/model/day.dart';
+import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
@@ -70,6 +71,7 @@ class _PeriodDayPickerBody extends StatefulWidget {
 class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
   final ItemScrollController _itemScrollController = ItemScrollController();
 
+  //for onboarding
   int _firstVisibleIndex = -1;
   int _lastVisibleIndex = -1;
 
@@ -87,28 +89,44 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
   var currentMonths;
   @override
   Widget build(BuildContext context) {
-    final DayEntryBloc dayEntryBloc = context.read<DayEntryBloc>();
-    final OnboardingBloc onboardingBloc =
-        context.read<OnboardingBloc>(); //OnboardingBloc
-    return BlocListener<PeriodDayPickerBloc, PeriodDayPickerState>(
-      listenWhen: (previous, current) =>
-          previous.status == PeriodDayPickerStatus.saving &&
-          current.status == PeriodDayPickerStatus.success,
-      listener: (context, state) {
-        if (onboardingBloc.state is OnboardingInProgress) {
-          onboardingBloc.add(LastPeriodPickerViewSubmitted());
-          Navigator.of(context).push(
-            MaterialPageRoute(
-                builder: (context) => BlocProvider.value(
-                      value: onboardingBloc,
-                      child: const DashboardView(),
-                    )),
-          );
-        } else {
-          dayEntryBloc.add(DayEntryFetch(widget.focusedDay!));
-          Navigator.pop(context);
-        }
-      },
+    final OnboardingBloc onboardingBloc = context.read<OnboardingBloc>();
+    //OnboardingBloc
+
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<PeriodDayPickerBloc, PeriodDayPickerState>(
+            listenWhen: (previous, current) =>
+                previous.status == PeriodDayPickerStatus.saving &&
+                current.status == PeriodDayPickerStatus.success,
+            listener: (context, state) {
+              if (onboardingBloc.state is OnboardingInProgress) {
+                onboardingBloc.add(LastPeriodPickerViewSubmitted());
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (context) => BlocProvider.value(
+                            value: onboardingBloc,
+                            child: MultiBlocProvider(
+                              providers: [
+                                BlocProvider(
+                                  create: (context) => DashboardBloc(),
+                                ),
+                                BlocProvider(
+                                  create: (context) => CycleTrackerBloc()
+                                    ..add(CycleTrackerStarted()),
+                                ),
+                              ],
+                              child: const DashboardView(),
+                            ),
+                          )),
+                );
+              } else {
+                context
+                    .read<DayEntryBloc>()
+                    .add(DayEntryFetch(widget.focusedDay!));
+                Navigator.pop(context);
+              }
+            }),
+      ],
       child: BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
         builder: (context, state) {
           if (state.status == PeriodDayPickerStatus.loading) {
@@ -224,7 +242,7 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: TextButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 context
                                     .read<PeriodDayPickerBloc>()
                                     .add(SavedPeriodDays(context));

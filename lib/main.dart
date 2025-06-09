@@ -35,6 +35,7 @@ class MinaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    DatabaseHelper().clearAllData();
     return MaterialApp(
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -64,9 +65,6 @@ class MinaApp extends StatelessWidget {
             return MultiBlocProvider(providers: [
               BlocProvider<CycleTrackerBloc>(
                 create: (context) => CycleTrackerBloc(),
-              ),
-              BlocProvider<DashboardBloc>(
-                create: (context) => DashboardBloc(),
               ),
               BlocProvider<OnboardingBloc>(
                 create: (_) => OnboardingBloc()..add(OnboardingStarted()),

@@ -8,15 +8,23 @@ import 'package:mina_app/data/model/period_day.dart';
 
 class CycleRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
-  Future<Cycle?> getCurrentCycle() async {
-    final Cycle? currentCycle = await _dbHelper.getCurrentCycle();
 
-    return currentCycle;
+  Future<Cycle?> getGlobalCycle() async {
+    final Cycle? globalCycle = await _dbHelper.getGlobalCycle();
+
+    return globalCycle;
+  }
+
+  Future<Cycle?> getCycle(DateTime date) async {
+    final Cycle? cycle = await _dbHelper.getCycle(date);
+
+    return cycle;
   }
 
   Future<int> insertCycle(Cycle cycle) async {
     return await _dbHelper.insertCycle(cycle);
   }
+
 //
   /// Calculates the menstrual cycle history by evaluating the list of days
   /// which includes both regular days and period days.
@@ -93,7 +101,7 @@ class CycleRepository {
       int totalLength = 0;
       for (int i = 0; i < cycles.length - 1; i++) {
         totalLength +=
-            cycles[i + 1].startDate.difference(cycles[i].startDate).inDays;
+            cycles[i + 1].startDate!.difference(cycles[i].startDate!).inDays;
       }
 
       return totalLength ~/ (cycles.length - 1);
@@ -135,7 +143,7 @@ class CycleRepository {
       if (avgCycleLength == 0) return null;
 
       final lastPeriod = cycles.last;
-      return lastPeriod.startDate.add(Duration(days: avgCycleLength));
+      return lastPeriod.startDate!.add(Duration(days: avgCycleLength));
     } catch (e) {
       debugPrint('Error predicting next period: $e');
       return null;

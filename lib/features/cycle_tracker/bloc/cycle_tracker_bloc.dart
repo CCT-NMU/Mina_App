@@ -8,13 +8,34 @@ part 'cycle_tracker_state.dart';
 
 class CycleTrackerBloc extends Bloc<CycleTrackerEvent, CycleTrackerState> {
   CycleTrackerBloc() : super(CycleTrackerInitial()) {
-    on<CycleFetch>((event, emit) {
-      // TODO: implement event handler
+    //On dashboard startup
+    on<CycleTrackerStarted>((event, emit) async {
+      //fetch the global cycle
+      final cycle = await CycleRepository().getGlobalCycle();
+
+      //global cycle can be null
+      if (cycle != null) {
+        emit(CycleTrackerInitial(presentCycle: cycle));
+      } else {
+        emit(CycleTrackerInitial());
+      }
     });
-    on<FetchCurrentCycle>((event, emit) async {
-      final currentCycle = await CycleRepository().getCurrentCycle();
+
+    //Fetch the cycle for the current date
+    //Emit no Cycle exists state for
+    on<FetchCycle>((event, emit) async {
+      print("fetching cycle for ${event.date}");
+      final currentCycle = await CycleRepository().getCycle(event.date);
       if (currentCycle != null) {
-        emit(CycleTrackerCurrent(currentCycle));
+        print("Cycle found for ${event.date}");
+        emit(CycleTrackerCycleFetched(currentCycle,
+            presentCycle: state.presentCycle));
+      } else
+      //Use to omit Day-Entry features that require a cycle
+      //For creating day entry older than the recorded cycle
+      {
+        print("No cycle found for ${event.date}");
+        (emit(CycleTrackerInitial()));
       }
     });
   }

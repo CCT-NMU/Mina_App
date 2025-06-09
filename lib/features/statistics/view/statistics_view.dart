@@ -118,7 +118,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                               padding: const EdgeInsets.all(4.0),
                               child: Text(
                                 DateFormat('MMM')
-                                    .format(_cycles[value.toInt()].startDate),
+                                    .format(_cycles[value.toInt()].startDate!),
                                 style: const TextStyle(fontSize: 10),
                               ),
                             );

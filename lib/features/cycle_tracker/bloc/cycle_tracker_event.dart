@@ -7,21 +7,17 @@ sealed class CycleTrackerEvent extends Equatable {
   List<Object> get props => [];
 }
 
+class CycleTrackerStarted extends CycleTrackerEvent {
+  const CycleTrackerStarted();
+}
+
 // cycle updated
-class CycleUpdated extends CycleTrackerEvent {
-  final Cycle cycle;
-  const CycleUpdated(this.cycle);
+class CyclesUpdated extends CycleTrackerEvent {
+  const CyclesUpdated();
 }
 
 // cycle fetch
-class CycleFetch extends CycleTrackerEvent {
-  const CycleFetch();
-}
-
-//check day in cycle
-class FetchCurrentCycle extends CycleTrackerEvent {}
-
-// cycle delete
-class CycleDelete extends CycleTrackerEvent {
-  const CycleDelete();
+class FetchCycle extends CycleTrackerEvent {
+  final DateTime date;
+  const FetchCycle(this.date);
 }

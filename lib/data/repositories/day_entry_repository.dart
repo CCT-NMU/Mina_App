@@ -42,16 +42,7 @@ class DayEntryRepository {
     }
   }
 
-  getPeriodDayEntry(DateTime date) async {
-    try {
-      return await DatabaseHelper().getPeriodDayByDate(date);
-    } catch (e) {
-      // Log the error and rethrow a custom exception
-      print('Error retrieving PeriodDay entry: $e');
-      throw Exception('Failed to retrieve PeriodDay entry');
-    }
-  }
-
+//Will return a Day or Period Day object
   Future<Day?> getDayEntry(DateTime date) async {
     try {
       var day = await DatabaseHelper().getDay(date);

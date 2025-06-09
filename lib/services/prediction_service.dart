@@ -21,7 +21,7 @@ class PredictionService {
         final cycle = cyclesForAverage[i];
         final nextCycle = cyclesForAverage[i + 1];
         final difference =
-            nextCycle.startDate.difference(cycle.startDate).inDays;
+            nextCycle.startDate!.difference(cycle.startDate!).inDays;
         totalDays += difference;
       }
 
@@ -31,7 +31,7 @@ class PredictionService {
       final lastCycle = cycles.first; // Most recent cycle
 
       // Predict next period start date
-      return lastCycle.startDate.add(Duration(days: averageCycleLength));
+      return lastCycle.startDate!.add(Duration(days: averageCycleLength));
     } catch (e) {
       return null;
     }
@@ -56,8 +56,8 @@ class PredictionService {
       List<int> cycleLengths = [];
       for (int i = 0; i < cyclesForStats.length - 1; i++) {
         final difference = cyclesForStats[i + 1]
-            .startDate
-            .difference(cyclesForStats[i].startDate)
+            .startDate!
+            .difference(cyclesForStats[i].startDate!)
             .inDays;
         totalCycleDays += difference;
         cycleLengths.add(difference);
