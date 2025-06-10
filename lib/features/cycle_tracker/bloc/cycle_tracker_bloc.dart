@@ -11,7 +11,7 @@ class CycleTrackerBloc extends Bloc<CycleTrackerEvent, CycleTrackerState> {
     //On dashboard startup
     on<CycleTrackerStarted>((event, emit) async {
       //fetch the global cycle
-      final cycle = await CycleRepository().getGlobalCycle();
+      final cycle = await CycleRepository().getPresentCycle();
 
       //global cycle can be null
       if (cycle != null) {
@@ -35,8 +35,17 @@ class CycleTrackerBloc extends Bloc<CycleTrackerEvent, CycleTrackerState> {
       //For creating day entry older than the recorded cycle
       {
         print("No cycle found for ${event.date}");
-        (emit(CycleTrackerInitial()));
+        (emit(CycleTrackerInitial(presentCycle: state.presentCycle)));
       }
     });
+  }
+  @override
+  void onTransition(
+      Transition<CycleTrackerEvent, CycleTrackerState> transition) {
+    super.onTransition(transition);
+
+    print('Transition: ${transition.event} '
+        'from ${transition.currentState.presentCycle}'
+        'to ${transition.nextState.presentCycle}');
   }
 }

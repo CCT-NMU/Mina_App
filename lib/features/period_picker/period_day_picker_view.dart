@@ -246,6 +246,13 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
                                 context
                                     .read<PeriodDayPickerBloc>()
                                     .add(SavedPeriodDays(context));
+                                if (context.read<OnboardingBloc>().state
+                                    is! OnboardingInProgress) {
+                                  context
+                                      .read<DayEntryBloc>()
+                                      .add(DayEntryFetch(widget.focusedDay!));
+                                  Navigator.pop(context);
+                                }
 
                                 // Navigate to Day_Entry view with the current Day Entry
                               },

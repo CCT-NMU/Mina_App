@@ -24,14 +24,14 @@ class DayEntryLoadingState extends DayEntryBlocState {
 // Loaded state
 class DayEntryLoadedState extends DayEntryBlocState {
   final DateTime date;
-  final bool isPeriodDaySelected;
+  final bool isPeriodDay;
   final List<String> selectedSymptoms;
   final List<String> selectedMoods;
   final String notes;
 
   const DayEntryLoadedState({
     required this.date,
-    required this.isPeriodDaySelected,
+    required this.isPeriodDay,
     required this.selectedSymptoms,
     required this.selectedMoods,
     required this.notes,
@@ -39,7 +39,7 @@ class DayEntryLoadedState extends DayEntryBlocState {
 
   @override
   List<Object> get props =>
-      [date, isPeriodDaySelected, selectedSymptoms, selectedMoods, notes];
+      [date, isPeriodDay, selectedSymptoms, selectedMoods, notes];
 
   copyWith({
     DateTime? date,
@@ -50,15 +50,51 @@ class DayEntryLoadedState extends DayEntryBlocState {
   }) =>
       DayEntryLoadedState(
           date: date ?? this.date,
-          isPeriodDaySelected: isPeriodDaySelected ?? this.isPeriodDaySelected,
+          isPeriodDay: isPeriodDaySelected ?? this.isPeriodDay,
           selectedSymptoms: selectedSymptoms ?? this.selectedSymptoms,
           selectedMoods: selectedMoods ?? this.selectedMoods,
           notes: notes ?? this.notes);
 }
 
+class DayEntryInPresentCycleState extends DayEntryLoadedState {
+  DayEntryInPresentCycleState(
+      {required super.date,
+      required super.isPeriodDay,
+      required super.selectedSymptoms,
+      required super.selectedMoods,
+      required super.notes});
+}
+
+class DayEntryInHistoricalCycleState extends DayEntryLoadedState {
+  DayEntryInHistoricalCycleState(
+      {required super.date,
+      required super.isPeriodDay,
+      required super.selectedSymptoms,
+      required super.selectedMoods,
+      required super.notes});
+}
+
+class FutureDayEntryOutOfCycleState extends DayEntryLoadedState {
+  FutureDayEntryOutOfCycleState(
+      {required super.date,
+      required super.isPeriodDay,
+      required super.selectedSymptoms,
+      required super.selectedMoods,
+      required super.notes});
+}
+
+class PastDayEntryOutOfCycleState extends DayEntryLoadedState {
+  PastDayEntryOutOfCycleState(
+      {required super.date,
+      required super.isPeriodDay,
+      required super.selectedSymptoms,
+      required super.selectedMoods,
+      required super.notes});
+}
+
 class PeriodDayEntryLoadedState extends DayEntryBlocState {
   final DateTime date;
-  final bool isPeriodDaySelected;
+  final bool isPeriodDay;
   final bool isPeriodEndDay;
   final bool isPeriodStartDay;
   final List<String> selectedSymptoms;
@@ -68,7 +104,7 @@ class PeriodDayEntryLoadedState extends DayEntryBlocState {
 
   const PeriodDayEntryLoadedState({
     required this.date,
-    required this.isPeriodDaySelected,
+    required this.isPeriodDay,
     required this.isPeriodEndDay,
     required this.isPeriodStartDay,
     required this.selectedFlow,
@@ -79,7 +115,7 @@ class PeriodDayEntryLoadedState extends DayEntryBlocState {
 
   @override
   List<Object> get props => [
-        isPeriodDaySelected,
+        isPeriodDay,
         isPeriodEndDay,
         isPeriodStartDay,
         selectedFlow ?? "0",
@@ -100,13 +136,37 @@ class PeriodDayEntryLoadedState extends DayEntryBlocState {
   }) =>
       PeriodDayEntryLoadedState(
           date: date ?? this.date,
-          isPeriodDaySelected: isPeriodDaySelected ?? this.isPeriodDaySelected,
+          isPeriodDay: isPeriodDaySelected ?? this.isPeriodDay,
           isPeriodEndDay: isPeriodEndDay ?? this.isPeriodEndDay,
           isPeriodStartDay: isPeriodStartDay ?? this.isPeriodStartDay,
           selectedFlow: selectedFlow ?? this.selectedFlow,
           selectedSymptoms: selectedSymptoms ?? this.selectedSymptoms,
           selectedMoods: selectedMoods ?? this.selectedMoods,
           notes: notes ?? this.notes);
+}
+
+class PeriodDayEntryOngoingPeriodState extends PeriodDayEntryLoadedState {
+  PeriodDayEntryOngoingPeriodState(
+      {required super.date,
+      required super.isPeriodDay,
+      required super.isPeriodEndDay,
+      required super.isPeriodStartDay,
+      required super.selectedFlow,
+      required super.selectedSymptoms,
+      required super.selectedMoods,
+      required super.notes});
+}
+
+class PeriodDayEntryInHistoricalCycleState extends PeriodDayEntryLoadedState {
+  PeriodDayEntryInHistoricalCycleState(
+      {required super.date,
+      required super.isPeriodDay,
+      required super.isPeriodEndDay,
+      required super.isPeriodStartDay,
+      required super.selectedFlow,
+      required super.selectedSymptoms,
+      required super.selectedMoods,
+      required super.notes});
 }
 
 // Saved state

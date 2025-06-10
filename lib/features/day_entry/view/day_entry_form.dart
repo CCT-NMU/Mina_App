@@ -39,13 +39,11 @@ class _DayEntryFormState extends State<DayEntryForm> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     focusedDay = widget.focusedDay;
     notesController = widget.notesController;
     formKey = widget.formKey;
-
-    context.read<CycleTrackerBloc>().add(FetchCycle(widget.focusedDay));
+    presentCycle = context.read<CycleTrackerBloc>().state.presentCycle;
   }
 
   @override
@@ -68,29 +66,40 @@ class _DayEntryFormState extends State<DayEntryForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                BlocBuilder<CycleTrackerBloc, CycleTrackerState>(
-                    builder: (context, cycleState) {
-                  final presentCycle = cycleState.presentCycle;
-                  final isInCycle = cycleState is CycleTrackerCycleFetched;
-
-                  if (isInCycle) {
-                    return DayEntryInCycleView(
-                      focusedDay: focusedDay,
-                      presentCycle: presentCycle!,
-                      dayBlocState: state,
-                      cycleState: cycleState,
-                    );
-                  } else if (!presentCycle!.startDate!
-                      .isAtSameMomentAs(DateTime(0, 0, 0))) {
-                    return DayEntryOutOfCycleView(
-                      focusedDay: focusedDay,
-                      presentCycle: presentCycle,
-                    );
-                  }
-                  throw () {
-                    Placeholder();
-                  };
-                }),
+                if (state is PeriodDayEntryOngoingPeriodState) ...[
+                  if (state.isPeriodStartDay) ...[
+                    _periodDayStartButton(
+                        context, focusedDay, state.isPeriodStartDay)
+                  ] else ...[
+                    _periodDayEndButton(
+                        context, focusedDay, state.isPeriodEndDay)
+                  ],
+                  _periodStatusWidget(context, state, focusedDay)
+                ],
+                if (state is PeriodDayEntryInHistoricalCycleState) ...[
+                  if (state.isPeriodStartDay) ...[
+                    _periodDayStartButton(
+                        context, focusedDay, state.isPeriodStartDay)
+                  ],
+                  if (state.isPeriodEndDay) ...[
+                    _periodDayEndButton(
+                        context, focusedDay, state.isPeriodEndDay)
+                  ],
+                  _periodStatusWidget(context, state, focusedDay)
+                ],
+                if (state is DayEntryInHistoricalCycleState) ...[
+                  _cycleDayStats(focusedDay, presentCycle, isFutureDay: false),
+                ],
+                if (state is DayEntryInPresentCycleState) ...[
+                  _periodDayStartButton(context, focusedDay, false),
+                  _cycleDayStats(focusedDay, presentCycle, isFutureDay: false),
+                ],
+                if (state is PastDayEntryOutOfCycleState) ...[
+                  _cycleDayStats(focusedDay, presentCycle, isFutureDay: false),
+                ],
+                if (state is FutureDayEntryOutOfCycleState) ...[
+                  _cycleDayStats(focusedDay, presentCycle, isFutureDay: true)
+                ],
 
                 const SizedBox(height: 16),
 
@@ -313,8 +322,7 @@ Widget _periodDayEndButton(
         children: [
           const Text("Period ends today"),
           const SizedBox(width: 8),
-          Icon(
-              isPeriodEndDay ? Icons.check_box_rounded : Icons.circle_outlined),
+          Icon(isPeriodEndDay ? Icons.check_circle : Icons.circle_outlined),
         ],
       ));
 }
@@ -336,6 +344,7 @@ class DayEntryInCycleView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
+      //ToDo check if the current cycle is in the predicted cycle table
       if (presentCycle!.isInCycle(focusedDay)) ...[
         // is day within the present cycle?
 
@@ -354,10 +363,8 @@ class DayEntryInCycleView extends StatelessWidget {
             ] else ...[
               //day is part of global cycle that is currenly not complete.
               //ask user if another period has started
-              if (dayBlocState is PeriodDayEntryLoadedState) ...[
+              if (dayBlocState is DayEntryLoadedState) ...[
                 _periodDayStartButton(context, focusedDay, false),
-                _periodStatusWidget(context,
-                    dayBlocState as PeriodDayEntryLoadedState, focusedDay),
                 _cycleDayStats(focusedDay,
                     context.read<CycleTrackerBloc>().state.presentCycle,
                     isFutureDay: false)
@@ -384,28 +391,28 @@ class DayEntryInCycleView extends StatelessWidget {
             ]
           ]
         ] else ...[
-          //day us a period start day
+          //day is a period start day
           if (dayBlocState is PeriodDayEntryLoadedState)
-            _periodDayStartButton(
-                context,
-                focusedDay,
-                (dayBlocState as PeriodDayEntryLoadedState)
-                    .isPeriodDaySelected),
+            _periodDayStartButton(context, focusedDay,
+                (dayBlocState as PeriodDayEntryLoadedState).isPeriodStartDay),
         ]
       ] else ...[
         //day does not fall within the scope of the present cycle
         //but is within a cycle
         //it must be a historical cycle
-        if (context.read<CycleTrackerBloc>().state
-            is CycleTrackerCycleFetched) ...[
-          if (focusedDay.isAfter(cycleState.focusedDayCycle.startDate!)) ...[
+        if (context.read<CycleTrackerBloc>().state is CycleTrackerCycleFetched)
+          //if the cycle exists
+          ...[
+          if (focusedDay.isAfter(cycleState.focusedDayCycle.startDate!))
+            //is the focused day after the start of the cycle?
+            ...[
             if (focusedDay
                 .isAfter(cycleState.focusedDayCycle.periodEndDate!)) ...[
-              //historical day is after the end of the of a period endDate
+              //is the focused day after the end of the of a period endDate
               _cycleDayStats(focusedDay, cycleState.focusedDayCycle,
                   isFutureDay: false),
             ] else ...[
-              //historical day is either an PeriodEndDate or a day after periodEndDate
+              //historical day is either an PeriodEndDate or a day after periodStartDate
               if (Utils()
                   .normalizedDate(cycleState.focusedDayCycle.periodEndDate!)
                   .isAtSameMomentAs(Utils().normalizedDate(focusedDay))) ...[
@@ -422,8 +429,9 @@ class DayEntryInCycleView extends StatelessWidget {
                       isFutureDay: false),
                 ]
               ] else ...[
-                //historical day is after the periodEndDate
-
+                //focused day is a periodDay after the periodStartDate
+                _periodStatusWidget(context,
+                    dayBlocState as PeriodDayEntryLoadedState, focusedDay),
                 _cycleDayStats(focusedDay, cycleState.focusedDayCycle,
                     isFutureDay: false),
               ]
@@ -431,11 +439,8 @@ class DayEntryInCycleView extends StatelessWidget {
           ] else ...[
             //day is a Period startDay
             if (dayBlocState is PeriodDayEntryLoadedState) ...[
-              _periodDayStartButton(
-                  context,
-                  focusedDay,
-                  (dayBlocState as PeriodDayEntryLoadedState)
-                      .isPeriodDaySelected),
+              _periodDayStartButton(context, focusedDay,
+                  (dayBlocState as PeriodDayEntryLoadedState).isPeriodStartDay),
               _periodStatusWidget(context,
                   (dayBlocState as PeriodDayEntryLoadedState), focusedDay)
             ]

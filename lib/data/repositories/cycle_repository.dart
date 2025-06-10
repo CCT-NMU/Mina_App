@@ -9,8 +9,8 @@ import 'package:mina_app/data/model/period_day.dart';
 class CycleRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  Future<Cycle?> getGlobalCycle() async {
-    final Cycle? globalCycle = await _dbHelper.getGlobalCycle();
+  Future<Cycle?> getPresentCycle() async {
+    final Cycle? globalCycle = await _dbHelper.getPresentCycle();
 
     return globalCycle;
   }

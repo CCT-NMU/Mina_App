@@ -18,7 +18,7 @@ import 'package:mina_app/features/period_picker/bloc/period_day_picker_event.dar
 import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
 
 class DayEntryView extends StatefulWidget {
-  const DayEntryView({super.key, required this.focusedDay, this.existingDay});
+  DayEntryView({super.key, required this.focusedDay, this.existingDay});
   final DateTime focusedDay;
   final Day? existingDay; // Optional existing day entry
 

@@ -123,12 +123,15 @@ class PeriodPickerLogic {
 
         //1.1 Check to see if the day exists in Day table
         Day? existingDay = await DatabaseHelper().getDay(curDate, txn: txn);
-        //If a day is a PeriodDay and it exists in the PeriodDay table
-        //it should only be updated if it is now a periodEndDay or PeriodStartDay
-        //If a day exists in the database that needs to be changed from a periodStartDay/periodEndDay
-        //to a normal PeriodDay we should update the entry by changing the flags as necessary
+        //If a DateTime matches an existing PeriodDay in the PeriodDay table
+        //it should only be updated if it is now a periodStartDay or periodEndDay.
 
-        //Process edge case where only one Period day exists
+        //If a Day record exists in the database that needs to be changed from a periodStartDay
+        // [or periodEndDay]..
+        //to a normal PeriodDay, we should update the entry by changing the flags as necessary
+
+        //*****Process edge case where only one Period day exists in a Cycle*****
+        //*****This will be a periodStartDay and periodEndDay*****
         if (curDate == curCycle.startDate &&
             curDate == curCycle.periodEndDate) {
           //if it the record does not exist in PeriodDay table
@@ -162,7 +165,7 @@ class PeriodPickerLogic {
           }
         }
 
-        //Process Start Day Period
+        //*****Process Start Day Period*****
         if (curDate == curCycle.startDate &&
             curDate != curCycle.periodEndDate) {
           if (existingPeriodDay != null) {
@@ -229,7 +232,7 @@ class PeriodPickerLogic {
             }
           }
         }
-
+        // ToDo -Add flag to process End days correctly if period is ongoing.
         // Process periodEndDays
         if (curDate == curCycle.periodEndDate &&
             curDate != curCycle.startDate) {
@@ -272,7 +275,7 @@ class PeriodPickerLogic {
     //If a Day is not a PeriodDay anymore, it should be deleted from the PeriodDay table
     if (deselecetedPeriodDates.isNotEmpty) {
       for (DateTime date in deselecetedPeriodDates) {
-        await DatabaseHelper().deletePeriodDay(date);
+        await DatabaseHelper().deletePeriodDay(date, txn: txn);
       }
     }
     //The database helper class helps on deletion of a PeriodDay entry by marking the

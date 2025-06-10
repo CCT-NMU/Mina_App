@@ -460,7 +460,7 @@ class DatabaseHelper {
   ///
   /// The query is sorted by the 'id' column in descending order (newest first),
   /// and limited to a single record (the latest one).
-  Future<Cycle?> getGlobalCycle() async {
+  Future<Cycle?> getPresentCycle() async {
     final db = await database;
 
     final result = await db.query("Cycle", orderBy: "id DESC", limit: 1);

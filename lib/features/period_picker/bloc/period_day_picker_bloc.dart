@@ -25,7 +25,7 @@ class PeriodDayPickerBloc
       final now = DateTime.now();
       List<Day> periodDays = await DatabaseHelper().getPeriodDaysInRange(
         DateTime(1960, 1, 1),
-        DateTime(now.year + 1, now.month + 2, 0),
+        DateTime(now.year + 1, now.month + 1, 0),
       );
       // Generate a list of months going back 12 months starting 1 month in the future from the focused day's month.
       // Start from 1 month in the future from the focused day's month, go back 12 months
