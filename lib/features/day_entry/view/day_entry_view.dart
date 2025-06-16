@@ -14,7 +14,6 @@ import 'package:mina_app/features/day_entry/bloc/day_entry_state.dart';
 import 'package:mina_app/features/day_entry/view/day_entry_form.dart';
 import 'package:mina_app/features/onboarding/bloc/onboarding_bloc.dart';
 import 'package:mina_app/features/period_picker/bloc/period_day_picker_bloc.dart';
-import 'package:mina_app/features/period_picker/bloc/period_day_picker_event.dart';
 import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
 
 class DayEntryView extends StatefulWidget {
@@ -58,9 +57,6 @@ class _DayEntryViewState extends State<DayEntryView> {
           providers: [
             BlocProvider.value(value: context.read<DayEntryBloc>()),
             BlocProvider.value(value: context.read<CycleTrackerBloc>()),
-            BlocProvider(
-              create: (context) => OnboardingBloc()..add(OnboardingCompleted()),
-            )
           ],
           child: BlocBuilder<DayEntryBloc, DayEntryBlocState>(
             builder: (context, state) {

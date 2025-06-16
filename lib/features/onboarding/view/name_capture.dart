@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mina_app/features/period_picker/bloc/period_day_picker_bloc.dart';
-import 'package:mina_app/features/period_picker/bloc/period_day_picker_event.dart';
 import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

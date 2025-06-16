@@ -19,7 +19,8 @@ class Cycle extends Equatable {
     return {
       'startDate': startDate!.toIso8601String(),
       'endDate': endDate != null ? endDate!.toIso8601String() : "",
-      'periodEndDate': periodEndDate!.toIso8601String(),
+      'periodEndDate':
+          periodEndDate != null ? periodEndDate!.toIso8601String() : "",
     };
   }
 
@@ -27,7 +28,9 @@ class Cycle extends Equatable {
     return Cycle(
       startDate: DateTime.parse(map['startDate']),
       endDate: map['endDate'] != "" ? DateTime.parse(map['endDate']) : null,
-      periodEndDate: DateTime.parse(map['periodEndDate']),
+      periodEndDate: map['periodEndDate'] != ""
+          ? DateTime.parse(map['periodEndDate'])
+          : null,
     );
   }
 

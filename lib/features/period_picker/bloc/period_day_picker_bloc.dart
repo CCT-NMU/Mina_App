@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/period_picker/period_picker_logic.dart';
-import 'period_day_picker_event.dart';
-import 'period_day_picker_state.dart';
-import 'package:mina_app/data/database/databaseHelper.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter/widgets.dart';
 import 'package:mina_app/data/model/day.dart';
+import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:flutter/foundation.dart';
+part 'period_day_picker_event.dart';
+part 'period_day_picker_state.dart';
 
 class PeriodDayPickerBloc
     extends Bloc<PeriodDayPickerEvent, PeriodDayPickerState> {
@@ -28,11 +32,11 @@ class PeriodDayPickerBloc
         DateTime(now.year + 1, now.month + 1, 0),
       );
       // Generate a list of months going back 12 months starting 1 month in the future from the focused day's month.
-      // Start from 1 month in the future from the focused day's month, go back 12 months
+      // Start from 2 month in the future from the focused day's month, go back 12 months
       List<DateTime> initialMonths = List.generate(
-        12,
+        24,
         (i) {
-          int month = event.focusedDay.month + 1 - i;
+          int month = event.focusedDay.month - i + 1;
           int year = event.focusedDay.year;
           while (month < 1) {
             month += 12;
@@ -79,7 +83,11 @@ class PeriodDayPickerBloc
     } else {
       selected.add(normalized);
     }
-    emit(state.copyWith(selectedDays: selected));
+    emit(state.copyWith(
+      selectedDays: selected,
+      preservedScrollIndex: null,
+      monthsAdded: 0,
+    ));
   }
 
   static Set<DateTime> _processPeriodDaySetIsolate(List<Day> periodDays) {
@@ -88,49 +96,71 @@ class PeriodDayPickerBloc
         .toSet();
   }
 
-  static const int windowSize = 12;
+  static const int windowSize = 24;
 
   void _onLoadMoreMonthsForward(
     LoadMoreMonthsForward event,
     Emitter<PeriodDayPickerState> emit,
   ) {
-    final lastMonth = state.months.last;
+    final firstMonth = state.months.first;
+    if (firstMonth.isAfter(DateTime.now())) return;
     final newMonths = List<DateTime>.generate(
-      6, // or any number of months to add
-      (i) => DateTime(lastMonth.year + ((lastMonth.month + i) ~/ 12),
-          ((lastMonth.month + i) % 12) + 1, 1),
-    );
-    var updatedMonths = [...state.months, ...newMonths];
+      12, // or any number of months to add
+      (i) => DateTime(firstMonth.year + ((firstMonth.month + i) ~/ 12),
+          ((firstMonth.month + i) % 12) + 1, 1),
+    ).reversed.toList();
+    var updatedMonths = [
+      ...newMonths,
+      ...state.months,
+    ];
     if (updatedMonths.length > windowSize) {
-      updatedMonths = updatedMonths.sublist(updatedMonths.length - windowSize);
+      updatedMonths = updatedMonths.sublist(0, windowSize);
     }
-    emit(state.copyWith(months: updatedMonths));
+    final preservedIndex = event.preservedIndex + newMonths.length;
+    emit(state.copyWith(
+      months: updatedMonths,
+      monthsAdded: newMonths.length,
+      preservedScrollIndex: preservedIndex,
+      leadingEdge: event.leadingEdge,
+    ));
   }
 
   void _onLoadMoreMonthsBackward(
     LoadMoreMonthsBackward event,
     Emitter<PeriodDayPickerState> emit,
   ) {
-    final firstMonth = state.months.first;
+    final lastMonth = state.months.last;
 
     final newMonths = List<DateTime>.generate(
-      6,
+      12,
       (i) {
-        int month = firstMonth.month - (i + 1);
-        int year = firstMonth.year;
+        int month = lastMonth.month - (i + 1);
+        int year = lastMonth.year;
         while (month < 1) {
           month += 12;
           year -= 1;
         }
         return DateTime(year, month, 1);
       },
-    ).reversed.toList();
-    var updatedMonths = [...state.months, ...newMonths];
-    // Remove from the end if over window size
+    ).toList();
+    var updatedMonths = [
+      ...state.months,
+      ...newMonths,
+    ];
+    final preservedIndex =
+        event.preservedIndex - updatedMonths.length + windowSize;
+
     if (updatedMonths.length > windowSize) {
-      updatedMonths = updatedMonths.sublist(0, windowSize);
+      updatedMonths = updatedMonths.sublist(
+          updatedMonths.length - windowSize, updatedMonths.length);
     }
-    emit(state.copyWith(months: updatedMonths));
+
+    emit(state.copyWith(
+      months: updatedMonths,
+      monthsAdded: newMonths.length,
+      preservedScrollIndex: preservedIndex,
+      leadingEdge: event.leadingEdge,
+    ));
   }
 
   @override
@@ -139,7 +169,7 @@ class PeriodDayPickerBloc
     super.onTransition(transition);
 
     print('Transition: ${transition.event} '
-        'from ${transition.currentState.months.length} months '
-        'to ${transition.nextState.months.length} months');
+        'from ${state.status} scroll index '
+        'to ${state.status} scroll index');
   }
 }

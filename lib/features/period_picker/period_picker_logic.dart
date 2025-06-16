@@ -65,7 +65,11 @@ class PeriodPickerLogic {
 
       newCycleRecords.add(Cycle(
           startDate: Utils().normalizedDate(startDate),
-          periodEndDate: Utils().normalizedDate(periodEndDate),
+          periodEndDate: Utils()
+                  .normalizedDate(periodEndDate)
+                  .isAtSameMomentAs(Utils().normalizedDate(DateTime.now()))
+              ? null
+              : Utils().normalizedDate(periodEndDate),
           endDate: endDate != null ? Utils().normalizedDate(endDate) : null));
     }
 
@@ -112,6 +116,7 @@ class PeriodPickerLogic {
 
     for (int i = 0; i < cycles.length; i++) {
       Cycle curCycle = cycleRecords[i];
+      bool isOngoing = curCycle.periodEndDate == null;
 //#### Process PeriodDays ####
       for (int j = 0; j < cycles[i].length; j++) {
         // Normalize date to remove time
@@ -133,8 +138,10 @@ class PeriodPickerLogic {
         //*****Process edge case where only one Period day exists in a Cycle*****
         //*****This will be a periodStartDay and periodEndDay*****
         if (curDate == curCycle.startDate &&
-            curDate == curCycle.periodEndDate) {
+            (curCycle.periodEndDate == null ||
+                curDate == curCycle.periodEndDate)) {
           //if it the record does not exist in PeriodDay table
+          bool isEnd = !isOngoing;
           if (existingPeriodDay == null) {
             if (existingDay == null) {
               await DayEntryRepository.instance.insertPeriodDayEntry(
@@ -143,9 +150,10 @@ class PeriodPickerLogic {
                     flowWeight:
                         FlowWeight.none, // or your default/desired value
                     isPeriodStartDay: true,
-                    isPeriodEndDay: true,
+                    isPeriodEndDay: isEnd,
                   ),
                   txn);
+              continue;
             } else {
               await DayEntryRepository.instance.updateDayToPeriodDay(
                   PeriodDay(
@@ -153,21 +161,22 @@ class PeriodPickerLogic {
                     flowWeight:
                         FlowWeight.none, // or your default/desired value
                     isPeriodStartDay: true,
-                    isPeriodEndDay: true,
+                    isPeriodEndDay: isEnd,
                   ),
                   txn);
+              continue;
             }
           } else {
             //record does exist, update it as a start and end day
             PeriodDay updated = existingPeriodDay.copyWith(
-                isPeriodStartDay: true, isPeriodEndDay: true);
+                isPeriodStartDay: true, isPeriodEndDay: isEnd);
             await DatabaseHelper().updatePeriodDay(updated, txn: txn);
+            continue;
           }
         }
 
         //*****Process Start Day Period*****
-        if (curDate == curCycle.startDate &&
-            curDate != curCycle.periodEndDate) {
+        if (curDate == curCycle.startDate) {
           if (existingPeriodDay != null) {
             // 2. If it exists and is already a start day, do nothing
             if (!existingPeriodDay.isPeriodStartDay) {
@@ -202,7 +211,7 @@ class PeriodPickerLogic {
 
         // Process PeriodDays (middle days)
         if (curDate.isAfter(curCycle.startDate!) &&
-            curDate.isBefore(curCycle.periodEndDate!)) {
+            (isOngoing || curDate.isBefore(curCycle.periodEndDate!))) {
           if (existingPeriodDay != null) {
             if (curDate == existingPeriodDay.date) {
               //Existing record is a periodDay that is not a start or end day; update flags as necessary
@@ -232,10 +241,8 @@ class PeriodPickerLogic {
             }
           }
         }
-        // ToDo -Add flag to process End days correctly if period is ongoing.
         // Process periodEndDays
-        if (curDate == curCycle.periodEndDate &&
-            curDate != curCycle.startDate) {
+        if (!isOngoing && curDate == curCycle.periodEndDate) {
           if (existingPeriodDay != null) {
             if (!existingPeriodDay.isPeriodEndDay) {
               //Existing record is not a periodEndDay

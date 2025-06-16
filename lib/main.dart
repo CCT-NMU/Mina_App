@@ -69,7 +69,10 @@ class MinaApp extends StatelessWidget {
               BlocProvider<OnboardingBloc>(
                 create: (_) => OnboardingBloc()..add(OnboardingStarted()),
               ),
-            ], child: Welcome());
+              BlocProvider<PeriodDayPickerBloc>(
+                  create: (_) => PeriodDayPickerBloc()
+                    ..add(PeriodDaysFetched(DateTime.now()))),
+            ], child: const Welcome());
           }
         },
       ),

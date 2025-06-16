@@ -1,6 +1,4 @@
-import 'package:equatable/equatable.dart';
-import 'package:flutter/widgets.dart';
-import 'package:mina_app/data/model/day.dart';
+part of 'period_day_picker_bloc.dart';
 
 abstract class PeriodDayPickerEvent extends Equatable {
   @override
@@ -10,6 +8,19 @@ abstract class PeriodDayPickerEvent extends Equatable {
 class PeriodDaysFetched extends PeriodDayPickerEvent {
   final DateTime focusedDay;
   PeriodDaysFetched(this.focusedDay);
+}
+
+class PeriodStartToday extends PeriodDaysFetched {
+  PeriodStartToday(DateTime focusedDay) : super(focusedDay);
+}
+
+class PeriodEndsToday extends PeriodDaysFetched {
+  PeriodEndsToday(DateTime focusedDay) : super(focusedDay);
+}
+
+class PeriodPickerStatusChanged extends PeriodDayPickerEvent {
+  final PeriodDayPickerStatus status;
+  PeriodPickerStatusChanged(this.status);
 }
 
 class PeriodDayToggled extends PeriodDayPickerEvent {
@@ -25,6 +36,20 @@ class SavedPeriodDays extends PeriodDayPickerEvent {
   SavedPeriodDays(this.context);
 }
 
-class LoadMoreMonthsForward extends PeriodDayPickerEvent {}
+class ScrollToIndex extends PeriodDayPickerEvent {
+  final int index;
+  final double leadingEdge;
+  ScrollToIndex(this.index, this.leadingEdge);
+}
 
-class LoadMoreMonthsBackward extends PeriodDayPickerEvent {}
+class LoadMoreMonthsForward extends PeriodDayPickerEvent {
+  final int preservedIndex;
+  final double leadingEdge;
+  LoadMoreMonthsForward(this.preservedIndex, this.leadingEdge);
+}
+
+class LoadMoreMonthsBackward extends PeriodDayPickerEvent {
+  final int preservedIndex;
+  final double leadingEdge;
+  LoadMoreMonthsBackward(this.preservedIndex, this.leadingEdge);
+}

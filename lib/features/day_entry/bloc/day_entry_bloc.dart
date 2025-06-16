@@ -118,9 +118,23 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
     });
 
     on<FlowChanged>((event, emit) {
-      if (state is PeriodDayEntryLoadedState) {
-        final s = state as PeriodDayEntryLoadedState;
-        emit(PeriodDayEntryLoadedState(
+      final currentState = state;
+      if (currentState is PeriodDayEntryOngoingPeriodState) {
+        final s = state as PeriodDayEntryOngoingPeriodState;
+        emit(PeriodDayEntryOngoingPeriodState(
+          date: s.date,
+          isPeriodDay: s.isPeriodDay,
+          isPeriodEndDay: s.isPeriodEndDay,
+          isPeriodStartDay: s.isPeriodStartDay,
+          selectedFlow: event.flow,
+          selectedSymptoms: s.selectedSymptoms,
+          selectedMoods: s.selectedMoods,
+          notes: s.notes,
+        ));
+      }
+      if (state is PeriodDayEntryInHistoricalCycleState) {
+        final s = state as PeriodDayEntryInHistoricalCycleState;
+        emit(PeriodDayEntryInHistoricalCycleState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
           isPeriodEndDay: s.isPeriodEndDay,
@@ -134,9 +148,21 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
     });
 
     on<SymptomsChanged>((event, emit) {
-      if (state is PeriodDayEntryLoadedState) {
-        final s = state as PeriodDayEntryLoadedState;
-        emit(PeriodDayEntryLoadedState(
+      final currentState = state;
+      if (currentState is DayEntryLoadedState) {
+        final s = state as DayEntryLoadedState;
+        emit(DayEntryLoadedState(
+          date: s.date,
+          isPeriodDay: s.isPeriodDay,
+          selectedSymptoms: event.symptoms,
+          selectedMoods: s.selectedMoods,
+          notes: s.notes,
+        ));
+      }
+
+      if (currentState is PeriodDayEntryOngoingPeriodState) {
+        final s = state as PeriodDayEntryOngoingPeriodState;
+        emit(PeriodDayEntryOngoingPeriodState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
           isPeriodEndDay: s.isPeriodEndDay,
@@ -147,11 +173,14 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
           notes: s.notes,
         ));
       }
-      if (state is DayEntryLoadedState) {
-        final s = state as DayEntryLoadedState;
-        emit(DayEntryLoadedState(
+      if (state is PeriodDayEntryInHistoricalCycleState) {
+        final s = state as PeriodDayEntryInHistoricalCycleState;
+        emit(PeriodDayEntryInHistoricalCycleState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
+          isPeriodEndDay: s.isPeriodEndDay,
+          isPeriodStartDay: s.isPeriodStartDay,
+          selectedFlow: s.selectedFlow,
           selectedSymptoms: event.symptoms,
           selectedMoods: s.selectedMoods,
           notes: s.notes,
@@ -160,13 +189,27 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
     });
 
     on<MoodsChanged>((event, emit) {
-      if (state is PeriodDayEntryLoadedState) {
-        final s = state as PeriodDayEntryLoadedState;
-        emit(PeriodDayEntryLoadedState(
+      final currentState = state;
+      if (currentState is PeriodDayEntryOngoingPeriodState) {
+        final s = state as PeriodDayEntryOngoingPeriodState;
+        emit(PeriodDayEntryOngoingPeriodState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
-          isPeriodStartDay: s.isPeriodStartDay,
           isPeriodEndDay: s.isPeriodEndDay,
+          isPeriodStartDay: s.isPeriodStartDay,
+          selectedFlow: s.selectedFlow,
+          selectedSymptoms: s.selectedSymptoms,
+          selectedMoods: event.moods,
+          notes: s.notes,
+        ));
+      }
+      if (state is PeriodDayEntryInHistoricalCycleState) {
+        final s = state as PeriodDayEntryInHistoricalCycleState;
+        emit(PeriodDayEntryInHistoricalCycleState(
+          date: s.date,
+          isPeriodDay: s.isPeriodDay,
+          isPeriodEndDay: s.isPeriodEndDay,
+          isPeriodStartDay: s.isPeriodStartDay,
           selectedFlow: s.selectedFlow,
           selectedSymptoms: s.selectedSymptoms,
           selectedMoods: event.moods,
@@ -180,45 +223,33 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
           isPeriodDay: s.isPeriodDay,
           selectedSymptoms: s.selectedSymptoms,
           selectedMoods: event.moods,
-          notes: s.notes,
-        ));
-      }
-    });
-
-    on<PeriodDaySelectedChanged>((event, emit) {
-      if (state is PeriodDayEntryLoadedState) {
-        final s = state as PeriodDayEntryLoadedState;
-        emit(PeriodDayEntryLoadedState(
-          date: s.date,
-          isPeriodDay: event.isPeriodDaySelected,
-          isPeriodStartDay: s.isPeriodStartDay,
-          isPeriodEndDay: s.isPeriodEndDay,
-          selectedFlow: s.selectedFlow,
-          selectedSymptoms: s.selectedSymptoms,
-          selectedMoods: s.selectedMoods,
-          notes: s.notes,
-        ));
-      }
-      if (state is DayEntryLoadedState) {
-        final s = state as DayEntryLoadedState;
-        emit(DayEntryLoadedState(
-          date: s.date,
-          isPeriodDay: event.isPeriodDaySelected,
-          selectedSymptoms: s.selectedSymptoms,
-          selectedMoods: s.selectedMoods,
           notes: s.notes,
         ));
       }
     });
 
     on<NotesChanged>((event, emit) {
-      if (state is PeriodDayEntryLoadedState) {
-        final s = state as PeriodDayEntryLoadedState;
-        emit(PeriodDayEntryLoadedState(
+      final currentState = state;
+      if (currentState is PeriodDayEntryOngoingPeriodState) {
+        final s = state as PeriodDayEntryOngoingPeriodState;
+        emit(PeriodDayEntryOngoingPeriodState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
-          isPeriodStartDay: s.isPeriodStartDay,
           isPeriodEndDay: s.isPeriodEndDay,
+          isPeriodStartDay: s.isPeriodStartDay,
+          selectedFlow: s.selectedFlow,
+          selectedSymptoms: s.selectedSymptoms,
+          selectedMoods: s.selectedMoods,
+          notes: event.notes,
+        ));
+      }
+      if (state is PeriodDayEntryInHistoricalCycleState) {
+        final s = state as PeriodDayEntryInHistoricalCycleState;
+        emit(PeriodDayEntryInHistoricalCycleState(
+          date: s.date,
+          isPeriodDay: s.isPeriodDay,
+          isPeriodEndDay: s.isPeriodEndDay,
+          isPeriodStartDay: s.isPeriodStartDay,
           selectedFlow: s.selectedFlow,
           selectedSymptoms: s.selectedSymptoms,
           selectedMoods: s.selectedMoods,

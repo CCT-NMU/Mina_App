@@ -1,5 +1,5 @@
 class Utils {
-  normalizedDate(DateTime date) {
+  DateTime normalizedDate(DateTime date) {
     return DateTime(date.year, date.month, date.day);
   }
 }

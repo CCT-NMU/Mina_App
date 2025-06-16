@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
@@ -16,11 +19,9 @@ import 'package:mina_app/local_libraries/table_calendar/lib/table_calendar.dart'
 import 'package:mina_app/local_libraries/table_calendar/lib/src/shared/utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/period_picker/period_picker_logic.dart';
-import 'package:path/path.dart';
+
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'bloc/period_day_picker_bloc.dart';
-import 'bloc/period_day_picker_event.dart';
-import 'bloc/period_day_picker_state.dart';
 
 /*A view of days that a user can choose to be a period day
 //The purpose of this view is to clarify  the user's start and end days of their period
@@ -28,65 +29,113 @@ import 'bloc/period_day_picker_state.dart';
 //The interaction is triggered from the Day_Entry view upon tapping the 
 // appropriate button. 
 // The appropriate button [period_pick_trigger] on the Day_Entry view is determined by
-// 2 factors, app state and the day the user is looking at. 
-// The app state is determined by where in the 
+// 2 factors, Present Cycle state and the day the user is looking at. 
+// The Present Cycle state is determined by where in the 
 // cycle the user is. The day is determined by the day the Day_Entry view is for.
-// The Day entry UI will adjust to whether the day falls within the current cycle
+// The Day entry UI will adjust to whether or not the day falls within the Present cycle
 // and whether the day is a period day or not.
 For instance in the case of a Day falling in a previous cycle
  that is not a period day, the [period_pick_trigger] button will not exist.
 The [period_pick_trigger] button is responsible for taking the user to this view. 
-It will only appear for days that:
-# are period start and end days within past menstrual cycles.
-# are in the current cycle
-    ->The [period_pick_trigger] will prompt user to choose a start period day if the current cycle state == PeriodEnded.
-    ->The [period_pick_trigger] will prompt user to choose an end period day if the current cycle state == currentPeriodOngoing.
-    ->The current cycle is demarcated by the latest periodStartday. Therefore upon saving 
-      the entries in this view the currentperiodStartday will be updated to reflect the latest current cycle
+It will only appear for :
+# days that are period start and end days within past menstrual cycles.
+# days that are in the present cycle
+    ->The [period_pick_trigger] will prompt user to choose a start period day if the current cycle state == DayEntryInPresentCycleState OR PastDayEntryOutOfCycleState.
+    ->The [period_pick_trigger] will prompt user to choose an end period day if the current cycle state == PeriodDayEntryOngoingPeriodState OR PeriodDayEntryInHistoricalCycleState where isPeriodEndDay == true.
+    ->The present cycle is demarcated by the latest periodStartday. Therefore upon saving 
+      the entries in this view the present Cycle's periodStartDay will be updated 
       
 
 */
 
-/*TODO: Get the date of the day being edited and check which number month it falls in. 
-        Make the day picker view display the month of the day being edited by scrolling to the
-        number month*/
-class PeriodDayPickerView extends StatelessWidget {
+class PeriodDayPickerView extends StatefulWidget {
   final DateTime? focusedDay;
   const PeriodDayPickerView({Key? key, this.focusedDay}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return _PeriodDayPickerBody(focusedDay: focusedDay ?? DateTime.now());
-  }
+  State<PeriodDayPickerView> createState() => _PeriodDayPickerViewState();
 }
 
-class _PeriodDayPickerBody extends StatefulWidget {
-  final DateTime? focusedDay;
-  const _PeriodDayPickerBody({Key? key, this.focusedDay}) : super(key: key);
-
-  @override
-  State<_PeriodDayPickerBody> createState() => _PeriodDayPickerBodyState();
-}
-
-class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
+class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
   final ItemScrollController _itemScrollController = ItemScrollController();
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
 
-  //for onboarding
-  int _firstVisibleIndex = -1;
-  int _lastVisibleIndex = -1;
+  Timer? _debounce;
+  int _firstVisible = 0;
+  int _lastVisible = 0;
 
   @override
   void initState() {
     super.initState();
+    final bloc = context.read<PeriodDayPickerBloc>();
+
+    bloc.stream.listen((state) {
+      //After days update, restore scroll if needed
+
+      if (state.preservedScrollIndex != null && state.monthsAdded > 0) {
+        var targetIndex = state.preservedScrollIndex!;
+
+        // Try to find the previous position of the target index
+
+        // Default alignment if position not found
+        double alignment = 0;
+
+        if (state.leadingEdge != null) {
+          alignment = state.leadingEdge!;
+        }
+        print("alignment: $alignment" "targetIndex: $targetIndex");
+        if (_itemScrollController.isAttached) {
+          _itemScrollController.jumpTo(
+            index: targetIndex,
+            alignment: alignment,
+          );
+        }
+      }
+    });
+
+    void onScroll() {
+      final positions = _itemPositionsListener.itemPositions.value;
+      if (positions.isEmpty) return;
+
+      final first = positions
+          .where((p) => p.itemLeadingEdge >= 0 && p.itemLeadingEdge <= 1)
+          .reduce((min, p) => p.index < min.index ? p : min);
+      _firstVisible = first.index;
+
+      final last = positions
+          .where((p) => p.itemTrailingEdge <= 1 && p.itemTrailingEdge >= 0)
+          .reduce((max, p) => p.index > max.index ? p : max);
+
+      _lastVisible = last.index;
+
+      print('first: $_firstVisible, last: $_lastVisible');
+      if (_debounce?.isActive ?? false) _debounce!.cancel();
+      _debounce = Timer(const Duration(milliseconds: 100), () {
+        if (_lastVisible >=
+                context.read<PeriodDayPickerBloc>().state.months.length - 2 &&
+            _firstVisible >=
+                context.read<PeriodDayPickerBloc>().state.months.length - 1) {
+          context.read<PeriodDayPickerBloc>().add(
+              LoadMoreMonthsBackward(_firstVisible, first.itemLeadingEdge));
+        }
+
+        if (_firstVisible == 0 && _lastVisible == 0) {
+          context.read<PeriodDayPickerBloc>().add(LoadMoreMonthsForward(
+              _firstVisible, 0)); //TODO remove first.itemLeadingEdge.
+        }
+      });
+    }
+
+    _itemPositionsListener.itemPositions.addListener(onScroll);
   }
 
   @override
   void dispose() {
     super.dispose();
+    _debounce?.cancel();
   }
 
-  var previousMonths;
-  var currentMonths;
   @override
   Widget build(BuildContext context) {
     final OnboardingBloc onboardingBloc = context.read<OnboardingBloc>();
@@ -139,11 +188,8 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
                 title: Container(
                   child: Column(
                     children: [
-                      Text('My period started'),
-                      Text(
-                          //ToDO: Replace this with the date of the day being edited
-                          '${DateFormat.E().format(widget.focusedDay!)}, ${DateFormat.MMMd().format(widget.focusedDay!)}',
-                          style: const TextStyle(fontSize: 20)),
+                      Text('Select period days',
+                          style: TextStyle(fontSize: 20)),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children:
@@ -167,48 +213,20 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
                 children: [
                   Expanded(
                     child:
-                        //ToDo remove the dead bloc Listener code
-                        BlocListener<PeriodDayPickerBloc, PeriodDayPickerState>(
-                      listenWhen: (previous, current) {
-                        if (previous.months.isEmpty || current.months.isEmpty) {
-                          return false;
-                        } else {
-                          return current.months.first.month !=
-                              previous.months.first.month;
-                        }
+                        BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
+                      builder: (context, state) {
+                        return ScrollablePositionedList.builder(
+                          reverse: true,
+                          itemScrollController: _itemScrollController,
+                          itemPositionsListener: _itemPositionsListener,
+                          itemCount: state.months.length,
+                          itemBuilder: (context, index) {
+                            final month = state.months[index];
+                            return buildMonthCalendar(
+                                context, month, state.selectedDays, index);
+                          },
+                        );
                       },
-                      listener: (context, state) {
-                        // Find the new index of the previously first visible month
-                        /* final prevMonth = state.prevMonthListFirstMonth ?? null;
-                          if (prevMonth != null) {
-                            final newIndex = state.months.indexWhere((m) =>
-                                m.year == prevMonth.year &&
-                                m.month == prevMonth.month);
-                            if (newIndex != -1) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                _itemScrollController.jumpTo(index: newIndex);
-                              });
-                            } 
-                          }*/
-                        Future.delayed(const Duration(seconds: 1), () {
-                          _itemScrollController.jumpTo(index: 5);
-                        });
-                      },
-                      child: BlocBuilder<PeriodDayPickerBloc,
-                          PeriodDayPickerState>(
-                        builder: (context, state) {
-                          return ScrollablePositionedList.builder(
-                            reverse: true,
-                            itemScrollController: _itemScrollController,
-                            itemCount: state.months.length,
-                            itemBuilder: (context, index) {
-                              final month = state.months[index];
-                              return buildMonthCalendar(
-                                  context, month, state.selectedDays, index);
-                            },
-                          );
-                        },
-                      ),
                     ),
                   ),
                   Padding(
@@ -242,20 +260,26 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: TextButton(
-                              onPressed: () async {
-                                context
-                                    .read<PeriodDayPickerBloc>()
-                                    .add(SavedPeriodDays(context));
-                                if (context.read<OnboardingBloc>().state
-                                    is! OnboardingInProgress) {
-                                  context
-                                      .read<DayEntryBloc>()
-                                      .add(DayEntryFetch(widget.focusedDay!));
-                                  Navigator.pop(context);
-                                }
+                              onPressed: state.selectedDays.isEmpty
+                                  ? null
+                                  : () async {
+                                      if (context.read<OnboardingBloc>().state
+                                          is OnboardingComplete) {
+                                        context
+                                            .read<PeriodDayPickerBloc>()
+                                            .add(SavedPeriodDays(context));
+                                        context.read<DayEntryBloc>().add(
+                                            DayEntryFetch(widget.focusedDay!));
+                                      }
+                                      if (context.read<OnboardingBloc>().state
+                                          is OnboardingInProgress) {
+                                        context
+                                            .read<PeriodDayPickerBloc>()
+                                            .add(SavedPeriodDays(context));
+                                      }
 
-                                // Navigate to Day_Entry view with the current Day Entry
-                              },
+                                      // Navigate to Day_Entry view with the current Day Entry
+                                    },
                               style: TextButton.styleFrom(
                                 padding: EdgeInsets.symmetric(
                                     horizontal: 42.0, vertical: 16.0),
@@ -347,7 +371,8 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
                                           : Colors.black87,
                                   fontWeight: FontWeight.w600,
                                 )),
-                            Container(
+                            AnimatedContainer(
+                              duration: Duration(microseconds: 400),
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
                                 border: isFutureDay
