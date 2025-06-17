@@ -22,22 +22,15 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     PredictionService? predictionService,
     NotificationService? notificationService,
     DatabaseHelper? dbHelper,
+    required DayEntryRepository dayEntryRepository,
   })  : _predictionService = predictionService ?? PredictionService(),
         _notificationService = notificationService ?? NotificationService(),
         _dbHelper = dbHelper ?? DatabaseHelper(),
         super(DashboardInitial()) {
     on<LoadDashboard>((event, emit) async {
       emit(DashboardLoadInProgress());
-      try {
-        final days = await _loadEventsFromDatabase(event.focusedDay);
-        if (days == null) {
-          emit(DashboardLoadSuccess(const []));
-        } else {
-          emit(DashboardLoadSuccess(days));
-        }
-      } catch (e) {
-        emit(DashboardLoadFailure(e.toString()));
-      }
+
+      _onLoadDashboard(event, emit);
     });
     // on<RefreshDashboard>(_onRefreshDashboard);
 
@@ -111,11 +104,10 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     Emitter<DashboardState> emit,
   ) async {
     try {
-      emit(DashboardLoading());
       final stats = await _predictionService.getPredictionStats(userId);
       final nextPeriod = await _predictionService.predictNextPeriod(userId);
       final cycles = await cycleRepository.calculateCycleHistory(userId);
-
+      final days = await _loadEventsFromDatabase(event.focusedDay);
       // Schedule notification if enabled
       final settings = await _dbHelper.getAllSettings(userId);
       final enableReminders = settings['enable_period_reminders'] == 'true';
@@ -125,15 +117,25 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         await _notificationService.schedulePeriodReminder(nextPeriod, userId);
       }
 
-      emit(DashboardLoaded(
-        nextPeriodDate: nextPeriod,
-        averageCycleLength: stats['averageCycleLength'] as int,
-        averagePeriodLength: stats['averagePeriodLength'] as int,
-        cycleRegularity: stats['cycleRegularity'] as double,
-        recentCycles: cycles,
-      ));
+      if (days == null) {
+        emit(DashboardLoadSuccess(
+            averageCycleLength: -1,
+            averagePeriodLength: -1,
+            cycleRegularity: -1,
+            recentCycles: [],
+            days: []));
+      } else {
+        emit(DashboardLoadSuccess(
+          nextPeriodDate: nextPeriod,
+          averageCycleLength: stats['averageCycleLength'] as int,
+          averagePeriodLength: stats['averagePeriodLength'] as int,
+          cycleRegularity: stats['cycleRegularity'] as double,
+          recentCycles: cycles,
+          days: days,
+        ));
+      }
     } catch (e) {
-      emit(DashboardError(e.toString()));
+      emit(DashboardLoadFailure(e.toString()));
     }
   }
 
@@ -141,6 +143,6 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     RefreshDashboard event,
     Emitter<DashboardState> emit,
   ) async {
-    await _onLoadDashboard(LoadDashboard(), emit);
+    await _onLoadDashboard(LoadDashboard(event.focusedDay), emit);
   }
 }

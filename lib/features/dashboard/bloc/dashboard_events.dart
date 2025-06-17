@@ -13,7 +13,10 @@ class LoadDashboard extends DashboardEvent {
   const LoadDashboard(this.focusedDay);
 }
 
-class RefreshDashboard extends DashboardEvent {}
+class RefreshDashboard extends DashboardEvent {
+  final DateTime focusedDay;
+  const RefreshDashboard(this.focusedDay);
+}
 
 class CalendarChanged extends DashboardEvent {
   //event to capture calendar's change to the new month

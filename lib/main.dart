@@ -36,56 +36,30 @@ void main() async {
 class MinaApp extends StatelessWidget {
   const MinaApp({super.key});
 
-  Future<bool> userHasName() async {
-    final name = await UserRepository.instance.getUserSetting('name');
+/*   Future<bool> userHasName() async {
+    final name = await UserRepository.instance.getUserSetting('name',);
     return name != null && name.isNotEmpty;
-  }
+  } */
 
   @override
   Widget build(BuildContext context) {
-    DatabaseHelper().clearAllData();
     return MaterialApp(
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      debugShowCheckedModeBanner: true,
-      home: FutureBuilder<bool>(
-        future: userHasName(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.data!) {
-            return MultiBlocProvider(providers: [
-              BlocProvider<CycleTrackerBloc>(
-                create: (context) => CycleTrackerBloc(),
-              ),
-              BlocProvider<DashboardBloc>(
-                create: (context) => DashboardBloc(),
-              ),
-              BlocProvider<OnboardingBloc>(
-                create: (_) => OnboardingBloc()..add(OnboardingCompleted()),
-              ),
-            ], child: AuthWrapper());
-          } else {
-            return MultiBlocProvider(providers: [
-              BlocProvider<CycleTrackerBloc>(
-                create: (context) => CycleTrackerBloc(),
-              ),
-              BlocProvider<OnboardingBloc>(
-                create: (_) => OnboardingBloc()..add(OnboardingStarted()),
-              ),
-              BlocProvider(create: (context) => AuthBloc()..add(AuthStarted())),
-              BlocProvider<PeriodDayPickerBloc>(
-                  create: (_) => PeriodDayPickerBloc()
-                    ..add(PeriodDaysFetched(DateTime.now()))),
-            ], child: const AuthWrapper());
-          }
-        },
-      ),
-    );
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        debugShowCheckedModeBanner: true,
+        home: MultiBlocProvider(providers: [
+          BlocProvider<CycleTrackerBloc>(
+            create: (context) => CycleTrackerBloc(),
+          ),
+          BlocProvider<DashboardBloc>(
+            create: (context) => DashboardBloc(),
+          ),
+          BlocProvider<OnboardingBloc>(
+            create: (_) => OnboardingBloc()..add(OnboardingCompleted()),
+          ),
+        ], child: AuthWrapper()));
   }
 }
 
@@ -101,7 +75,12 @@ class AuthWrapper extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         } else if (state is AuthAuthenticated) {
-          return const DashboardView();
+          //find any existing days.
+          if (state.profile != null) {
+            if (state.profile!['avg_period_length'] != null) {
+              return const DashboardView();
+            }
+          }
         } else {
           return const LoginView();
         }

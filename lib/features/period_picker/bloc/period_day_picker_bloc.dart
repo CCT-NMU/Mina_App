@@ -28,9 +28,9 @@ class PeriodDayPickerBloc
     try {
       final now = DateTime.now();
       List<Day> periodDays = await DatabaseHelper().getPeriodDaysInRange(
-        DateTime(1960, 1, 1),
-        DateTime(now.year + 1, now.month + 1, 0),
-      );
+          DateTime(1960, 1, 1),
+          DateTime(now.year + 1, now.month + 1, 0),
+          event.userId);
       // Generate a list of months going back 12 months starting 1 month in the future from the focused day's month.
       // Start from 2 month in the future from the focused day's month, go back 12 months
       List<DateTime> initialMonths = List.generate(
@@ -66,7 +66,7 @@ class PeriodDayPickerBloc
     Emitter<PeriodDayPickerState> emit,
   ) async {
     emit(state.copyWith(status: PeriodDayPickerStatus.saving));
-    final result = await PeriodPickerLogic()
+    final result = await PeriodPickerLogic(event.userId)
         .saveEditedDays(state.selectedDays, state.oldDays, event.context);
     if (result == true)
       emit(state.copyWith(status: PeriodDayPickerStatus.success));

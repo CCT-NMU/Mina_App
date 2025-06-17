@@ -19,10 +19,10 @@ class OnboardingBloc extends Bloc<OboardingEvent, OnboardingState> {
       emit(OnboardingInProgress());
     });
 
-    on<OnboardingNameSubmitted>((event, emit) {
-      UserRepository.instance.insertOrUpdateUserSetting('name', event.name);
+    /*    on<OnboardingNameSubmitted>((event, emit) {
+      UserRepository.instance.insertOrUpdateUserSetting('name', event.name,);
       emit(OnboardingInProgress());
-    });
+    }); */
 
     on<LastPeriodPickerViewLoaded>((event, emit) {
       emit(OnboardingInProgress());

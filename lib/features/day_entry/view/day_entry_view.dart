@@ -80,6 +80,7 @@ class _DayEntryViewState extends State<DayEntryView> {
                   formKey: _formKey,
                   notesController: _notesController,
                   focusedDay: widget.focusedDay,
+                  userId: widget.userId,
                 );
               }
 

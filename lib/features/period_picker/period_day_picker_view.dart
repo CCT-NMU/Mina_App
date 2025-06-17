@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/model/day.dart';
+import 'package:mina_app/data/repositories/cycle_repository.dart';
+import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
@@ -19,6 +21,8 @@ import 'package:mina_app/local_libraries/table_calendar/lib/table_calendar.dart'
 import 'package:mina_app/local_libraries/table_calendar/lib/src/shared/utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/period_picker/period_picker_logic.dart';
+import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/prediction_service.dart';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'bloc/period_day_picker_bloc.dart';
@@ -50,7 +54,8 @@ It will only appear for :
 
 class PeriodDayPickerView extends StatefulWidget {
   final DateTime? focusedDay;
-  const PeriodDayPickerView({Key? key, this.focusedDay}) : super(key: key);
+  final String userId = AuthService.instance.requireUserId;
+  PeriodDayPickerView({Key? key, this.focusedDay}) : super(key: key);
 
   @override
   State<PeriodDayPickerView> createState() => _PeriodDayPickerViewState();
@@ -157,7 +162,13 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                             child: MultiBlocProvider(
                               providers: [
                                 BlocProvider(
-                                  create: (context) => DashboardBloc(),
+                                  create: (context) => DashboardBloc(
+                                      cycleRepository: CycleRepository(),
+                                      userId: widget.userId,
+                                      dayEntryRepository:
+                                          DayEntryRepository.instance,
+                                      predictionService: PredictionService(),
+                                      dbHelper: DatabaseHelper()),
                                 ),
                                 BlocProvider(
                                   create: (context) => CycleTrackerBloc()
@@ -171,7 +182,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
               } else {
                 context
                     .read<DayEntryBloc>()
-                    .add(DayEntryFetch(widget.focusedDay!));
+                    .add(DayEntryFetch(widget.focusedDay!, widget.userId));
                 Navigator.pop(context);
               }
             }),
@@ -265,17 +276,18 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                                   : () async {
                                       if (context.read<OnboardingBloc>().state
                                           is OnboardingComplete) {
-                                        context
-                                            .read<PeriodDayPickerBloc>()
-                                            .add(SavedPeriodDays(context));
+                                        context.read<PeriodDayPickerBloc>().add(
+                                            SavedPeriodDays(
+                                                context, widget.userId));
                                         context.read<DayEntryBloc>().add(
-                                            DayEntryFetch(widget.focusedDay!));
+                                            DayEntryFetch(widget.focusedDay!,
+                                                widget.userId));
                                       }
                                       if (context.read<OnboardingBloc>().state
                                           is OnboardingInProgress) {
-                                        context
-                                            .read<PeriodDayPickerBloc>()
-                                            .add(SavedPeriodDays(context));
+                                        context.read<PeriodDayPickerBloc>().add(
+                                            SavedPeriodDays(
+                                                context, widget.userId));
                                       }
 
                                       // Navigate to Day_Entry view with the current Day Entry

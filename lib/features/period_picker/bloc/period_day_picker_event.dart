@@ -6,16 +6,17 @@ abstract class PeriodDayPickerEvent extends Equatable {
 }
 
 class PeriodDaysFetched extends PeriodDayPickerEvent {
+  final String userId;
   final DateTime focusedDay;
-  PeriodDaysFetched(this.focusedDay);
+  PeriodDaysFetched(this.focusedDay, this.userId);
 }
 
 class PeriodStartToday extends PeriodDaysFetched {
-  PeriodStartToday(DateTime focusedDay) : super(focusedDay);
+  PeriodStartToday(super.focusedDay, super.userId);
 }
 
 class PeriodEndsToday extends PeriodDaysFetched {
-  PeriodEndsToday(DateTime focusedDay) : super(focusedDay);
+  PeriodEndsToday(super.focusedDay, super.userId);
 }
 
 class PeriodPickerStatusChanged extends PeriodDayPickerEvent {
@@ -33,7 +34,8 @@ class PeriodDayToggled extends PeriodDayPickerEvent {
 
 class SavedPeriodDays extends PeriodDayPickerEvent {
   final BuildContext context;
-  SavedPeriodDays(this.context);
+  String userId;
+  SavedPeriodDays(this.context, this.userId);
 }
 
 class ScrollToIndex extends PeriodDayPickerEvent {

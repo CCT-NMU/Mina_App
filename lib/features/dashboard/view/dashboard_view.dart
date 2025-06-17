@@ -30,7 +30,6 @@ class _DashboardViewState extends State<DashboardView> {
   late DateTime _focusedDay;
   DateTime? _selectedDay;
 
-
   // Get current user ID from AuthService
   String get currentUserId => AuthService.instance.requireUserId;
 
@@ -40,12 +39,9 @@ class _DashboardViewState extends State<DashboardView> {
     _focusedDay = DateTime.now();
   }
 
-
-  
-
   @override
   Widget build(BuildContext context) {
-     // Get user info for display
+    // Get user info for display
     final userName = AuthService.instance.currentUserName ?? 'User';
     return BlocBuilder<DashboardBloc, DashboardState>(
       builder: (context, state) {
@@ -256,65 +252,68 @@ class _DashboardViewState extends State<DashboardView> {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) {
         return FutureBuilder<Day?>(
-          future: DayEntryRepository.instance.getDayEntry(focusedDay),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Scaffold(
-                body: Center(child: Text('Error: ${snapshot.error}')),
-              );
-            }
-            if (snapshot.data is PeriodDay) {
-              final periodDay = snapshot.data as PeriodDay;
-              return MultiBlocProvider(
-                providers: [
-                  BlocProvider.value(
-                      value: cycleTrackerBloc
-                        ..add(const CycleTrackerStarted())),
-                  BlocProvider.value(value: dashboardBloc),
-                  BlocProvider(
-                    create: (_) =>
-                        DayEntryBloc()..add(DayEntryFetch(focusedDay)),
+            future: DayEntryRepository.instance
+                .getDayEntry(focusedDay, currentUserId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Scaffold(
+                  body: Center(child: Text('Error: ${snapshot.error}')),
+                );
+              }
+              if (snapshot.data is PeriodDay) {
+                final periodDay = snapshot.data as PeriodDay;
+                return MultiBlocProvider(
+                  providers: [
+                    BlocProvider.value(
+                        value: cycleTrackerBloc
+                          ..add(const CycleTrackerStarted())),
+                    BlocProvider.value(value: dashboardBloc),
+                    BlocProvider(
+                      create: (_) => DayEntryBloc()
+                        ..add(DayEntryFetch(focusedDay, currentUserId)),
+                    ),
+                  ],
+                  child: DayEntryView(
+                    focusedDay: focusedDay,
+                    existingDay: periodDay,
+                    userId: currentUserId,
                   ),
-                ],
-                child: DayEntryView(
-                  focusedDay: focusedDay,
-                  existingDay: periodDay,
-                  userId: currentUserId,
-                ),
-              );
-            } else if (snapshot.data is Day) {
-              final day = snapshot.data as Day;
+                );
+              } else if (snapshot.data is Day) {
+                final day = snapshot.data as Day;
+                return MultiBlocProvider(
+                  providers: [
+                    BlocProvider.value(value: cycleTrackerBloc),
+                    BlocProvider.value(value: dashboardBloc),
+                    BlocProvider(
+                      create: (_) => DayEntryBloc()
+                        ..add(DayEntryFetch(focusedDay, currentUserId)),
+                    ),
+                  ],
+                  child: DayEntryView(
+                    focusedDay: focusedDay,
+                    existingDay: snapshot.data,
+                    userId: currentUserId,
+                  ),
+                );
+              }
               return MultiBlocProvider(
                 providers: [
                   BlocProvider.value(value: cycleTrackerBloc),
                   BlocProvider.value(value: dashboardBloc),
                   BlocProvider(
-                    create: (_) =>
-                        DayEntryBloc()..add(DayEntryFetch(focusedDay)),
+                    create: (_) => DayEntryBloc()
+                      ..add(DayEntryFetch(focusedDay, currentUserId)),
                   ),
                 ],
                 child: DayEntryView(
                   focusedDay: focusedDay,
                   existingDay: snapshot.data,
-                   userId: currentUserId,
-                );
-              }
-                return MultiBlocProvider(
-              providers: [
-                BlocProvider.value(value: cycleTrackerBloc),
-                BlocProvider.value(value: dashboardBloc),
-                BlocProvider(
-                  create: (_) => DayEntryBloc()..add(DayEntryFetch(focusedDay)),
+                  userId: currentUserId,
                 ),
-              ],
-              child: DayEntryView(
-                focusedDay: focusedDay,
-                existingDay: snapshot.data,
-                userId: currentUserId,
-              ),
-            );
+              );
             });
       },
       transitionsBuilder: (context, animation, secondaryAnimation, child) {

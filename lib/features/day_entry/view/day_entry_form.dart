@@ -19,13 +19,14 @@ class DayEntryForm extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final DateTime focusedDay;
   final TextEditingController notesController;
+  final String userId;
 
-  const DayEntryForm({
-    super.key,
-    required this.formKey,
-    required this.focusedDay,
-    required this.notesController,
-  });
+  const DayEntryForm(
+      {super.key,
+      required this.formKey,
+      required this.focusedDay,
+      required this.notesController,
+      required this.userId});
 
   @override
   State<DayEntryForm> createState() => _DayEntryFormState();
@@ -36,6 +37,7 @@ class _DayEntryFormState extends State<DayEntryForm> {
   late TextEditingController notesController;
   late GlobalKey<FormState> formKey;
   late Cycle? presentCycle;
+  late String userId;
   var focusedDayCycle;
 
   @override
@@ -44,6 +46,7 @@ class _DayEntryFormState extends State<DayEntryForm> {
     focusedDay = widget.focusedDay;
     notesController = widget.notesController;
     formKey = widget.formKey;
+    userId = widget.userId;
     presentCycle = context.read<CycleTrackerBloc>().state.presentCycle;
   }
 
@@ -70,23 +73,23 @@ class _DayEntryFormState extends State<DayEntryForm> {
                 if (state is PeriodDayEntryOngoingPeriodState) ...[
                   if (state.isPeriodStartDay) ...[
                     _periodDayStartButton(
-                        context, focusedDay, state.isPeriodStartDay),
+                        context, focusedDay, state.isPeriodStartDay, userId),
                   ],
                   if (state.isPeriodEndDay ||
                       state.isPeriodDay && !state.isPeriodStartDay) ...[
                     _periodDayEndButton(
-                        context, focusedDay, state.isPeriodEndDay)
+                        context, focusedDay, state.isPeriodEndDay, userId)
                   ],
                   _periodStatusWidget(context, state, focusedDay)
                 ],
                 if (state is PeriodDayEntryInHistoricalCycleState) ...[
                   if (state.isPeriodStartDay) ...[
                     _periodDayStartButton(
-                        context, focusedDay, state.isPeriodStartDay)
+                        context, focusedDay, state.isPeriodStartDay, userId)
                   ],
                   if (state.isPeriodEndDay) ...[
                     _periodDayEndButton(
-                        context, focusedDay, state.isPeriodEndDay)
+                        context, focusedDay, state.isPeriodEndDay, userId)
                   ],
                   _periodStatusWidget(context, state, focusedDay)
                 ],
@@ -94,7 +97,7 @@ class _DayEntryFormState extends State<DayEntryForm> {
                   _cycleDayStats(focusedDay, presentCycle, isFutureDay: false),
                 ],
                 if (state is DayEntryInPresentCycleState) ...[
-                  _periodDayStartButton(context, focusedDay, false),
+                  _periodDayStartButton(context, focusedDay, false, userId),
                   _cycleDayStats(focusedDay, presentCycle, isFutureDay: false),
                 ],
                 if (state is PastDayEntryOutOfCycleState) ...[
@@ -200,7 +203,7 @@ class _DayEntryFormState extends State<DayEntryForm> {
                     onPressed: () {
                       context
                           .read<DayEntryBloc>()
-                          .add(DayEntryInsertOrUpdate());
+                          .add(DayEntryInsertOrUpdate(widget.userId));
 
                       Navigator.pop(context, true);
                     },
@@ -265,8 +268,8 @@ Widget _cycleDayStats(DateTime focusedDay, Cycle? focusedCycle,
         );
 }
 
-Widget _periodDayStartButton(
-    BuildContext context, DateTime focusedDay, bool isPeriodStartDay) {
+Widget _periodDayStartButton(BuildContext context, DateTime focusedDay,
+    bool isPeriodStartDay, String userId) {
   return TextButton(
       onPressed: () => Navigator.push(
             context,
@@ -278,7 +281,7 @@ Widget _periodDayStartButton(
                   ),
                   BlocProvider(
                     create: (_) => PeriodDayPickerBloc()
-                      ..add(PeriodDaysFetched(focusedDay)),
+                      ..add(PeriodDaysFetched(focusedDay, userId)),
                   ),
                   BlocProvider(
                       create: (_) =>
@@ -297,8 +300,8 @@ Widget _periodDayStartButton(
       ));
 }
 
-Widget _periodDayEndButton(
-    BuildContext context, DateTime focusedDay, bool isPeriodEndDay) {
+Widget _periodDayEndButton(BuildContext context, DateTime focusedDay,
+    bool isPeriodEndDay, String userId) {
   return TextButton(
       onPressed: () {
         Navigator.push(
@@ -310,8 +313,8 @@ Widget _periodDayEndButton(
                   value: context.read<DayEntryBloc>(),
                 ),
                 BlocProvider(
-                  create: (_) =>
-                      PeriodDayPickerBloc()..add(PeriodDaysFetched(focusedDay)),
+                  create: (_) => PeriodDayPickerBloc()
+                    ..add(PeriodDaysFetched(focusedDay, userId)),
                 ),
                 BlocProvider(
                     create: (_) =>

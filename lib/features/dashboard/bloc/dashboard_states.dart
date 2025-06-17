@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:mina_app/data/model/cycle.dart';
 import 'package:mina_app/data/model/day.dart';
 
 abstract class DashboardState extends Equatable {
@@ -21,7 +22,13 @@ class DashboardFocusedDayChanged extends DashboardState {
 
 class DashboardLoadSuccess extends DashboardState {
   final List<Day> days;
-  DashboardLoadSuccess(this.days);
+  DashboardLoadSuccess(
+      {DateTime? nextPeriodDate,
+      required int averageCycleLength,
+      required int averagePeriodLength,
+      required double cycleRegularity,
+      required List<Cycle> recentCycles,
+      required this.days});
 
   @override
   List<Object?> get props => [days];

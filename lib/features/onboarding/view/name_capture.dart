@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:mina_app/data/repositories/cycle_repository.dart';
+import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/features/period_picker/bloc/period_day_picker_bloc.dart';
 import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/onboarding/bloc/onboarding_bloc.dart';
+import 'package:mina_app/services/auth_service.dart';
 
 class NameCapture extends StatefulWidget {
   const NameCapture({super.key});
@@ -79,11 +82,17 @@ class _NameCaptureState extends State<NameCapture> {
             BlocProvider(
               create: (context) {
                 final bloc = PeriodDayPickerBloc();
-                bloc.add(PeriodDaysFetched(DateTime.now()));
+                //ToDo fix the onboarding auth.
+                bloc.add(PeriodDaysFetched(
+                    DateTime.now(), AuthService.instance.currentUser!.id));
                 return bloc;
               },
             ),
-            BlocProvider(create: (context) => DashboardBloc()),
+            BlocProvider(
+                create: (context) => DashboardBloc(
+                    cycleRepository: CycleRepository(),
+                    userId: '',
+                    dayEntryRepository: DayEntryRepository.instance)),
           ],
           child: PeriodDayPickerView(focusedDay: DateTime.now()),
         ),

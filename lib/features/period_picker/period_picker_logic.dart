@@ -14,7 +14,8 @@ import 'package:mina_app/data/model/day.dart';
 import 'package:flutter/foundation.dart';
 
 class PeriodPickerLogic {
-  PeriodPickerLogic();
+  final String userId;
+  PeriodPickerLogic(this.userId);
   List<DateTime> deselecetedPeriodDates = [];
 
   //selectedDates are a list of all the dates that have been selected.
@@ -123,11 +124,12 @@ class PeriodPickerLogic {
         DateTime curDate = Utils().normalizedDate(cycles[i][j]);
 
         // 1. Try to get existing PeriodDay for this date
-        PeriodDay? existingPeriodDay =
-            await DatabaseHelper().getPeriodDayByDate(curDate, txn: txn);
+        PeriodDay? existingPeriodDay = await DatabaseHelper()
+            .getPeriodDayByDate(curDate, userId, txn: txn);
 
         //1.1 Check to see if the day exists in Day table
-        Day? existingDay = await DatabaseHelper().getDay(curDate, txn: txn);
+        Day? existingDay =
+            await DatabaseHelper().getDay(curDate, userId, txn: txn);
         //If a DateTime matches an existing PeriodDay in the PeriodDay table
         //it should only be updated if it is now a periodStartDay or periodEndDay.
 
@@ -152,6 +154,7 @@ class PeriodPickerLogic {
                     isPeriodStartDay: true,
                     isPeriodEndDay: isEnd,
                   ),
+                  userId,
                   txn);
               continue;
             } else {
@@ -170,7 +173,7 @@ class PeriodPickerLogic {
             //record does exist, update it as a start and end day
             PeriodDay updated = existingPeriodDay.copyWith(
                 isPeriodStartDay: true, isPeriodEndDay: isEnd);
-            await DatabaseHelper().updatePeriodDay(updated, txn: txn);
+            await DatabaseHelper().updatePeriodDay(updated, userId, txn: txn);
             continue;
           }
         }
@@ -183,7 +186,7 @@ class PeriodPickerLogic {
               // 3. If not a start day, update it to be a start day, keep flowWeight
               PeriodDay updated = existingPeriodDay.copyWith(
                   isPeriodStartDay: true, isPeriodEndDay: false);
-              await DatabaseHelper().updatePeriodDay(updated, txn: txn);
+              await DatabaseHelper().updatePeriodDay(updated, userId, txn: txn);
             }
           } else {
             // 4. If it does not exist, insert/update as start day
@@ -194,7 +197,8 @@ class PeriodPickerLogic {
                 isPeriodStartDay: true,
                 isPeriodEndDay: false,
               );
-              await DatabaseHelper().insertPeriodDay(newPeriodDay, txn: txn);
+              await DatabaseHelper()
+                  .insertPeriodDay(newPeriodDay, userId, txn: txn);
             } else {
               await DayEntryRepository.instance.updateDayToPeriodDay(
                 PeriodDay(
@@ -217,7 +221,7 @@ class PeriodPickerLogic {
               //Existing record is a periodDay that is not a start or end day; update flags as necessary
               PeriodDay updated = existingPeriodDay.copyWith(
                   isPeriodStartDay: false, isPeriodEndDay: false);
-              await DatabaseHelper().updatePeriodDay(updated, txn: txn);
+              await DatabaseHelper().updatePeriodDay(updated, userId, txn: txn);
             }
           } else {
             if (existingDay == null) {
@@ -227,7 +231,8 @@ class PeriodPickerLogic {
                 isPeriodStartDay: false,
                 isPeriodEndDay: false,
               );
-              await DatabaseHelper().insertPeriodDay(newPeriodDay, txn: txn);
+              await DatabaseHelper()
+                  .insertPeriodDay(newPeriodDay, userId, txn: txn);
             } else {
               await DayEntryRepository.instance.updateDayToPeriodDay(
                 PeriodDay(
@@ -249,6 +254,7 @@ class PeriodPickerLogic {
               await DatabaseHelper().updatePeriodDay(
                   existingPeriodDay.copyWith(
                       isPeriodEndDay: true, isPeriodStartDay: false),
+                  userId,
                   txn: txn);
             }
             //Existing record is a periodEndDay; do nothing
@@ -260,7 +266,8 @@ class PeriodPickerLogic {
                 isPeriodStartDay: false,
                 isPeriodEndDay: true,
               );
-              await DatabaseHelper().insertPeriodDay(newPeriodDay, txn: txn);
+              await DatabaseHelper()
+                  .insertPeriodDay(newPeriodDay, userId, txn: txn);
             } else {
               await DayEntryRepository.instance.updateDayToPeriodDay(
                 PeriodDay(
@@ -282,7 +289,7 @@ class PeriodPickerLogic {
     //If a Day is not a PeriodDay anymore, it should be deleted from the PeriodDay table
     if (deselecetedPeriodDates.isNotEmpty) {
       for (DateTime date in deselecetedPeriodDates) {
-        await DatabaseHelper().deletePeriodDay(date, txn: txn);
+        await DatabaseHelper().deletePeriodDay(date, userId, txn: txn);
       }
     }
     //The database helper class helps on deletion of a PeriodDay entry by marking the
