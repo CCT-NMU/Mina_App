@@ -4,8 +4,8 @@ import 'package:mina_app/data/database/databaseHelper.dart';
 
 class UserRepository {
   UserRepository._privateConstructor();
-  final UserRepository _instance = UserRepository._privateConstructor();
-  UserRepository get instance => _instance;
+  static final UserRepository _instance = UserRepository._privateConstructor();
+  static UserRepository get instance => _instance;
 
   Future<void> insertOrUpdateUserSetting(
       String key, String value, String userId) async {

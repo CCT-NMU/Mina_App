@@ -1,11 +1,39 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:mina_app/common/utils.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/model/cycle.dart';
+import 'package:mina_app/data/model/day.dart';
 import 'package:mina_app/data/model/period_day.dart';
 
 class CycleRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
+
+  Future<Cycle?> getPresentCycle() async {
+    final Cycle? globalCycle = await _dbHelper.getPresentCycle();
+
+    return globalCycle;
+  }
+
+  Future<Cycle?> getCycle(DateTime date) async {
+    final Cycle? cycle = await _dbHelper.getCycle(date);
+
+    return cycle;
+  }
+
+//
+  /// Calculates the menstrual cycle history by evaluating the list of days
+  /// which includes both regular days and period days.
+  ///
+  /// This function retrieves all day records from the database, sorts them by date,
+  /// and identifies the start and end of each menstrual cycle to build a list of
+  /// `Cycle` objects. Each cycle's start date is marked by a `PeriodDay` with
+  /// `isPeriodStartDay` set to true, and the cycle ends the day before the next
+  /// start day. If a cycle is ongoing without a defined end, the current date is
+  /// used as the cycle's end date.
+  ///
+  /// Returns a list of `Cycle` objects representing each identified cycle.
+  /// If an error occurs during processing, an empty list is returned.
 
   Future<List<Cycle>> calculateCycleHistory(String userId) async {
     try {
@@ -69,7 +97,7 @@ class CycleRepository {
       int totalLength = 0;
       for (int i = 0; i < cycles.length - 1; i++) {
         totalLength +=
-            cycles[i + 1].startDate.difference(cycles[i].startDate).inDays;
+            cycles[i + 1].startDate!.difference(cycles[i].startDate!).inDays;
       }
 
       return totalLength ~/ (cycles.length - 1);
@@ -112,7 +140,7 @@ class CycleRepository {
       if (avgCycleLength == 0) return null;
 
       final lastPeriod = cycles.last;
-      return lastPeriod.startDate.add(Duration(days: avgCycleLength));
+      return lastPeriod.startDate!.add(Duration(days: avgCycleLength));
     } catch (e) {
       debugPrint('Error predicting next period: $e');
       return null;

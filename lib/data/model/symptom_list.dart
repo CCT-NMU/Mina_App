@@ -6,18 +6,18 @@ class SymptomList extends Equatable {
   const SymptomList({this.symptoms = const []});
 
   static const List<String> predefinedSymptoms = [
-    'Cramps',
-    'Headache',
-    'Bloating',
-    'Fatigue',
-    'Breast Tenderness',
-    'Back Pain',
-    'Acne',
-    'Nausea',
-    'Dizziness',
-    'Food Cravings',
-    'Insomnia',
-    'Muscle Pain'
+    'Cramps 🩸',
+    'Headache 🤕',
+    'Bloating 🤰',
+    'Fatigue 😴',
+    'Breast Tenderness 🤱',
+    'Back Pain 💢',
+    'Acne 🧖‍♀️',
+    'Nausea 🤢',
+    'Dizziness 🌀',
+    'Food Cravings 🍫',
+    'Insomnia 🌙',
+    'Muscle Pain 💪'
   ];
 
   @override
@@ -36,7 +36,9 @@ class SymptomList extends Equatable {
   }
 
   static SymptomList fromString(String? symptomsString) {
-    if (symptomsString == null || symptomsString.isEmpty) {
+    if (symptomsString == null ||
+        symptomsString.isEmpty ||
+        symptomsString == "") {
       return const SymptomList();
     }
     return SymptomList(symptoms: symptomsString.split(','));

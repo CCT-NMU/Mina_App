@@ -1,5 +1,6 @@
 import 'dart:io' as io;
 import 'package:flutter/material.dart';
+import 'package:mina_app/common/utils.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:mina_app/data/model/model.dart';
@@ -219,11 +220,12 @@ class DatabaseHelper {
   /// Retrieves a day entry from the database for a specific user.
   ///
   /// If a day entry with the given [date] and [userId] does not exist, returns `null`.
-  /// Otherwise, returns the day entry.
-  Future<Day?> getDay(DateTime date, String userId) async {
+  /// Otherwise, returns the Day object or a Period Day object
+  Future<Day?> getDay(DateTime date, String userId, {Transaction? txn}) async {
     final db = await database;
-    final List<Map<String, dynamic>> result = await db.rawQuery('''
-      SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.symptomList,Day.moodList,Day.userId,
+    final executor = txn ?? db;
+    final List<Map<String, dynamic>> result = await executor.rawQuery('''
+      SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.symptomList,Day.moodList,,Day.userId,
       PeriodDay.FlowWeight,PeriodDay.IsPeriodStartDay,PeriodDay.IsPeriodEndDay
       FROM Day
       LEFT JOIN PeriodDay ON Day.Date = PeriodDay.Date AND Day.userId = PeriodDay.userId
@@ -342,6 +344,43 @@ class DatabaseHelper {
     }
   }
 
+//update a Day to a PeriodDay
+  Future<void> updateDayToPeriodDay(PeriodDay periodDay,
+      {Transaction? txn}) async {
+    final db = await database;
+    final executor = txn ?? db;
+    final List<Map<String, dynamic>> result = await executor.query(
+      'Day',
+      where: 'Date = ?',
+      whereArgs: [periodDay.date.toIso8601String()],
+    );
+
+    Map<String, dynamic> existing = result.isNotEmpty ? result.first : {};
+
+    // Merge existing fields if not set in periodDay
+    final updatedMap = {
+      ...existing,
+      ...periodDay.toMap(),
+      'IsPeriodDay': 1,
+      'note': periodDay.note ?? existing['note'],
+      'moodList': periodDay.moodList ?? existing['moodList'],
+      'symptomList': periodDay.symptomList ?? existing['symptomList'],
+    };
+
+    await executor.update(
+      'Day',
+      updatedMap,
+      where: 'Date = ?',
+      whereArgs: [periodDay.date.toIso8601String()],
+    );
+
+    await executor.insert(
+      'PeriodDay',
+      periodDay.toPeriodDayMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
 //updates existing PeriodDay entry
   Future<void> updatePeriodDay(PeriodDay periodDay, String userId,
       {Transaction? txn}) async {
@@ -399,6 +438,18 @@ class DatabaseHelper {
       'Day',
       where: 'Date BETWEEN ? AND ? AND IsPeriodDay = 1 AND userId = ?',
       whereArgs: [start.toIso8601String(), end.toIso8601String(), userId],
+    );
+    return List.generate(maps.length, (i) {
+      return Day.fromMap(maps[i]);
+    });
+  }
+
+  Future<List<Day>> getDaysInRange(DateTime start, DateTime end) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'Day',
+      where: 'Date BETWEEN ? AND ?',
+      whereArgs: [start.toIso8601String(), end.toIso8601String()],
     );
     return List.generate(maps.length, (i) {
       return Day.fromMap(maps[i]);
@@ -478,5 +529,52 @@ class DatabaseHelper {
     final db = await database;
     await db.delete('Cycle',
         where: 'id = ? AND userId = ?', whereArgs: [id, userId]);
+  }
+
+//Cycle operations
+
+  /// Retrieves the latest Cycle record from the database.
+  //
+  /// Returns a Cycle object if a record is found, otherwise returns null.
+  ///
+  /// The query is sorted by the 'id' column in descending order (newest first),
+  /// and limited to a single record (the latest one).
+  Future<Cycle?> getPresentCycle() async {
+    final db = await database;
+
+    final result = await db.query("Cycle", orderBy: "id DESC", limit: 1);
+
+    if (result.isNotEmpty) {
+      return Cycle.fromMap(result.first);
+    } else {
+      return null;
+    }
+  }
+
+  /// Retrieves the Cycle record from the database that contains the given [date].
+  ///
+  /// The query is filtered by the condition that the Cycle's 'startDate' is
+  /// less than or equal to the given [date], and its 'endDate' is either null
+  /// or greater than or equal to the given [date].
+  ///
+  /// Returns a Cycle object if a record is found, otherwise returns null.
+  Future<Cycle?> getCycle(DateTime date) async {
+    final db = await database;
+    print(
+        "getting Cycle with ${Utils().normalizedDate(date).toIso8601String()}");
+    final result = await db.query(
+      "Cycle",
+      where:
+          'date(?) >= date(startDate) AND (date(endDate) IS NULL OR date(?) <= date(endDate))',
+      whereArgs: [
+        Utils().normalizedDate(date).toIso8601String(),
+        Utils().normalizedDate(date).toIso8601String()
+      ],
+    );
+    if (result.isNotEmpty) {
+      return Cycle.fromMap(result.first);
+    } else {
+      return null;
+    }
   }
 }

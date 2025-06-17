@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/model/model.dart';
+import 'package:sqflite/sqflite.dart';
 
 class DayEntryRepository {
   DayEntryRepository._privateConstructor();
@@ -17,18 +18,23 @@ class DayEntryRepository {
     }
   }
 
-  Future<void> insertPeriodDayEntry(PeriodDay periodDay, String userId) async {
+  Future<void> insertPeriodDayEntry(
+      PeriodDay periodDay, String userId, Transaction? txn) async {
     try {
-      await DatabaseHelper().insertPeriodDay(periodDay, userId);
+      await DatabaseHelper().insertPeriodDay(periodDay, userId,
+          txn: txn); //method handles the insertion in
+      //both Day table and PeriodDay table.
     } catch (e) {
       print('Error inserting PeriodDay entry: $e');
       throw Exception('Failed to insert PeriodDay entry');
     }
   }
 
-  getPeriodDaysInRange(DateTime startDate, DateTime endDate, String userId) async {
+  getPeriodDaysInRange(
+      DateTime startDate, DateTime endDate, String userId) async {
     try {
-      return await DatabaseHelper().getPeriodDaysInRange(startDate, endDate, userId);
+      return await DatabaseHelper()
+          .getPeriodDaysInRange(startDate, endDate, userId);
     } catch (e) {
       print('Error retrieving PeriodDays in range: $e');
       throw Exception('Failed to retrieve PeriodDays in range');
@@ -45,9 +51,10 @@ class DayEntryRepository {
     }
   }
 
-   Future<List<Day>> getAllDaysandPeriodDays(String userId) async {
+  Future<List<Day>> getAllDaysandPeriodDays(String userId) async {
     try {
-      final result = await DatabaseHelper().getCombinedDayAndPeriodDayRecords(userId);
+      final result =
+          await DatabaseHelper().getCombinedDayAndPeriodDayRecords(userId);
       return result;
     } catch (e) {
       print('Error retrieving all Days and PeriodDays: $e');
@@ -73,7 +80,31 @@ class DayEntryRepository {
     }
   }
 
-  // NEW: Add updateDay method 
+  Future<List<Day>> getDaysInRange(
+      DateTime firstDayOfPrevMonth, DateTime lastDayOfNextMonth) async {
+    try {
+      return await DatabaseHelper()
+          .getDaysInRange(firstDayOfPrevMonth, lastDayOfNextMonth);
+    } catch (e) {
+      // Log the error and rethrow a custom exception
+      print('Error retrieving Days in range: $e');
+      throw Exception('Failed to retrieve Days in range');
+    }
+  }
+
+  //update Day to a PeriodDay
+  Future<void> updateDayToPeriodDay(
+      PeriodDay periodDay, Transaction? txn) async {
+    try {
+      await DatabaseHelper().updateDayToPeriodDay(periodDay, txn: txn);
+    } catch (e) {
+      // Log the error and rethrow a custom exception
+      print('Error updating Day to PeriodDay: $e');
+      throw Exception('Failed to update Day to PeriodDay');
+    }
+  }
+
+  // NEW: Add updateDay method
   Future<void> updateDayEntry(Day day, String userId) async {
     try {
       await DatabaseHelper().updateDay(day, userId);
@@ -83,7 +114,7 @@ class DayEntryRepository {
     }
   }
 
-  // NEW: Add updatePeriodDay method 
+  // NEW: Add updatePeriodDay method
   Future<void> updatePeriodDayEntry(PeriodDay periodDay, String userId) async {
     try {
       await DatabaseHelper().updatePeriodDay(periodDay, userId);

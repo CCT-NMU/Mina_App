@@ -1,6 +1,13 @@
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
+import 'package:mina_app/data/model/period_day.dart';
+import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
+import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
+import 'package:mina_app/features/dashboard/bloc/dashboard_states.dart';
+import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
+import 'package:mina_app/features/day_entry/bloc/day_entry_event.dart';
+import 'package:mina_app/features/onboarding/bloc/onboarding_bloc.dart';
 import 'package:mina_app/features/widgets/common/menu/menu_drawer.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:mina_app/features/day_entry/view/day_entry_view.dart';
@@ -22,9 +29,7 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView> {
   late DateTime _focusedDay;
   DateTime? _selectedDay;
-  Map<DateTime, List<String>> _events = {};
-  List<Day> periodDays = [];
-  Set<dynamic> periodDayDatesSet = {};
+
 
   // Get current user ID from AuthService
   String get currentUserId => AuthService.instance.requireUserId;
@@ -33,240 +38,109 @@ class _DashboardViewState extends State<DashboardView> {
   void initState() {
     super.initState();
     _focusedDay = DateTime.now();
-    _loadEventsFromDatabase();
   }
 
-  Future<void> _loadEventsFromDatabase() async {
-    try {
-      // Check if user is authenticated before proceeding
-      if (!AuthService.instance.isLoggedIn) {
-        debugPrint('User not authenticated');
-        return;
-      }
 
-      // Get the current month's range
-      final DateTime firstDayOfMonth = DateTime(
-        _focusedDay.year,
-        _focusedDay.month,
-        1,
-      );
-      final DateTime lastDayOfMonth = DateTime(
-        _focusedDay.year,
-        _focusedDay.month + 1,
-        0,
-      );
-
-      // Fetch period days from repository
-      periodDays = await DayEntryRepository.instance
-          .getPeriodDaysInRange(firstDayOfMonth, lastDayOfMonth, currentUserId);
-
-      // Convert to set of DateTimes
-      Set<dynamic> periodSet =
-          periodDays.map((day) => normalizeDate(day.date)).toSet();
-
-      // Update state with new events
-      setState(() {
-        // _events = newEvents;
-        periodDayDatesSet = periodSet;
-      });
-    } catch (e) {
-      debugPrint('Error loading events: $e');
-      // Show error message to user if it's an authentication error
-      if (e.toString().contains('No authenticated user found') && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please log in to view your data'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
+  
 
   @override
   Widget build(BuildContext context) {
-    // Get user info for display
+     // Get user info for display
     final userName = AuthService.instance.currentUserName ?? 'User';
-
-    return BlocProvider(
-      create: (context) => DashboardBloc(
-        cycleRepository: CycleRepository(),
-        userId: currentUserId,
-      )..add(LoadDashboard()),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Mina'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () {
-                context.read<DashboardBloc>().add(RefreshDashboard());
-                _loadEventsFromDatabase(); // Also refresh the calendar data
-              },
-            ),
-          ],
-        ),
-        body: SafeArea(
-          child: Container(
-            decoration: const BoxDecoration(
-                gradient: LinearGradient(
-              colors: [
-                Color.fromARGB(55, 227, 183, 235),
-                Color.fromARGB(55, 233, 30, 98)
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            )),
-            height: double.infinity,
-            width: double.infinity,
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  // Hero Section with personalized greeting
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: const BoxDecoration(
-                      color: Color.fromARGB(178, 132, 77, 151),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(16.0),
-                        bottomRight: Radius.circular(16.0),
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      builder: (context, state) {
+        return SafeArea(
+          child: Scaffold(
+            backgroundColor: Color.fromARGB(255, 255, 255, 255),
+            body: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  title: const Text('Mina'),
+                ),
+                SliverToBoxAdapter(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    // Hero Section
+                    Container(
+                      height: MediaQuery.of(context).size.height * 0.15,
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: const BoxDecoration(
+                        color: Color.fromARGB(178, 132, 77, 151),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(16.0),
+                          bottomRight: Radius.circular(16.0),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Welcome to My Mina $userName!",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            "Track your days and stay organized.",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Welcome to My Mina, $userName!",
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "Track your days and stay organized.",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
+                    // Calendar Section
+                    BlocBuilder<DashboardBloc, DashboardState>(
+                      builder: (context, state) {
+                        if (state is DashboardLoadInProgress) {
+                          return Center(
+                              heightFactor:
+                                  MediaQuery.of(context).size.height * 0.3,
+                              child: CircularProgressIndicator());
+                        }
+                        if (state is DashboardLoadSuccess) {
+                          final periodDays = state.days;
+                          return MultiBlocProvider(
+                            providers: [
+                              BlocProvider.value(
+                                  value: context.read<DashboardBloc>()),
+                              //Start up the CycleTracker
+                              BlocProvider.value(
+                                  value: context.read<CycleTrackerBloc>()),
 
-                  // Calendar Section
-                  Column(
+                              //Start up the DayEntry
+                            ],
+                            child: SizedBox(
+                              child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: myCalendar(periodDays)),
+                            ),
+                          );
+                        } else if (state is DashboardLoadFailure) {
+                          return const Center(
+                              heightFactor: 2,
+                              child: Text('Failed to load events'));
+                        }
+                        return Center(
+                            heightFactor:
+                                MediaQuery.of(context).size.height * 0.5,
+                            child: CircularProgressIndicator());
+                      },
+                    ),
+                  ]),
+                ),
+                SliverToBoxAdapter(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      TableCalendar(
-                        firstDay: DateTime.utc(1670, 1, 1),
-                        lastDay: DateTime.utc(DateTime.now().year + 10, 12, 31),
-                        focusedDay: _focusedDay,
-                        selectedDayPredicate: (day) =>
-                            isSameDay(_selectedDay, day),
-                        calendarFormat: CalendarFormat.month,
-                        headerStyle: const HeaderStyle(
-                          formatButtonVisible: false,
-                          titleCentered: true,
-                        ),
-                        onDaySelected: (selectedDay, focusedDay) async {
-                          setState(() {
-                            _selectedDay = selectedDay;
-                            _focusedDay = focusedDay;
-                          });
-                          final result = await Navigator.of(context)
-                              .push(_createRoute(normalizeDate(_focusedDay)));
-
-                          if (result == true) {
-                            _loadEventsFromDatabase();
-                            //context.read<DashboardBloc>().add(RefreshDashboard());
-                          }
-                        },
-                        onPageChanged: (focusedDay) {
-                          //Change the focused day and reload days from the
-                          //database
-                          setState(() {
-                            _focusedDay = focusedDay;
-                          });
-                          _loadEventsFromDatabase();
-                        },
-                        //eventLoader: _getEventsForDay,
-                        calendarBuilders: CalendarBuilders(
-                          prioritizedBuilder: (context, day, focusedDay) {
-                            var isPeriodDay =
-                                periodDayDatesSet.contains(normalizeDate(day));
-
-                            return Container(
-                              width: 50,
-                              decoration: BoxDecoration(
-                                color: isPeriodDay
-                                    ? const Color.fromARGB(120, 244, 67, 54)
-                                    : null,
-                                shape: BoxShape.circle,
-                                border: normalizeDate(day) ==
-                                        normalizeDate(DateTime.now())
-                                    ? Border.all(
-                                        color: const Color.fromARGB(
-                                            255, 54, 111, 244),
-                                        width: 2,
-                                      )
-                                    : null,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '${day.day}',
-                                  style: TextStyle(
-                                    color: isPeriodDay
-                                        ? Colors.white
-                                        : Colors.black,
-                                    // isPeriodDay ? Colors.white : Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        calendarStyle: CalendarStyle(
-                          withinRangeDecoration: const BoxDecoration(
-                            color: Color.fromARGB(116, 255, 102, 199),
-                            shape: BoxShape.circle,
-                          ),
-                          selectedTextStyle: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          rangeHighlightColor:
-                              const Color.fromARGB(124, 255, 102, 224),
-                          markerDecoration: const BoxDecoration(
-                            color: null,
-                            shape: BoxShape.circle,
-                          ),
-                          todayDecoration: periodDayDatesSet
-                                  .contains(normalizeDate(DateTime.now()))
-                              ? const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                )
-                              : const BoxDecoration(
-                                  color: Color.fromARGB(180, 33, 149, 243),
-                                  shape: BoxShape.circle,
-                                ),
-                          selectedDecoration: const BoxDecoration(
-                            color: Color.fromARGB(0, 76, 175, 79),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-
-                      // Menstrual Information Sections
-
-                      const SizedBox(
-                        height: 20,
-                      ),
+                      const SizedBox(height: 20),
                       _buildInfoSection(
                         context,
                         title: "Understanding Your Cycle",
@@ -348,17 +222,16 @@ class _DashboardViewState extends State<DashboardView> {
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+            drawer: const MenuDrawer(),
           ),
-        ),
-        drawer: const MenuDrawer(),
-      ),
+        );
+      },
     );
   }
 
-  //method to normalize DateTime objects in a list
   DateTime normalizeDate(DateTime date) {
     return DateTime(date.year, date.month, date.day);
   }
@@ -378,31 +251,70 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  Route _createRoute(DateTime focusedDay) {
+  Route _createRoute(DateTime focusedDay, DashboardBloc dashboardBloc,
+      CycleTrackerBloc cycleTrackerBloc) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) {
         return FutureBuilder<Day?>(
-            future: DayEntryRepository.instance
-                .getDayEntry(focusedDay, currentUserId),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Scaffold(
-                  body: Center(child: Text('Error: ${snapshot.error}')),
-                );
-              }
-              if (snapshot.hasData) {
-                return DayEntryView(
+          future: DayEntryRepository.instance.getDayEntry(focusedDay),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Scaffold(
+                body: Center(child: Text('Error: ${snapshot.error}')),
+              );
+            }
+            if (snapshot.data is PeriodDay) {
+              final periodDay = snapshot.data as PeriodDay;
+              return MultiBlocProvider(
+                providers: [
+                  BlocProvider.value(
+                      value: cycleTrackerBloc
+                        ..add(const CycleTrackerStarted())),
+                  BlocProvider.value(value: dashboardBloc),
+                  BlocProvider(
+                    create: (_) =>
+                        DayEntryBloc()..add(DayEntryFetch(focusedDay)),
+                  ),
+                ],
+                child: DayEntryView(
+                  focusedDay: focusedDay,
+                  existingDay: periodDay,
+                  userId: currentUserId,
+                ),
+              );
+            } else if (snapshot.data is Day) {
+              final day = snapshot.data as Day;
+              return MultiBlocProvider(
+                providers: [
+                  BlocProvider.value(value: cycleTrackerBloc),
+                  BlocProvider.value(value: dashboardBloc),
+                  BlocProvider(
+                    create: (_) =>
+                        DayEntryBloc()..add(DayEntryFetch(focusedDay)),
+                  ),
+                ],
+                child: DayEntryView(
                   focusedDay: focusedDay,
                   existingDay: snapshot.data,
-                  userId: currentUserId,
+                   userId: currentUserId,
                 );
               }
-              return DayEntryView(
+                return MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: cycleTrackerBloc),
+                BlocProvider.value(value: dashboardBloc),
+                BlocProvider(
+                  create: (_) => DayEntryBloc()..add(DayEntryFetch(focusedDay)),
+                ),
+              ],
+              child: DayEntryView(
                 focusedDay: focusedDay,
+                existingDay: snapshot.data,
                 userId: currentUserId,
-              );
+              ),
+            );
             });
       },
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -415,6 +327,114 @@ class _DashboardViewState extends State<DashboardView> {
 
         return SlideTransition(position: animation.drive(tween), child: child);
       },
+    );
+  }
+
+  Widget myCalendar(List<Day> periodDays) {
+    return TableCalendar(
+      firstDay: DateTime.utc(1670, 1, 1),
+      lastDay: DateTime.utc(DateTime.now().year + 10, 12, 31),
+      focusedDay: _focusedDay,
+      selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+      calendarFormat: CalendarFormat.month,
+      headerStyle: const HeaderStyle(
+        formatButtonVisible: false,
+        titleCentered: true,
+      ),
+      onDaySelected: (selectedDay, focusedDay) async {
+        setState(() {
+          _selectedDay = selectedDay;
+          _focusedDay = focusedDay;
+        });
+        final dashboardBloc = context.read<DashboardBloc>();
+        final cycleTrackerBloc = context.read<CycleTrackerBloc>();
+        final result = await Navigator.of(context).push(_createRoute(
+            normalizeDate(_focusedDay), dashboardBloc, cycleTrackerBloc));
+        if (result == true) {
+          dashboardBloc.add(LoadDashboard(_focusedDay));
+        }
+      },
+      onPageChanged: (focusedDay) {
+        context.read<DashboardBloc>().add(CalendarChanged(focusedDay));
+        setState(() {
+          _focusedDay = focusedDay;
+        });
+      },
+      calendarBuilders: CalendarBuilders(
+        prioritizedBuilder: (context, day, focusedDay) {
+          final Day dayEntry = periodDays.firstWhere(
+            (d) => normalizeDate(d.date) == normalizeDate(day),
+            orElse: () => Day(date: DateTime(0, 0, 0), isPeriodDay: false),
+          );
+
+          bool isPeriodDay = false;
+          bool isToday = normalizeDate(day) == normalizeDate(DateTime.now());
+          bool hasNote = false;
+          bool hasMood_or_Symptoms = false;
+
+          if (dayEntry.date != DateTime(0, 0, 0)) {
+            isPeriodDay = dayEntry.isPeriodDay == true;
+            hasNote = dayEntry.note != null && dayEntry.note != "";
+            hasMood_or_Symptoms =
+                (dayEntry.moodList?.moods.isNotEmpty ?? false) ||
+                    (dayEntry.symptomList?.symptoms.isNotEmpty ?? false);
+          }
+          return Container(
+            width: 50,
+            decoration: BoxDecoration(
+                color: isPeriodDay ? Color.fromARGB(120, 244, 67, 54) : null,
+                shape: BoxShape.circle,
+                border: isToday
+                    ? Border.all(
+                        color: const Color.fromARGB(255, 54, 111, 244),
+                        width: 2,
+                      )
+                    : null),
+            child: Stack(alignment: Alignment.center, children: [
+              Center(
+                child: Text(
+                  '${day.day}',
+                  style: TextStyle(
+                    color: isPeriodDay ? Colors.white : Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (hasNote)
+                const Positioned(
+                  bottom: 4,
+                  right: 4,
+                  child: Icon(Icons.edit, size: 14, color: Colors.purple),
+                ),
+              if (hasMood_or_Symptoms)
+                const Positioned(
+                  bottom: 4,
+                  left: 4,
+                  child: Icon(Icons.favorite, size: 14, color: Colors.purple),
+                )
+            ]),
+          );
+        },
+      ),
+      calendarStyle: const CalendarStyle(
+        withinRangeDecoration: BoxDecoration(
+          color: Color.fromARGB(116, 255, 102, 199),
+          shape: BoxShape.circle,
+        ),
+        selectedTextStyle: TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+        ),
+        rangeHighlightColor: Color.fromARGB(124, 255, 102, 224),
+        markerDecoration: BoxDecoration(
+          color: null,
+          shape: BoxShape.circle,
+        ),
+        selectedDecoration: BoxDecoration(
+          color: Color.fromARGB(0, 76, 175, 79),
+          shape: BoxShape.circle,
+        ),
+      ),
     );
   }
 }
