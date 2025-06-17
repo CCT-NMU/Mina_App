@@ -1,101 +1,94 @@
+/// lib/ui/notes_view.dart
 import 'package:flutter/material.dart';
-import 'package:mina_app/features/note_taking/note_editor_view.dart';
+import '../../data/database/notedb.dart';
+import '/data/model/note.dart';
+import 'note_editor_view.dart';
 
 class NotesView extends StatefulWidget {
   const NotesView({super.key});
-
   @override
   State<NotesView> createState() => _NotesViewState();
 }
 
 class _NotesViewState extends State<NotesView> {
-  final List<Map<String, String>> _notes = [];
+  late Future<List<Note>> _notesFuture;
 
-  void _openNoteEditor({Map<String, String>? existingNote, int? index}) async {
-    final result = await Navigator.push<Map<String, String>>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => NoteEditorView(
-          initialTitle: existingNote?['title'],
-          initialContent: existingNote?['content'],
-        ),
-      ),
-    );
-
-    if (result != null) {
-      setState(() {
-        if (index != null && index < _notes.length) {
-          _notes[index] = result;
-        } else {
-          _notes.add(result);
-        }
-      });
-    }
+  @override
+  void initState() {
+    super.initState();
+    _reload();
   }
 
-  void _deleteNoteAt(int index) {
-    setState(() {
-      _notes.removeAt(index);
-    });
+  void _reload() => _notesFuture = NoteDb.instance.readAll();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Note deleted")),
+  Future<void> _openEditor([Note? note]) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => NoteEditorView(note: note)),
     );
+    if (changed == true && mounted) setState(_reload);
+  }
+
+  Future<void> _delete(Note n) async {
+    await NoteDb.instance.delete(n.id!);
+    if (mounted) {
+      setState(_reload);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Note deleted')));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Notes"),
-        elevation: 2,
-      ),
-      body: _notes.isEmpty
-          ? const Center(child: Text("No notes yet. Tap + to add one."))
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: _notes.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final note = _notes[index];
-                return Dismissible(
-                  key: UniqueKey(),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.deepPurpleAccent[100],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: const Icon(Icons.delete, color: Colors.white),
-                  ),
-                  onDismissed: (direction) {
-                    _deleteNoteAt(index);
-                  },
-                  child: ClipRRect(
+      appBar: AppBar(title: const Text('Notes'), elevation: 2),
+      body: FutureBuilder<List<Note>>(
+        future: _notesFuture,
+        builder: (context, snap) {
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final notes = snap.data!;
+          if (notes.isEmpty) {
+            return const Center(child: Text('No notes yet. Tap + to add one.'));
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: notes.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (_, i) {
+              final n = notes[i];
+              return Dismissible(
+                key: ValueKey(n.id),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurpleAccent[100],
                     borderRadius: BorderRadius.circular(12),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ),
-                      tileColor: Colors.deepPurple[50],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      title: Text(note["title"] ?? "Untitled"),
-                      onTap: () => _openNoteEditor(
-                        existingNote: note,
-                        index: index,
-                      ),
-                    ),
                   ),
-                );
-              },
-            ),
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                onDismissed: (_) => _delete(n),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 16),
+                    tileColor: Colors.deepPurple[50],
+                    title: Text(n.title.isEmpty ? 'Untitled' : n.title),
+                    onTap: () => _openEditor(n),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _openNoteEditor(),
+        onPressed: () => _openEditor(),
         child: const Icon(Icons.add),
       ),
     );
