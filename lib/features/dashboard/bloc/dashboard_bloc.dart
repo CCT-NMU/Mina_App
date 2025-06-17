@@ -10,19 +10,17 @@ import 'package:mina_app/services/notification_service.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
-  final CycleRepository cycleRepository;
+  final CycleRepository cycleRepository = CycleRepository();
   final PredictionService _predictionService;
   final NotificationService _notificationService;
   final DatabaseHelper _dbHelper;
   final String userId;
 
   DashboardBloc({
-    required this.cycleRepository,
     required this.userId,
     PredictionService? predictionService,
     NotificationService? notificationService,
     DatabaseHelper? dbHelper,
-    required DayEntryRepository dayEntryRepository,
   })  : _predictionService = predictionService ?? PredictionService(),
         _notificationService = notificationService ?? NotificationService(),
         _dbHelper = dbHelper ?? DatabaseHelper(),

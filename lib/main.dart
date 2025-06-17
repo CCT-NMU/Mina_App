@@ -54,7 +54,9 @@ class MinaApp extends StatelessWidget {
             create: (context) => CycleTrackerBloc(),
           ),
           BlocProvider<DashboardBloc>(
-            create: (context) => DashboardBloc(),
+            create: (context) => DashboardBloc(
+              userId: '',
+            ),
           ),
           BlocProvider<OnboardingBloc>(
             create: (_) => OnboardingBloc()..add(OnboardingCompleted()),
@@ -76,11 +78,8 @@ class AuthWrapper extends StatelessWidget {
           );
         } else if (state is AuthAuthenticated) {
           //find any existing days.
-          if (state.profile != null) {
-            if (state.profile!['avg_period_length'] != null) {
-              return const DashboardView();
-            }
-          }
+
+          return const DashboardView();
         } else {
           return const LoginView();
         }

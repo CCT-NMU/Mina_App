@@ -163,10 +163,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                               providers: [
                                 BlocProvider(
                                   create: (context) => DashboardBloc(
-                                      cycleRepository: CycleRepository(),
                                       userId: widget.userId,
-                                      dayEntryRepository:
-                                          DayEntryRepository.instance,
                                       predictionService: PredictionService(),
                                       dbHelper: DatabaseHelper()),
                                 ),

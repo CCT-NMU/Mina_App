@@ -89,10 +89,10 @@ class _NameCaptureState extends State<NameCapture> {
               },
             ),
             BlocProvider(
-                create: (context) => DashboardBloc(
-                    cycleRepository: CycleRepository(),
-                    userId: '',
-                    dayEntryRepository: DayEntryRepository.instance)),
+              create: (context) => DashboardBloc(
+                userId: '',
+              ),
+            )
           ],
           child: PeriodDayPickerView(focusedDay: DateTime.now()),
         ),
