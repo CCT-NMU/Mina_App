@@ -28,7 +28,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<LoadDashboard>((event, emit) async {
       emit(DashboardLoadInProgress());
 
-      _onLoadDashboard(event, emit);
+      await _onLoadDashboard(event, emit);
     });
     // on<RefreshDashboard>(_onRefreshDashboard);
 
@@ -101,46 +101,48 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     LoadDashboard event,
     Emitter<DashboardState> emit,
   ) async {
-    try {
-      final stats = await _predictionService.getPredictionStats(userId);
-      final nextPeriod = await _predictionService.predictNextPeriod(userId);
-      final cycles = await cycleRepository.calculateCycleHistory(userId);
-      final days = await _loadEventsFromDatabase(event.focusedDay);
-      // Schedule notification if enabled
-      final settings = await _dbHelper.getAllSettings(userId);
-      final enableReminders = settings['enable_period_reminders'] == 'true';
-      final reminderDays = int.parse(settings['reminder_days'] ?? '2');
+    {
+      try {
+        final stats = await _predictionService.getPredictionStats(userId);
+        final nextPeriod = await _predictionService.predictNextPeriod(userId);
+        final cycles = await cycleRepository.calculateCycleHistory(userId);
+        final days = await _loadEventsFromDatabase(event.focusedDay);
+        // Schedule notification if enabled
+        final settings = await _dbHelper.getAllSettings(userId);
+        final enableReminders = settings['enable_period_reminders'] == 'true';
+        final reminderDays = int.parse(settings['reminder_days'] ?? '2');
 
-      if (enableReminders && nextPeriod != null) {
-        await _notificationService.schedulePeriodReminder(nextPeriod, userId);
-      }
+        if (enableReminders && nextPeriod != null) {
+          await _notificationService.schedulePeriodReminder(nextPeriod, userId);
+        }
 
-      if (days == null) {
-        emit(DashboardLoadSuccess(
-            averageCycleLength: -1,
-            averagePeriodLength: -1,
-            cycleRegularity: -1,
-            recentCycles: [],
-            days: []));
-      } else {
-        emit(DashboardLoadSuccess(
-          nextPeriodDate: nextPeriod,
-          averageCycleLength: stats['averageCycleLength'] as int,
-          averagePeriodLength: stats['averagePeriodLength'] as int,
-          cycleRegularity: stats['cycleRegularity'] as double,
-          recentCycles: cycles,
-          days: days,
-        ));
+        if (days == null) {
+          emit(DashboardLoadSuccess(
+              averageCycleLength: -1,
+              averagePeriodLength: -1,
+              cycleRegularity: -1,
+              recentCycles: [],
+              days: []));
+        } else {
+          emit(DashboardLoadSuccess(
+            nextPeriodDate: nextPeriod,
+            averageCycleLength: stats['averageCycleLength'] as int,
+            averagePeriodLength: stats['averagePeriodLength'] as int,
+            cycleRegularity: stats['cycleRegularity'] as double,
+            recentCycles: cycles,
+            days: days,
+          ));
+        }
+      } catch (e) {
+        emit(DashboardLoadFailure(e.toString()));
       }
-    } catch (e) {
-      emit(DashboardLoadFailure(e.toString()));
     }
-  }
 
-  Future<void> _onRefreshDashboard(
-    RefreshDashboard event,
-    Emitter<DashboardState> emit,
-  ) async {
-    await _onLoadDashboard(LoadDashboard(event.focusedDay), emit);
+    Future<void> _onRefreshDashboard(
+      RefreshDashboard event,
+      Emitter<DashboardState> emit,
+    ) async {
+      await _onLoadDashboard(LoadDashboard(event.focusedDay), emit);
+    }
   }
 }

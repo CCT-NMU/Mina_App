@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/data/repositories/user_repository.dart';
 import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
+import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
+import 'package:mina_app/features/dashboard/bloc/dashboard_states.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
 import 'package:mina_app/features/onboarding/bloc/onboarding_bloc.dart';
 import 'package:mina_app/features/onboarding/view/welcome.dart';
@@ -56,12 +58,17 @@ class MinaApp extends StatelessWidget {
           BlocProvider<DashboardBloc>(
             create: (context) => DashboardBloc(
               userId: '',
-            ),
+            )..add(LoadDashboard(DateTime.now())),
           ),
           BlocProvider<OnboardingBloc>(
             create: (_) => OnboardingBloc()..add(OnboardingCompleted()),
           ),
-        ], child: AuthWrapper()));
+          //remove this BlocProvider
+          BlocProvider<AuthBloc>(
+            create: (_) => AuthBloc(),
+          )
+        ], child: DashboardView() //AuthWrapper()
+            ));
   }
 }
 

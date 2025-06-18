@@ -1,9 +1,8 @@
-class Symptom {
-
+class AppSymptom {
   String name;
   bool? isActive;
 
-  Symptom({required this.name, this.isActive});
+  AppSymptom.Symptom({required this.name, this.isActive});
 
   setActive(bool isActive) {
     this.isActive = isActive;
@@ -13,7 +12,7 @@ class Symptom {
     return isActive;
   }
 
-  String getName(){
+  String getName() {
     return name;
   }
 }

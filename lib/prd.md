@@ -34,8 +34,8 @@ The following table outlines the detailed functional requirements of the Mina Me
 ## Technical Notes
 
 1. **Data Layer**:
-   - SQLite database for local storage
-   - Cloud Firestore for cloud sync functionality
+   - Drift database for local storage
+   - Cloud Supabase for cloud sync functionality
    - JSON format for data exports
 
 2. **Architecture**:
@@ -45,5 +45,5 @@ The following table outlines the detailed functional requirements of the Mina Me
 
 3. **Dependencies**:
    - Flutter SDK for cross-platform development
-   - Firebase for authentication and cloud services
+   - Supabase for authentication and cloud services
    - Syncfusion Flutter Charts for data visualization

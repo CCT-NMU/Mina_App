@@ -27,7 +27,7 @@
 3. Repositories
    - DayEntryRepository: Handles Day and PeriodDay CRUD operations
    - CycleRepository: Manages cycle calculations and history
-
+   - UserRepository: Manages the User settings.
 ### UI Layer
 1. Views
    - DayEntryView: Form for entering day information
@@ -87,10 +87,10 @@
    - [ ] Add performance benchmarks
 
 ## Next Steps (Priority Order)
-1. Complete basic CRUD operations for Day and PeriodDay
-2. Implement cycle calculation logic
+1. Complete basic CRUD operations for Day and PeriodDay ./
+2. Implement cycle calculation logic      ./
 3. Add comprehensive error handling
 4. Complete unit tests for existing functionality
-5. Implement calendar view
+5. Implement calendar view ./
 6. Add statistics calculation
 7. Create data visualization components

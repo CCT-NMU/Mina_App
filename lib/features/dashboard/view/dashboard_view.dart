@@ -2,6 +2,7 @@ import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:mina_app/data/model/period_day.dart';
+import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_states.dart';
@@ -43,188 +44,191 @@ class _DashboardViewState extends State<DashboardView> {
   Widget build(BuildContext context) {
     // Get user info for display
     final userName = AuthService.instance.currentUserName ?? 'User';
-    return BlocBuilder<DashboardBloc, DashboardState>(
-      builder: (context, state) {
-        return SafeArea(
-          child: Scaffold(
-            backgroundColor: Color.fromARGB(255, 255, 255, 255),
-            body: CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  title: const Text('Mina'),
-                ),
-                SliverToBoxAdapter(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    // Hero Section
-                    Container(
-                      height: MediaQuery.of(context).size.height * 0.15,
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: const BoxDecoration(
-                        color: Color.fromARGB(178, 132, 77, 151),
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(16.0),
-                          bottomRight: Radius.circular(16.0),
+    return BlocProvider.value(
+      value: context.read<AuthBloc>(),
+      child: BlocBuilder<DashboardBloc, DashboardState>(
+        builder: (context, state) {
+          return SafeArea(
+            child: Scaffold(
+              backgroundColor: Color.fromARGB(255, 255, 255, 255),
+              body: CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    title: const Text('Mina'),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      // Hero Section
+                      Container(
+                        height: MediaQuery.of(context).size.height * 0.15,
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: const BoxDecoration(
+                          color: Color.fromARGB(178, 132, 77, 151),
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(16.0),
+                            bottomRight: Radius.circular(16.0),
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Welcome to My Mina $userName!",
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              "Track your days and stay organized.",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Welcome to My Mina $userName!",
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            "Track your days and stay organized.",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Calendar Section
-                    BlocBuilder<DashboardBloc, DashboardState>(
-                      builder: (context, state) {
-                        if (state is DashboardLoadInProgress) {
+                      const SizedBox(height: 20),
+                      // Calendar Section
+                      BlocBuilder<DashboardBloc, DashboardState>(
+                        builder: (context, state) {
+                          if (state is DashboardLoadInProgress) {
+                            return Center(
+                                heightFactor:
+                                    MediaQuery.of(context).size.height * 0.3,
+                                child: CircularProgressIndicator());
+                          }
+                          if (state is DashboardLoadSuccess) {
+                            final periodDays = state.days;
+                            return MultiBlocProvider(
+                              providers: [
+                                BlocProvider.value(
+                                    value: context.read<DashboardBloc>()),
+                                //Start up the CycleTracker
+                                BlocProvider.value(
+                                    value: context.read<CycleTrackerBloc>()),
+
+                                //Start up the DayEntry
+                              ],
+                              child: SizedBox(
+                                child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 8.0),
+                                    child: myCalendar(periodDays)),
+                              ),
+                            );
+                          } else if (state is DashboardLoadFailure) {
+                            return const Center(
+                                heightFactor: 2,
+                                child: Text('Failed to load events'));
+                          }
                           return Center(
                               heightFactor:
-                                  MediaQuery.of(context).size.height * 0.3,
+                                  MediaQuery.of(context).size.height * 0.5,
                               child: CircularProgressIndicator());
-                        }
-                        if (state is DashboardLoadSuccess) {
-                          final periodDays = state.days;
-                          return MultiBlocProvider(
-                            providers: [
-                              BlocProvider.value(
-                                  value: context.read<DashboardBloc>()),
-                              //Start up the CycleTracker
-                              BlocProvider.value(
-                                  value: context.read<CycleTrackerBloc>()),
-
-                              //Start up the DayEntry
-                            ],
-                            child: SizedBox(
-                              child: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 8.0),
-                                  child: myCalendar(periodDays)),
-                            ),
-                          );
-                        } else if (state is DashboardLoadFailure) {
-                          return const Center(
-                              heightFactor: 2,
-                              child: Text('Failed to load events'));
-                        }
-                        return Center(
-                            heightFactor:
-                                MediaQuery.of(context).size.height * 0.5,
-                            child: CircularProgressIndicator());
-                      },
-                    ),
-                  ]),
-                ),
-                SliverToBoxAdapter(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildInfoSection(
-                        context,
-                        title: "Understanding Your Cycle",
-                        description:
-                            "Learn about the phases of your menstrual cycle.",
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text("Understanding Your Cycle"),
-                                content: const Text(
-                                  "The menstrual cycle has four phases: menstrual, follicular, ovulation, and luteal. "
-                                  "Each phase plays a vital role in your reproductive health.",
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(),
-                                    child: const Text("Close"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
                         },
                       ),
-                      _buildInfoSection(
-                        context,
-                        title: "Healthy Habits",
-                        description: "Tips for maintaining menstrual health.",
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text("Healthy Habits"),
-                                content: const Text(
-                                  "Maintain a balanced diet, stay hydrated, exercise regularly, and get enough sleep "
-                                  "to support your menstrual health.",
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(),
-                                    child: const Text("Close"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      _buildInfoSection(
-                        context,
-                        title: "Common Symptoms",
-                        description: "Explore common symptoms and remedies.",
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text("Common Symptoms"),
-                                content: const Text(
-                                  "Common menstrual symptoms include cramps, bloating, mood swings, and fatigue. "
-                                  "Remedies include pain relievers, heat therapy, and relaxation techniques.",
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(),
-                                    child: const Text("Close"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ],
+                    ]),
                   ),
-                ),
-              ],
+                  SliverToBoxAdapter(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildInfoSection(
+                          context,
+                          title: "Understanding Your Cycle",
+                          description:
+                              "Learn about the phases of your menstrual cycle.",
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text("Understanding Your Cycle"),
+                                  content: const Text(
+                                    "The menstrual cycle has four phases: menstrual, follicular, ovulation, and luteal. "
+                                    "Each phase plays a vital role in your reproductive health.",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: const Text("Close"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        _buildInfoSection(
+                          context,
+                          title: "Healthy Habits",
+                          description: "Tips for maintaining menstrual health.",
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text("Healthy Habits"),
+                                  content: const Text(
+                                    "Maintain a balanced diet, stay hydrated, exercise regularly, and get enough sleep "
+                                    "to support your menstrual health.",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: const Text("Close"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        _buildInfoSection(
+                          context,
+                          title: "Common Symptoms",
+                          description: "Explore common symptoms and remedies.",
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text("Common Symptoms"),
+                                  content: const Text(
+                                    "Common menstrual symptoms include cramps, bloating, mood swings, and fatigue. "
+                                    "Remedies include pain relievers, heat therapy, and relaxation techniques.",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: const Text("Close"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              drawer: const MenuDrawer(),
             ),
-            drawer: const MenuDrawer(),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

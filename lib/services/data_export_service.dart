@@ -17,7 +17,7 @@ class DataExportService {
   })  : _dbHelper = dbHelper ?? DatabaseHelper(),
         _cycleRepository = cycleRepository ?? CycleRepository();
 
-  Future<String> exportToCsv( String userId) async {
+  Future<String> exportToCsv(String userId) async {
     final days = await _dbHelper.getCombinedDayAndPeriodDayRecords(userId);
     final cycles = await _cycleRepository.calculateCycleHistory(userId);
 

@@ -1,5 +1,4 @@
 class Mood {
-
   String name;
   bool? isActive;
 
@@ -13,8 +12,7 @@ class Mood {
     return isActive;
   }
 
-  getName(){
+  getName() {
     return name;
   }
-
 }
