@@ -13,7 +13,7 @@ import 'dart:io';
 
 part 'drift_database.g.dart';
 
-class UserSettingsTable extends Table {
+class AppUserSettings extends Table {
   TextColumn get key => text()();
   TextColumn get value => text()();
   TextColumn get userId => text()();
@@ -22,7 +22,7 @@ class UserSettingsTable extends Table {
   Set<Column> get primaryKey => {key, userId};
 }
 
-class Days extends Table {
+class AppDays extends Table {
   TextColumn get date => text()();
   BoolColumn get isPeriodDay => boolean().withDefault(const Constant(false))();
   TextColumn get note => text().nullable()();
@@ -34,7 +34,7 @@ class Days extends Table {
   Set<Column> get primaryKey => {date, userId};
 }
 
-class PeriodDays extends Table {
+class AppPeriodDays extends Table {
   TextColumn get date => text()();
   IntColumn get flowWeight => integer().nullable()();
   BoolColumn get isPeriodStartDay =>
@@ -47,7 +47,7 @@ class PeriodDays extends Table {
   Set<Column> get primaryKey => {date, userId};
 }
 
-class Cycles extends Table {
+class AppCycles extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get startDate => text()();
   TextColumn get periodEndDate => text().nullable()();
@@ -55,17 +55,17 @@ class Cycles extends Table {
   TextColumn get userId => text()();
 }
 
-class Moods extends Table {
+class AppMoods extends Table {
   TextColumn get date => text()();
   TextColumn get name => text()();
 }
 
-class Symptoms extends Table {
+class AppSymptoms extends Table {
   TextColumn get date => text()();
   TextColumn get name => text()();
 }
 
-class Notes extends Table {
+class AppNotes extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get title => text()();
   TextColumn get content => text()();
@@ -75,21 +75,21 @@ class Notes extends Table {
 
 //,DaysDao,PeriodDaysDao,CyclesDao,MoodsDao,SymptomsDao
 @DriftDatabase(tables: [
-  UserSettingsTable,
-  Days,
-  PeriodDays,
-  Cycles,
-  Moods,
-  Symptoms,
-  Notes
+  AppUserSettings,
+  AppDays,
+  AppPeriodDays,
+  AppCycles,
+  AppMoods,
+  AppSymptoms,
+  AppNotes
 ], daos: [
-  UserSettingsTableDao,
-  DaysDao,
-  PeriodDaysDao,
-  CyclesDao,
-  MoodsDao,
-  SymptomsDao,
-  NotesDao
+  AppUserSettingsDao,
+  AppDaysDao,
+  AppPeriodDaysDao,
+  AppCyclesDao,
+  AppMoodsDao,
+  AppSymptomsDao,
+  AppNotesDao
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(QueryExecutor e) : super(e);

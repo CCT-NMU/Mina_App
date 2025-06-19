@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:mina_app/data/database/drift_database.dart';
 import '../../data/database/notedb.dart';
+import 'package:mina_app/data/repositories/note_repository.dart';
+import 'package:mina_app/data/database/notes_dao.dart';
 import '/data/model/note.dart';
 
 class NoteEditorView extends StatefulWidget {
   final Note? note; // null ⇒ new note
-
   const NoteEditorView({super.key, this.note});
 
   @override
@@ -15,7 +17,10 @@ class _NoteEditorViewState extends State<NoteEditorView> {
   late final _titleCtrl = TextEditingController(text: widget.note?.title ?? '');
   late final _contentCtrl =
       TextEditingController(text: widget.note?.content ?? '');
-
+  final database = AppDatabase(
+      /* provide required argument here */); // Create the database instance
+  final notesDao = AppNotesDao(database); // Inject database into DAO
+  final noteRepository = NoteRepository(notesDao); // Inject DAO into repository
   Future<void> _save() async {
     final title = _titleCtrl.text.trim();
     final content = _contentCtrl.text.trim();
@@ -34,7 +39,7 @@ class _NoteEditorViewState extends State<NoteEditorView> {
     if (note.id == null) {
       await NoteDb.instance.create(note);
     } else {
-      await NoteDb.instance.update(note);
+      await NoteRepository(NoteDb.instance).updateNote(note);
     }
     if (mounted) Navigator.pop(context, true); // tell caller to refresh
   }

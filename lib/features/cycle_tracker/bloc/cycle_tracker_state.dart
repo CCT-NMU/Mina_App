@@ -10,6 +10,7 @@ sealed class CycleTrackerState extends Equatable {
   List<Object> get props => [
         presentCycle ??
             Cycle(
+                userId: "",
                 startDate: DateTime(0, 0, 0),
                 endDate: null,
                 periodEndDate: null)
@@ -23,6 +24,7 @@ final class CycleTrackerInitial extends CycleTrackerState {
   List<Object> get props => [
         presentCycle ??
             Cycle(
+                userId: "",
                 startDate: DateTime(0, 0, 0),
                 endDate: null,
                 periodEndDate: null)
@@ -47,6 +49,7 @@ final class CycleTrackerCycleFetched extends CycleTrackerState {
         focusedDayCycle,
         presentCycle ??
             Cycle(
+                userId: "",
                 startDate: DateTime(0, 0, 0),
                 endDate: null,
                 periodEndDate: null)

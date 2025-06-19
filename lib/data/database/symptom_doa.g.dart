@@ -3,6 +3,6 @@
 part of 'symptom_doa.dart';
 
 // ignore_for_file: type=lint
-mixin _$SymptomsDaoMixin on DatabaseAccessor<AppDatabase> {
-  $SymptomsTable get symptoms => attachedDatabase.symptoms;
+mixin _$AppSymptomsDaoMixin on DatabaseAccessor<AppDatabase> {
+  $AppSymptomsTable get appSymptoms => attachedDatabase.appSymptoms;
 }

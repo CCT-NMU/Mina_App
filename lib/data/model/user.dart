@@ -3,9 +3,9 @@ class User {
   String? surname;
   String? email;
   String? birthday;
-  int avgCycleLength; // average length of menstrual cycle
-  int avgPeriodLength; // average length of period
-  DateTime lastestCycleStart;
+  int? avgCycleLength; // average length of menstrual cycle
+  int? avgPeriodLength; // average length of period
+  DateTime? lastestCycleStart;
 
   User(
       {this.name,
@@ -14,8 +14,7 @@ class User {
       this.birthday,
       this.avgCycleLength = 0,
       this.avgPeriodLength = 0,
-      DateTime? lastestCycleStart})
-      : lastestCycleStart = lastestCycleStart ?? DateTime(2025, 04, 07);
+      this.lastestCycleStart});
 
   void updateProfile({String? name, String? email, int? age}) {
     if (name != null) {

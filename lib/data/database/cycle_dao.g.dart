@@ -3,6 +3,6 @@
 part of 'cycle_dao.dart';
 
 // ignore_for_file: type=lint
-mixin _$CyclesDaoMixin on DatabaseAccessor<AppDatabase> {
-  $CyclesTable get cycles => attachedDatabase.cycles;
+mixin _$AppCyclesDaoMixin on DatabaseAccessor<AppDatabase> {
+  $AppCyclesTable get appCycles => attachedDatabase.appCycles;
 }

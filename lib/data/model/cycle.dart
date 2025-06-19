@@ -2,21 +2,24 @@ import 'package:equatable/equatable.dart';
 import 'package:mina_app/common/utils.dart';
 
 class Cycle extends Equatable {
+  final String? userId;
   final DateTime? startDate;
   final DateTime? endDate;
   final DateTime? periodEndDate;
 
   const Cycle({
+    required this.userId,
     required this.startDate,
     this.endDate,
     required this.periodEndDate,
   });
 
   @override
-  List<Object?> get props => [startDate, endDate, periodEndDate];
+  List<Object?> get props => [userId, startDate, endDate, periodEndDate];
 
   Map<String, dynamic> toMap() {
     return {
+      'userId': userId,
       'startDate': startDate!.toIso8601String(),
       'endDate': endDate != null ? endDate!.toIso8601String() : "",
       'periodEndDate':
@@ -26,6 +29,7 @@ class Cycle extends Equatable {
 
   factory Cycle.fromMap(Map<String, dynamic> map) {
     return Cycle(
+      userId: map['userId'],
       startDate: DateTime.parse(map['startDate']),
       endDate: map['endDate'] != "" ? DateTime.parse(map['endDate']) : null,
       periodEndDate: map['periodEndDate'] != ""

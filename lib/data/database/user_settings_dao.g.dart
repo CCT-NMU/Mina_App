@@ -3,7 +3,6 @@
 part of 'user_settings_dao.dart';
 
 // ignore_for_file: type=lint
-mixin _$UserSettingsTableDaoMixin on DatabaseAccessor<AppDatabase> {
-  $UserSettingsTableTable get userSettingsTable =>
-      attachedDatabase.userSettingsTable;
+mixin _$AppUserSettingsDaoMixin on DatabaseAccessor<AppDatabase> {
+  $AppUserSettingsTable get appUserSettings => attachedDatabase.appUserSettings;
 }

@@ -18,25 +18,32 @@ import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/auth/view/login_view.dart';
 import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
+import 'package:mina_app/services/fake_auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase
-  // TODO: (refactor to be more secure)
-  await Supabase.initialize(
-    url: 'https://qvlfvktdzzpcuximbdic.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2bGZ2a3RkenpwY3V4aW1iZGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0MjQ1OTcsImV4cCI6MjA2NDAwMDU5N30.gJbrV1oFuczqPUhs9RMn2ofc6BP1gYGml97jDEfFwzg',
-  );
+  const bool useFakeAuth =
+      true; // Set to true to bypass Supabase and use fake user
+
+  if (!useFakeAuth) {
+    // Initialize Supabase
+    // TODO: (refactor to be more secure)
+    await Supabase.initialize(
+      url: 'https://qvlfvktdzzpcuximbdic.supabase.co',
+      anonKey:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2bGZ2a3RkenpwY3V4aW1iZGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0MjQ1OTcsImV4cCI6MjA2NDAwMDU5N30.gJbrV1oFuczqPUhs9RMn2ofc6BP1gYGml97jDEfFwzg',
+    );
+  }
   // Initialize notifications
   // await NotificationService().initialize();
 
-  runApp(const MinaApp());
+  runApp(MinaApp(useFakeAuth: useFakeAuth));
 }
 
 class MinaApp extends StatelessWidget {
-  const MinaApp({super.key});
+  final bool useFakeAuth;
+  const MinaApp({super.key, this.useFakeAuth = false});
 
 /*   Future<bool> userHasName() async {
     final name = await UserRepository.instance.getUserSetting('name',);
@@ -63,9 +70,10 @@ class MinaApp extends StatelessWidget {
           BlocProvider<OnboardingBloc>(
             create: (_) => OnboardingBloc()..add(OnboardingCompleted()),
           ),
-          //remove this BlocProvider
           BlocProvider<AuthBloc>(
-            create: (_) => AuthBloc(),
+            create: (_) => useFakeAuth
+                ? AuthBloc(authService: FakeAuthService())
+                : AuthBloc(),
           )
         ], child: DashboardView() //AuthWrapper()
             ));

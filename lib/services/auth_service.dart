@@ -137,5 +137,6 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  static AuthService get instance => _instance;
+  // Add a named constructor for fake usage
+  AuthService.fake();
 }

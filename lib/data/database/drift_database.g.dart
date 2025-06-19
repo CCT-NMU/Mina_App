@@ -3,12 +3,12 @@
 part of 'drift_database.dart';
 
 // ignore_for_file: type=lint
-class $UserSettingsTableTable extends UserSettingsTable
-    with TableInfo<$UserSettingsTableTable, UserSettingsTableData> {
+class $AppUserSettingsTable extends AppUserSettings
+    with TableInfo<$AppUserSettingsTable, AppUserSetting> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $UserSettingsTableTable(this.attachedDatabase, [this._alias]);
+  $AppUserSettingsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _keyMeta = const VerificationMeta('key');
   @override
   late final GeneratedColumn<String> key = GeneratedColumn<String>(
@@ -30,10 +30,9 @@ class $UserSettingsTableTable extends UserSettingsTable
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'user_settings_table';
+  static const String $name = 'app_user_settings';
   @override
-  VerificationContext validateIntegrity(
-      Insertable<UserSettingsTableData> instance,
+  VerificationContext validateIntegrity(Insertable<AppUserSetting> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -61,9 +60,9 @@ class $UserSettingsTableTable extends UserSettingsTable
   @override
   Set<GeneratedColumn> get $primaryKey => {key, userId};
   @override
-  UserSettingsTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+  AppUserSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return UserSettingsTableData(
+    return AppUserSetting(
       key: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}key'])!,
       value: attachedDatabase.typeMapping
@@ -74,17 +73,16 @@ class $UserSettingsTableTable extends UserSettingsTable
   }
 
   @override
-  $UserSettingsTableTable createAlias(String alias) {
-    return $UserSettingsTableTable(attachedDatabase, alias);
+  $AppUserSettingsTable createAlias(String alias) {
+    return $AppUserSettingsTable(attachedDatabase, alias);
   }
 }
 
-class UserSettingsTableData extends DataClass
-    implements Insertable<UserSettingsTableData> {
+class AppUserSetting extends DataClass implements Insertable<AppUserSetting> {
   final String key;
   final String value;
   final String userId;
-  const UserSettingsTableData(
+  const AppUserSetting(
       {required this.key, required this.value, required this.userId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -95,18 +93,18 @@ class UserSettingsTableData extends DataClass
     return map;
   }
 
-  UserSettingsTableCompanion toCompanion(bool nullToAbsent) {
-    return UserSettingsTableCompanion(
+  AppUserSettingsCompanion toCompanion(bool nullToAbsent) {
+    return AppUserSettingsCompanion(
       key: Value(key),
       value: Value(value),
       userId: Value(userId),
     );
   }
 
-  factory UserSettingsTableData.fromJson(Map<String, dynamic> json,
+  factory AppUserSetting.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return UserSettingsTableData(
+    return AppUserSetting(
       key: serializer.fromJson<String>(json['key']),
       value: serializer.fromJson<String>(json['value']),
       userId: serializer.fromJson<String>(json['userId']),
@@ -122,15 +120,14 @@ class UserSettingsTableData extends DataClass
     };
   }
 
-  UserSettingsTableData copyWith(
-          {String? key, String? value, String? userId}) =>
-      UserSettingsTableData(
+  AppUserSetting copyWith({String? key, String? value, String? userId}) =>
+      AppUserSetting(
         key: key ?? this.key,
         value: value ?? this.value,
         userId: userId ?? this.userId,
       );
-  UserSettingsTableData copyWithCompanion(UserSettingsTableCompanion data) {
-    return UserSettingsTableData(
+  AppUserSetting copyWithCompanion(AppUserSettingsCompanion data) {
+    return AppUserSetting(
       key: data.key.present ? data.key.value : this.key,
       value: data.value.present ? data.value.value : this.value,
       userId: data.userId.present ? data.userId.value : this.userId,
@@ -139,7 +136,7 @@ class UserSettingsTableData extends DataClass
 
   @override
   String toString() {
-    return (StringBuffer('UserSettingsTableData(')
+    return (StringBuffer('AppUserSetting(')
           ..write('key: $key, ')
           ..write('value: $value, ')
           ..write('userId: $userId')
@@ -152,25 +149,24 @@ class UserSettingsTableData extends DataClass
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is UserSettingsTableData &&
+      (other is AppUserSetting &&
           other.key == this.key &&
           other.value == this.value &&
           other.userId == this.userId);
 }
 
-class UserSettingsTableCompanion
-    extends UpdateCompanion<UserSettingsTableData> {
+class AppUserSettingsCompanion extends UpdateCompanion<AppUserSetting> {
   final Value<String> key;
   final Value<String> value;
   final Value<String> userId;
   final Value<int> rowid;
-  const UserSettingsTableCompanion({
+  const AppUserSettingsCompanion({
     this.key = const Value.absent(),
     this.value = const Value.absent(),
     this.userId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  UserSettingsTableCompanion.insert({
+  AppUserSettingsCompanion.insert({
     required String key,
     required String value,
     required String userId,
@@ -178,7 +174,7 @@ class UserSettingsTableCompanion
   })  : key = Value(key),
         value = Value(value),
         userId = Value(userId);
-  static Insertable<UserSettingsTableData> custom({
+  static Insertable<AppUserSetting> custom({
     Expression<String>? key,
     Expression<String>? value,
     Expression<String>? userId,
@@ -192,12 +188,12 @@ class UserSettingsTableCompanion
     });
   }
 
-  UserSettingsTableCompanion copyWith(
+  AppUserSettingsCompanion copyWith(
       {Value<String>? key,
       Value<String>? value,
       Value<String>? userId,
       Value<int>? rowid}) {
-    return UserSettingsTableCompanion(
+    return AppUserSettingsCompanion(
       key: key ?? this.key,
       value: value ?? this.value,
       userId: userId ?? this.userId,
@@ -225,7 +221,7 @@ class UserSettingsTableCompanion
 
   @override
   String toString() {
-    return (StringBuffer('UserSettingsTableCompanion(')
+    return (StringBuffer('AppUserSettingsCompanion(')
           ..write('key: $key, ')
           ..write('value: $value, ')
           ..write('userId: $userId, ')
@@ -235,11 +231,11 @@ class UserSettingsTableCompanion
   }
 }
 
-class $DaysTable extends Days with TableInfo<$DaysTable, Day> {
+class $AppDaysTable extends AppDays with TableInfo<$AppDaysTable, AppDay> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $DaysTable(this.attachedDatabase, [this._alias]);
+  $AppDaysTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<String> date = GeneratedColumn<String>(
@@ -284,9 +280,9 @@ class $DaysTable extends Days with TableInfo<$DaysTable, Day> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'days';
+  static const String $name = 'app_days';
   @override
-  VerificationContext validateIntegrity(Insertable<Day> instance,
+  VerificationContext validateIntegrity(Insertable<AppDay> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -328,9 +324,9 @@ class $DaysTable extends Days with TableInfo<$DaysTable, Day> {
   @override
   Set<GeneratedColumn> get $primaryKey => {date, userId};
   @override
-  Day map(Map<String, dynamic> data, {String? tablePrefix}) {
+  AppDay map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Day(
+    return AppDay(
       date: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}date'])!,
       isPeriodDay: attachedDatabase.typeMapping
@@ -347,19 +343,19 @@ class $DaysTable extends Days with TableInfo<$DaysTable, Day> {
   }
 
   @override
-  $DaysTable createAlias(String alias) {
-    return $DaysTable(attachedDatabase, alias);
+  $AppDaysTable createAlias(String alias) {
+    return $AppDaysTable(attachedDatabase, alias);
   }
 }
 
-class Day extends DataClass implements Insertable<Day> {
+class AppDay extends DataClass implements Insertable<AppDay> {
   final String date;
   final bool isPeriodDay;
   final String? note;
   final String? symptomList;
   final String? moodList;
   final String userId;
-  const Day(
+  const AppDay(
       {required this.date,
       required this.isPeriodDay,
       this.note,
@@ -384,8 +380,8 @@ class Day extends DataClass implements Insertable<Day> {
     return map;
   }
 
-  DaysCompanion toCompanion(bool nullToAbsent) {
-    return DaysCompanion(
+  AppDaysCompanion toCompanion(bool nullToAbsent) {
+    return AppDaysCompanion(
       date: Value(date),
       isPeriodDay: Value(isPeriodDay),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
@@ -399,10 +395,10 @@ class Day extends DataClass implements Insertable<Day> {
     );
   }
 
-  factory Day.fromJson(Map<String, dynamic> json,
+  factory AppDay.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Day(
+    return AppDay(
       date: serializer.fromJson<String>(json['date']),
       isPeriodDay: serializer.fromJson<bool>(json['isPeriodDay']),
       note: serializer.fromJson<String?>(json['note']),
@@ -424,14 +420,14 @@ class Day extends DataClass implements Insertable<Day> {
     };
   }
 
-  Day copyWith(
+  AppDay copyWith(
           {String? date,
           bool? isPeriodDay,
           Value<String?> note = const Value.absent(),
           Value<String?> symptomList = const Value.absent(),
           Value<String?> moodList = const Value.absent(),
           String? userId}) =>
-      Day(
+      AppDay(
         date: date ?? this.date,
         isPeriodDay: isPeriodDay ?? this.isPeriodDay,
         note: note.present ? note.value : this.note,
@@ -439,8 +435,8 @@ class Day extends DataClass implements Insertable<Day> {
         moodList: moodList.present ? moodList.value : this.moodList,
         userId: userId ?? this.userId,
       );
-  Day copyWithCompanion(DaysCompanion data) {
-    return Day(
+  AppDay copyWithCompanion(AppDaysCompanion data) {
+    return AppDay(
       date: data.date.present ? data.date.value : this.date,
       isPeriodDay:
           data.isPeriodDay.present ? data.isPeriodDay.value : this.isPeriodDay,
@@ -454,7 +450,7 @@ class Day extends DataClass implements Insertable<Day> {
 
   @override
   String toString() {
-    return (StringBuffer('Day(')
+    return (StringBuffer('AppDay(')
           ..write('date: $date, ')
           ..write('isPeriodDay: $isPeriodDay, ')
           ..write('note: $note, ')
@@ -471,7 +467,7 @@ class Day extends DataClass implements Insertable<Day> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Day &&
+      (other is AppDay &&
           other.date == this.date &&
           other.isPeriodDay == this.isPeriodDay &&
           other.note == this.note &&
@@ -480,7 +476,7 @@ class Day extends DataClass implements Insertable<Day> {
           other.userId == this.userId);
 }
 
-class DaysCompanion extends UpdateCompanion<Day> {
+class AppDaysCompanion extends UpdateCompanion<AppDay> {
   final Value<String> date;
   final Value<bool> isPeriodDay;
   final Value<String?> note;
@@ -488,7 +484,7 @@ class DaysCompanion extends UpdateCompanion<Day> {
   final Value<String?> moodList;
   final Value<String> userId;
   final Value<int> rowid;
-  const DaysCompanion({
+  const AppDaysCompanion({
     this.date = const Value.absent(),
     this.isPeriodDay = const Value.absent(),
     this.note = const Value.absent(),
@@ -497,7 +493,7 @@ class DaysCompanion extends UpdateCompanion<Day> {
     this.userId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  DaysCompanion.insert({
+  AppDaysCompanion.insert({
     required String date,
     this.isPeriodDay = const Value.absent(),
     this.note = const Value.absent(),
@@ -507,7 +503,7 @@ class DaysCompanion extends UpdateCompanion<Day> {
     this.rowid = const Value.absent(),
   })  : date = Value(date),
         userId = Value(userId);
-  static Insertable<Day> custom({
+  static Insertable<AppDay> custom({
     Expression<String>? date,
     Expression<bool>? isPeriodDay,
     Expression<String>? note,
@@ -527,7 +523,7 @@ class DaysCompanion extends UpdateCompanion<Day> {
     });
   }
 
-  DaysCompanion copyWith(
+  AppDaysCompanion copyWith(
       {Value<String>? date,
       Value<bool>? isPeriodDay,
       Value<String?>? note,
@@ -535,7 +531,7 @@ class DaysCompanion extends UpdateCompanion<Day> {
       Value<String?>? moodList,
       Value<String>? userId,
       Value<int>? rowid}) {
-    return DaysCompanion(
+    return AppDaysCompanion(
       date: date ?? this.date,
       isPeriodDay: isPeriodDay ?? this.isPeriodDay,
       note: note ?? this.note,
@@ -575,7 +571,7 @@ class DaysCompanion extends UpdateCompanion<Day> {
 
   @override
   String toString() {
-    return (StringBuffer('DaysCompanion(')
+    return (StringBuffer('AppDaysCompanion(')
           ..write('date: $date, ')
           ..write('isPeriodDay: $isPeriodDay, ')
           ..write('note: $note, ')
@@ -588,12 +584,12 @@ class DaysCompanion extends UpdateCompanion<Day> {
   }
 }
 
-class $PeriodDaysTable extends PeriodDays
-    with TableInfo<$PeriodDaysTable, PeriodDay> {
+class $AppPeriodDaysTable extends AppPeriodDays
+    with TableInfo<$AppPeriodDaysTable, AppPeriodDay> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $PeriodDaysTable(this.attachedDatabase, [this._alias]);
+  $AppPeriodDaysTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<String> date = GeneratedColumn<String>(
@@ -637,9 +633,9 @@ class $PeriodDaysTable extends PeriodDays
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'period_days';
+  static const String $name = 'app_period_days';
   @override
-  VerificationContext validateIntegrity(Insertable<PeriodDay> instance,
+  VerificationContext validateIntegrity(Insertable<AppPeriodDay> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -679,9 +675,9 @@ class $PeriodDaysTable extends PeriodDays
   @override
   Set<GeneratedColumn> get $primaryKey => {date, userId};
   @override
-  PeriodDay map(Map<String, dynamic> data, {String? tablePrefix}) {
+  AppPeriodDay map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return PeriodDay(
+    return AppPeriodDay(
       date: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}date'])!,
       flowWeight: attachedDatabase.typeMapping
@@ -696,18 +692,18 @@ class $PeriodDaysTable extends PeriodDays
   }
 
   @override
-  $PeriodDaysTable createAlias(String alias) {
-    return $PeriodDaysTable(attachedDatabase, alias);
+  $AppPeriodDaysTable createAlias(String alias) {
+    return $AppPeriodDaysTable(attachedDatabase, alias);
   }
 }
 
-class PeriodDay extends DataClass implements Insertable<PeriodDay> {
+class AppPeriodDay extends DataClass implements Insertable<AppPeriodDay> {
   final String date;
   final int? flowWeight;
   final bool isPeriodStartDay;
   final bool isPeriodEndDay;
   final String userId;
-  const PeriodDay(
+  const AppPeriodDay(
       {required this.date,
       this.flowWeight,
       required this.isPeriodStartDay,
@@ -726,8 +722,8 @@ class PeriodDay extends DataClass implements Insertable<PeriodDay> {
     return map;
   }
 
-  PeriodDaysCompanion toCompanion(bool nullToAbsent) {
-    return PeriodDaysCompanion(
+  AppPeriodDaysCompanion toCompanion(bool nullToAbsent) {
+    return AppPeriodDaysCompanion(
       date: Value(date),
       flowWeight: flowWeight == null && nullToAbsent
           ? const Value.absent()
@@ -738,10 +734,10 @@ class PeriodDay extends DataClass implements Insertable<PeriodDay> {
     );
   }
 
-  factory PeriodDay.fromJson(Map<String, dynamic> json,
+  factory AppPeriodDay.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return PeriodDay(
+    return AppPeriodDay(
       date: serializer.fromJson<String>(json['date']),
       flowWeight: serializer.fromJson<int?>(json['flowWeight']),
       isPeriodStartDay: serializer.fromJson<bool>(json['isPeriodStartDay']),
@@ -761,21 +757,21 @@ class PeriodDay extends DataClass implements Insertable<PeriodDay> {
     };
   }
 
-  PeriodDay copyWith(
+  AppPeriodDay copyWith(
           {String? date,
           Value<int?> flowWeight = const Value.absent(),
           bool? isPeriodStartDay,
           bool? isPeriodEndDay,
           String? userId}) =>
-      PeriodDay(
+      AppPeriodDay(
         date: date ?? this.date,
         flowWeight: flowWeight.present ? flowWeight.value : this.flowWeight,
         isPeriodStartDay: isPeriodStartDay ?? this.isPeriodStartDay,
         isPeriodEndDay: isPeriodEndDay ?? this.isPeriodEndDay,
         userId: userId ?? this.userId,
       );
-  PeriodDay copyWithCompanion(PeriodDaysCompanion data) {
-    return PeriodDay(
+  AppPeriodDay copyWithCompanion(AppPeriodDaysCompanion data) {
+    return AppPeriodDay(
       date: data.date.present ? data.date.value : this.date,
       flowWeight:
           data.flowWeight.present ? data.flowWeight.value : this.flowWeight,
@@ -791,7 +787,7 @@ class PeriodDay extends DataClass implements Insertable<PeriodDay> {
 
   @override
   String toString() {
-    return (StringBuffer('PeriodDay(')
+    return (StringBuffer('AppPeriodDay(')
           ..write('date: $date, ')
           ..write('flowWeight: $flowWeight, ')
           ..write('isPeriodStartDay: $isPeriodStartDay, ')
@@ -807,7 +803,7 @@ class PeriodDay extends DataClass implements Insertable<PeriodDay> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is PeriodDay &&
+      (other is AppPeriodDay &&
           other.date == this.date &&
           other.flowWeight == this.flowWeight &&
           other.isPeriodStartDay == this.isPeriodStartDay &&
@@ -815,14 +811,14 @@ class PeriodDay extends DataClass implements Insertable<PeriodDay> {
           other.userId == this.userId);
 }
 
-class PeriodDaysCompanion extends UpdateCompanion<PeriodDay> {
+class AppPeriodDaysCompanion extends UpdateCompanion<AppPeriodDay> {
   final Value<String> date;
   final Value<int?> flowWeight;
   final Value<bool> isPeriodStartDay;
   final Value<bool> isPeriodEndDay;
   final Value<String> userId;
   final Value<int> rowid;
-  const PeriodDaysCompanion({
+  const AppPeriodDaysCompanion({
     this.date = const Value.absent(),
     this.flowWeight = const Value.absent(),
     this.isPeriodStartDay = const Value.absent(),
@@ -830,7 +826,7 @@ class PeriodDaysCompanion extends UpdateCompanion<PeriodDay> {
     this.userId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  PeriodDaysCompanion.insert({
+  AppPeriodDaysCompanion.insert({
     required String date,
     this.flowWeight = const Value.absent(),
     this.isPeriodStartDay = const Value.absent(),
@@ -839,7 +835,7 @@ class PeriodDaysCompanion extends UpdateCompanion<PeriodDay> {
     this.rowid = const Value.absent(),
   })  : date = Value(date),
         userId = Value(userId);
-  static Insertable<PeriodDay> custom({
+  static Insertable<AppPeriodDay> custom({
     Expression<String>? date,
     Expression<int>? flowWeight,
     Expression<bool>? isPeriodStartDay,
@@ -857,14 +853,14 @@ class PeriodDaysCompanion extends UpdateCompanion<PeriodDay> {
     });
   }
 
-  PeriodDaysCompanion copyWith(
+  AppPeriodDaysCompanion copyWith(
       {Value<String>? date,
       Value<int?>? flowWeight,
       Value<bool>? isPeriodStartDay,
       Value<bool>? isPeriodEndDay,
       Value<String>? userId,
       Value<int>? rowid}) {
-    return PeriodDaysCompanion(
+    return AppPeriodDaysCompanion(
       date: date ?? this.date,
       flowWeight: flowWeight ?? this.flowWeight,
       isPeriodStartDay: isPeriodStartDay ?? this.isPeriodStartDay,
@@ -900,7 +896,7 @@ class PeriodDaysCompanion extends UpdateCompanion<PeriodDay> {
 
   @override
   String toString() {
-    return (StringBuffer('PeriodDaysCompanion(')
+    return (StringBuffer('AppPeriodDaysCompanion(')
           ..write('date: $date, ')
           ..write('flowWeight: $flowWeight, ')
           ..write('isPeriodStartDay: $isPeriodStartDay, ')
@@ -912,11 +908,12 @@ class PeriodDaysCompanion extends UpdateCompanion<PeriodDay> {
   }
 }
 
-class $CyclesTable extends Cycles with TableInfo<$CyclesTable, Cycle> {
+class $AppCyclesTable extends AppCycles
+    with TableInfo<$AppCyclesTable, AppCycle> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $CyclesTable(this.attachedDatabase, [this._alias]);
+  $AppCyclesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -956,9 +953,9 @@ class $CyclesTable extends Cycles with TableInfo<$CyclesTable, Cycle> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'cycles';
+  static const String $name = 'app_cycles';
   @override
-  VerificationContext validateIntegrity(Insertable<Cycle> instance,
+  VerificationContext validateIntegrity(Insertable<AppCycle> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -993,9 +990,9 @@ class $CyclesTable extends Cycles with TableInfo<$CyclesTable, Cycle> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Cycle map(Map<String, dynamic> data, {String? tablePrefix}) {
+  AppCycle map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Cycle(
+    return AppCycle(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       startDate: attachedDatabase.typeMapping
@@ -1010,18 +1007,18 @@ class $CyclesTable extends Cycles with TableInfo<$CyclesTable, Cycle> {
   }
 
   @override
-  $CyclesTable createAlias(String alias) {
-    return $CyclesTable(attachedDatabase, alias);
+  $AppCyclesTable createAlias(String alias) {
+    return $AppCyclesTable(attachedDatabase, alias);
   }
 }
 
-class Cycle extends DataClass implements Insertable<Cycle> {
+class AppCycle extends DataClass implements Insertable<AppCycle> {
   final int id;
   final String startDate;
   final String? periodEndDate;
   final String? endDate;
   final String userId;
-  const Cycle(
+  const AppCycle(
       {required this.id,
       required this.startDate,
       this.periodEndDate,
@@ -1042,8 +1039,8 @@ class Cycle extends DataClass implements Insertable<Cycle> {
     return map;
   }
 
-  CyclesCompanion toCompanion(bool nullToAbsent) {
-    return CyclesCompanion(
+  AppCyclesCompanion toCompanion(bool nullToAbsent) {
+    return AppCyclesCompanion(
       id: Value(id),
       startDate: Value(startDate),
       periodEndDate: periodEndDate == null && nullToAbsent
@@ -1056,10 +1053,10 @@ class Cycle extends DataClass implements Insertable<Cycle> {
     );
   }
 
-  factory Cycle.fromJson(Map<String, dynamic> json,
+  factory AppCycle.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Cycle(
+    return AppCycle(
       id: serializer.fromJson<int>(json['id']),
       startDate: serializer.fromJson<String>(json['startDate']),
       periodEndDate: serializer.fromJson<String?>(json['periodEndDate']),
@@ -1079,13 +1076,13 @@ class Cycle extends DataClass implements Insertable<Cycle> {
     };
   }
 
-  Cycle copyWith(
+  AppCycle copyWith(
           {int? id,
           String? startDate,
           Value<String?> periodEndDate = const Value.absent(),
           Value<String?> endDate = const Value.absent(),
           String? userId}) =>
-      Cycle(
+      AppCycle(
         id: id ?? this.id,
         startDate: startDate ?? this.startDate,
         periodEndDate:
@@ -1093,8 +1090,8 @@ class Cycle extends DataClass implements Insertable<Cycle> {
         endDate: endDate.present ? endDate.value : this.endDate,
         userId: userId ?? this.userId,
       );
-  Cycle copyWithCompanion(CyclesCompanion data) {
-    return Cycle(
+  AppCycle copyWithCompanion(AppCyclesCompanion data) {
+    return AppCycle(
       id: data.id.present ? data.id.value : this.id,
       startDate: data.startDate.present ? data.startDate.value : this.startDate,
       periodEndDate: data.periodEndDate.present
@@ -1107,7 +1104,7 @@ class Cycle extends DataClass implements Insertable<Cycle> {
 
   @override
   String toString() {
-    return (StringBuffer('Cycle(')
+    return (StringBuffer('AppCycle(')
           ..write('id: $id, ')
           ..write('startDate: $startDate, ')
           ..write('periodEndDate: $periodEndDate, ')
@@ -1123,7 +1120,7 @@ class Cycle extends DataClass implements Insertable<Cycle> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Cycle &&
+      (other is AppCycle &&
           other.id == this.id &&
           other.startDate == this.startDate &&
           other.periodEndDate == this.periodEndDate &&
@@ -1131,20 +1128,20 @@ class Cycle extends DataClass implements Insertable<Cycle> {
           other.userId == this.userId);
 }
 
-class CyclesCompanion extends UpdateCompanion<Cycle> {
+class AppCyclesCompanion extends UpdateCompanion<AppCycle> {
   final Value<int> id;
   final Value<String> startDate;
   final Value<String?> periodEndDate;
   final Value<String?> endDate;
   final Value<String> userId;
-  const CyclesCompanion({
+  const AppCyclesCompanion({
     this.id = const Value.absent(),
     this.startDate = const Value.absent(),
     this.periodEndDate = const Value.absent(),
     this.endDate = const Value.absent(),
     this.userId = const Value.absent(),
   });
-  CyclesCompanion.insert({
+  AppCyclesCompanion.insert({
     this.id = const Value.absent(),
     required String startDate,
     this.periodEndDate = const Value.absent(),
@@ -1152,7 +1149,7 @@ class CyclesCompanion extends UpdateCompanion<Cycle> {
     required String userId,
   })  : startDate = Value(startDate),
         userId = Value(userId);
-  static Insertable<Cycle> custom({
+  static Insertable<AppCycle> custom({
     Expression<int>? id,
     Expression<String>? startDate,
     Expression<String>? periodEndDate,
@@ -1168,13 +1165,13 @@ class CyclesCompanion extends UpdateCompanion<Cycle> {
     });
   }
 
-  CyclesCompanion copyWith(
+  AppCyclesCompanion copyWith(
       {Value<int>? id,
       Value<String>? startDate,
       Value<String?>? periodEndDate,
       Value<String?>? endDate,
       Value<String>? userId}) {
-    return CyclesCompanion(
+    return AppCyclesCompanion(
       id: id ?? this.id,
       startDate: startDate ?? this.startDate,
       periodEndDate: periodEndDate ?? this.periodEndDate,
@@ -1206,7 +1203,7 @@ class CyclesCompanion extends UpdateCompanion<Cycle> {
 
   @override
   String toString() {
-    return (StringBuffer('CyclesCompanion(')
+    return (StringBuffer('AppCyclesCompanion(')
           ..write('id: $id, ')
           ..write('startDate: $startDate, ')
           ..write('periodEndDate: $periodEndDate, ')
@@ -1217,11 +1214,11 @@ class CyclesCompanion extends UpdateCompanion<Cycle> {
   }
 }
 
-class $MoodsTable extends Moods with TableInfo<$MoodsTable, Mood> {
+class $AppMoodsTable extends AppMoods with TableInfo<$AppMoodsTable, AppMood> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $MoodsTable(this.attachedDatabase, [this._alias]);
+  $AppMoodsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<String> date = GeneratedColumn<String>(
@@ -1238,9 +1235,9 @@ class $MoodsTable extends Moods with TableInfo<$MoodsTable, Mood> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'moods';
+  static const String $name = 'app_moods';
   @override
-  VerificationContext validateIntegrity(Insertable<Mood> instance,
+  VerificationContext validateIntegrity(Insertable<AppMood> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -1262,9 +1259,9 @@ class $MoodsTable extends Moods with TableInfo<$MoodsTable, Mood> {
   @override
   Set<GeneratedColumn> get $primaryKey => const {};
   @override
-  Mood map(Map<String, dynamic> data, {String? tablePrefix}) {
+  AppMood map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Mood(
+    return AppMood(
       date: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}date'])!,
       name: attachedDatabase.typeMapping
@@ -1273,15 +1270,15 @@ class $MoodsTable extends Moods with TableInfo<$MoodsTable, Mood> {
   }
 
   @override
-  $MoodsTable createAlias(String alias) {
-    return $MoodsTable(attachedDatabase, alias);
+  $AppMoodsTable createAlias(String alias) {
+    return $AppMoodsTable(attachedDatabase, alias);
   }
 }
 
-class Mood extends DataClass implements Insertable<Mood> {
+class AppMood extends DataClass implements Insertable<AppMood> {
   final String date;
   final String name;
-  const Mood({required this.date, required this.name});
+  const AppMood({required this.date, required this.name});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1290,17 +1287,17 @@ class Mood extends DataClass implements Insertable<Mood> {
     return map;
   }
 
-  MoodsCompanion toCompanion(bool nullToAbsent) {
-    return MoodsCompanion(
+  AppMoodsCompanion toCompanion(bool nullToAbsent) {
+    return AppMoodsCompanion(
       date: Value(date),
       name: Value(name),
     );
   }
 
-  factory Mood.fromJson(Map<String, dynamic> json,
+  factory AppMood.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Mood(
+    return AppMood(
       date: serializer.fromJson<String>(json['date']),
       name: serializer.fromJson<String>(json['name']),
     );
@@ -1314,12 +1311,12 @@ class Mood extends DataClass implements Insertable<Mood> {
     };
   }
 
-  Mood copyWith({String? date, String? name}) => Mood(
+  AppMood copyWith({String? date, String? name}) => AppMood(
         date: date ?? this.date,
         name: name ?? this.name,
       );
-  Mood copyWithCompanion(MoodsCompanion data) {
-    return Mood(
+  AppMood copyWithCompanion(AppMoodsCompanion data) {
+    return AppMood(
       date: data.date.present ? data.date.value : this.date,
       name: data.name.present ? data.name.value : this.name,
     );
@@ -1327,7 +1324,7 @@ class Mood extends DataClass implements Insertable<Mood> {
 
   @override
   String toString() {
-    return (StringBuffer('Mood(')
+    return (StringBuffer('AppMood(')
           ..write('date: $date, ')
           ..write('name: $name')
           ..write(')'))
@@ -1339,25 +1336,25 @@ class Mood extends DataClass implements Insertable<Mood> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Mood && other.date == this.date && other.name == this.name);
+      (other is AppMood && other.date == this.date && other.name == this.name);
 }
 
-class MoodsCompanion extends UpdateCompanion<Mood> {
+class AppMoodsCompanion extends UpdateCompanion<AppMood> {
   final Value<String> date;
   final Value<String> name;
   final Value<int> rowid;
-  const MoodsCompanion({
+  const AppMoodsCompanion({
     this.date = const Value.absent(),
     this.name = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  MoodsCompanion.insert({
+  AppMoodsCompanion.insert({
     required String date,
     required String name,
     this.rowid = const Value.absent(),
   })  : date = Value(date),
         name = Value(name);
-  static Insertable<Mood> custom({
+  static Insertable<AppMood> custom({
     Expression<String>? date,
     Expression<String>? name,
     Expression<int>? rowid,
@@ -1369,9 +1366,9 @@ class MoodsCompanion extends UpdateCompanion<Mood> {
     });
   }
 
-  MoodsCompanion copyWith(
+  AppMoodsCompanion copyWith(
       {Value<String>? date, Value<String>? name, Value<int>? rowid}) {
-    return MoodsCompanion(
+    return AppMoodsCompanion(
       date: date ?? this.date,
       name: name ?? this.name,
       rowid: rowid ?? this.rowid,
@@ -1395,7 +1392,7 @@ class MoodsCompanion extends UpdateCompanion<Mood> {
 
   @override
   String toString() {
-    return (StringBuffer('MoodsCompanion(')
+    return (StringBuffer('AppMoodsCompanion(')
           ..write('date: $date, ')
           ..write('name: $name, ')
           ..write('rowid: $rowid')
@@ -1404,11 +1401,12 @@ class MoodsCompanion extends UpdateCompanion<Mood> {
   }
 }
 
-class $SymptomsTable extends Symptoms with TableInfo<$SymptomsTable, Symptom> {
+class $AppSymptomsTable extends AppSymptoms
+    with TableInfo<$AppSymptomsTable, AppSymptom> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $SymptomsTable(this.attachedDatabase, [this._alias]);
+  $AppSymptomsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<String> date = GeneratedColumn<String>(
@@ -1425,9 +1423,9 @@ class $SymptomsTable extends Symptoms with TableInfo<$SymptomsTable, Symptom> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'symptoms';
+  static const String $name = 'app_symptoms';
   @override
-  VerificationContext validateIntegrity(Insertable<Symptom> instance,
+  VerificationContext validateIntegrity(Insertable<AppSymptom> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -1449,9 +1447,9 @@ class $SymptomsTable extends Symptoms with TableInfo<$SymptomsTable, Symptom> {
   @override
   Set<GeneratedColumn> get $primaryKey => const {};
   @override
-  Symptom map(Map<String, dynamic> data, {String? tablePrefix}) {
+  AppSymptom map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Symptom(
+    return AppSymptom(
       date: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}date'])!,
       name: attachedDatabase.typeMapping
@@ -1460,15 +1458,15 @@ class $SymptomsTable extends Symptoms with TableInfo<$SymptomsTable, Symptom> {
   }
 
   @override
-  $SymptomsTable createAlias(String alias) {
-    return $SymptomsTable(attachedDatabase, alias);
+  $AppSymptomsTable createAlias(String alias) {
+    return $AppSymptomsTable(attachedDatabase, alias);
   }
 }
 
-class Symptom extends DataClass implements Insertable<Symptom> {
+class AppSymptom extends DataClass implements Insertable<AppSymptom> {
   final String date;
   final String name;
-  const Symptom({required this.date, required this.name});
+  const AppSymptom({required this.date, required this.name});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1477,17 +1475,17 @@ class Symptom extends DataClass implements Insertable<Symptom> {
     return map;
   }
 
-  SymptomsCompanion toCompanion(bool nullToAbsent) {
-    return SymptomsCompanion(
+  AppSymptomsCompanion toCompanion(bool nullToAbsent) {
+    return AppSymptomsCompanion(
       date: Value(date),
       name: Value(name),
     );
   }
 
-  factory Symptom.fromJson(Map<String, dynamic> json,
+  factory AppSymptom.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Symptom(
+    return AppSymptom(
       date: serializer.fromJson<String>(json['date']),
       name: serializer.fromJson<String>(json['name']),
     );
@@ -1501,12 +1499,12 @@ class Symptom extends DataClass implements Insertable<Symptom> {
     };
   }
 
-  Symptom copyWith({String? date, String? name}) => Symptom(
+  AppSymptom copyWith({String? date, String? name}) => AppSymptom(
         date: date ?? this.date,
         name: name ?? this.name,
       );
-  Symptom copyWithCompanion(SymptomsCompanion data) {
-    return Symptom(
+  AppSymptom copyWithCompanion(AppSymptomsCompanion data) {
+    return AppSymptom(
       date: data.date.present ? data.date.value : this.date,
       name: data.name.present ? data.name.value : this.name,
     );
@@ -1514,7 +1512,7 @@ class Symptom extends DataClass implements Insertable<Symptom> {
 
   @override
   String toString() {
-    return (StringBuffer('Symptom(')
+    return (StringBuffer('AppSymptom(')
           ..write('date: $date, ')
           ..write('name: $name')
           ..write(')'))
@@ -1526,25 +1524,27 @@ class Symptom extends DataClass implements Insertable<Symptom> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Symptom && other.date == this.date && other.name == this.name);
+      (other is AppSymptom &&
+          other.date == this.date &&
+          other.name == this.name);
 }
 
-class SymptomsCompanion extends UpdateCompanion<Symptom> {
+class AppSymptomsCompanion extends UpdateCompanion<AppSymptom> {
   final Value<String> date;
   final Value<String> name;
   final Value<int> rowid;
-  const SymptomsCompanion({
+  const AppSymptomsCompanion({
     this.date = const Value.absent(),
     this.name = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  SymptomsCompanion.insert({
+  AppSymptomsCompanion.insert({
     required String date,
     required String name,
     this.rowid = const Value.absent(),
   })  : date = Value(date),
         name = Value(name);
-  static Insertable<Symptom> custom({
+  static Insertable<AppSymptom> custom({
     Expression<String>? date,
     Expression<String>? name,
     Expression<int>? rowid,
@@ -1556,9 +1556,9 @@ class SymptomsCompanion extends UpdateCompanion<Symptom> {
     });
   }
 
-  SymptomsCompanion copyWith(
+  AppSymptomsCompanion copyWith(
       {Value<String>? date, Value<String>? name, Value<int>? rowid}) {
-    return SymptomsCompanion(
+    return AppSymptomsCompanion(
       date: date ?? this.date,
       name: name ?? this.name,
       rowid: rowid ?? this.rowid,
@@ -1582,7 +1582,7 @@ class SymptomsCompanion extends UpdateCompanion<Symptom> {
 
   @override
   String toString() {
-    return (StringBuffer('SymptomsCompanion(')
+    return (StringBuffer('AppSymptomsCompanion(')
           ..write('date: $date, ')
           ..write('name: $name, ')
           ..write('rowid: $rowid')
@@ -1591,11 +1591,11 @@ class SymptomsCompanion extends UpdateCompanion<Symptom> {
   }
 }
 
-class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
+class $AppNotesTable extends AppNotes with TableInfo<$AppNotesTable, AppNote> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $NotesTable(this.attachedDatabase, [this._alias]);
+  $AppNotesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -1635,9 +1635,9 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'notes';
+  static const String $name = 'app_notes';
   @override
-  VerificationContext validateIntegrity(Insertable<Note> instance,
+  VerificationContext validateIntegrity(Insertable<AppNote> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -1674,9 +1674,9 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Note map(Map<String, dynamic> data, {String? tablePrefix}) {
+  AppNote map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Note(
+    return AppNote(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       title: attachedDatabase.typeMapping
@@ -1691,18 +1691,18 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
   }
 
   @override
-  $NotesTable createAlias(String alias) {
-    return $NotesTable(attachedDatabase, alias);
+  $AppNotesTable createAlias(String alias) {
+    return $AppNotesTable(attachedDatabase, alias);
   }
 }
 
-class Note extends DataClass implements Insertable<Note> {
+class AppNote extends DataClass implements Insertable<AppNote> {
   final int id;
   final String title;
   final String content;
   final String createdAt;
   final String updatedAt;
-  const Note(
+  const AppNote(
       {required this.id,
       required this.title,
       required this.content,
@@ -1719,8 +1719,8 @@ class Note extends DataClass implements Insertable<Note> {
     return map;
   }
 
-  NotesCompanion toCompanion(bool nullToAbsent) {
-    return NotesCompanion(
+  AppNotesCompanion toCompanion(bool nullToAbsent) {
+    return AppNotesCompanion(
       id: Value(id),
       title: Value(title),
       content: Value(content),
@@ -1729,10 +1729,10 @@ class Note extends DataClass implements Insertable<Note> {
     );
   }
 
-  factory Note.fromJson(Map<String, dynamic> json,
+  factory AppNote.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Note(
+    return AppNote(
       id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
       content: serializer.fromJson<String>(json['content']),
@@ -1752,21 +1752,21 @@ class Note extends DataClass implements Insertable<Note> {
     };
   }
 
-  Note copyWith(
+  AppNote copyWith(
           {int? id,
           String? title,
           String? content,
           String? createdAt,
           String? updatedAt}) =>
-      Note(
+      AppNote(
         id: id ?? this.id,
         title: title ?? this.title,
         content: content ?? this.content,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
-  Note copyWithCompanion(NotesCompanion data) {
-    return Note(
+  AppNote copyWithCompanion(AppNotesCompanion data) {
+    return AppNote(
       id: data.id.present ? data.id.value : this.id,
       title: data.title.present ? data.title.value : this.title,
       content: data.content.present ? data.content.value : this.content,
@@ -1777,7 +1777,7 @@ class Note extends DataClass implements Insertable<Note> {
 
   @override
   String toString() {
-    return (StringBuffer('Note(')
+    return (StringBuffer('AppNote(')
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('content: $content, ')
@@ -1792,7 +1792,7 @@ class Note extends DataClass implements Insertable<Note> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Note &&
+      (other is AppNote &&
           other.id == this.id &&
           other.title == this.title &&
           other.content == this.content &&
@@ -1800,20 +1800,20 @@ class Note extends DataClass implements Insertable<Note> {
           other.updatedAt == this.updatedAt);
 }
 
-class NotesCompanion extends UpdateCompanion<Note> {
+class AppNotesCompanion extends UpdateCompanion<AppNote> {
   final Value<int> id;
   final Value<String> title;
   final Value<String> content;
   final Value<String> createdAt;
   final Value<String> updatedAt;
-  const NotesCompanion({
+  const AppNotesCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
     this.content = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
-  NotesCompanion.insert({
+  AppNotesCompanion.insert({
     this.id = const Value.absent(),
     required String title,
     required String content,
@@ -1823,7 +1823,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
         content = Value(content),
         createdAt = Value(createdAt),
         updatedAt = Value(updatedAt);
-  static Insertable<Note> custom({
+  static Insertable<AppNote> custom({
     Expression<int>? id,
     Expression<String>? title,
     Expression<String>? content,
@@ -1839,13 +1839,13 @@ class NotesCompanion extends UpdateCompanion<Note> {
     });
   }
 
-  NotesCompanion copyWith(
+  AppNotesCompanion copyWith(
       {Value<int>? id,
       Value<String>? title,
       Value<String>? content,
       Value<String>? createdAt,
       Value<String>? updatedAt}) {
-    return NotesCompanion(
+    return AppNotesCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
       content: content ?? this.content,
@@ -1877,7 +1877,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
 
   @override
   String toString() {
-    return (StringBuffer('NotesCompanion(')
+    return (StringBuffer('AppNotesCompanion(')
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('content: $content, ')
@@ -1891,48 +1891,57 @@ class NotesCompanion extends UpdateCompanion<Note> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
-  late final $UserSettingsTableTable userSettingsTable =
-      $UserSettingsTableTable(this);
-  late final $DaysTable days = $DaysTable(this);
-  late final $PeriodDaysTable periodDays = $PeriodDaysTable(this);
-  late final $CyclesTable cycles = $CyclesTable(this);
-  late final $MoodsTable moods = $MoodsTable(this);
-  late final $SymptomsTable symptoms = $SymptomsTable(this);
-  late final $NotesTable notes = $NotesTable(this);
-  late final UserSettingsTableDao userSettingsTableDao =
-      UserSettingsTableDao(this as AppDatabase);
-  late final DaysDao daysDao = DaysDao(this as AppDatabase);
-  late final PeriodDaysDao periodDaysDao = PeriodDaysDao(this as AppDatabase);
-  late final CyclesDao cyclesDao = CyclesDao(this as AppDatabase);
-  late final MoodsDao moodsDao = MoodsDao(this as AppDatabase);
-  late final SymptomsDao symptomsDao = SymptomsDao(this as AppDatabase);
-  late final NotesDao notesDao = NotesDao(this as AppDatabase);
+  late final $AppUserSettingsTable appUserSettings =
+      $AppUserSettingsTable(this);
+  late final $AppDaysTable appDays = $AppDaysTable(this);
+  late final $AppPeriodDaysTable appPeriodDays = $AppPeriodDaysTable(this);
+  late final $AppCyclesTable appCycles = $AppCyclesTable(this);
+  late final $AppMoodsTable appMoods = $AppMoodsTable(this);
+  late final $AppSymptomsTable appSymptoms = $AppSymptomsTable(this);
+  late final $AppNotesTable appNotes = $AppNotesTable(this);
+  late final AppUserSettingsDao appUserSettingsDao =
+      AppUserSettingsDao(this as AppDatabase);
+  late final AppDaysDao appDaysDao = AppDaysDao(this as AppDatabase);
+  late final AppPeriodDaysDao appPeriodDaysDao =
+      AppPeriodDaysDao(this as AppDatabase);
+  late final AppCyclesDao appCyclesDao = AppCyclesDao(this as AppDatabase);
+  late final AppMoodsDao appMoodsDao = AppMoodsDao(this as AppDatabase);
+  late final AppSymptomsDao appSymptomsDao =
+      AppSymptomsDao(this as AppDatabase);
+  late final AppNotesDao appNotesDao = AppNotesDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [userSettingsTable, days, periodDays, cycles, moods, symptoms, notes];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+        appUserSettings,
+        appDays,
+        appPeriodDays,
+        appCycles,
+        appMoods,
+        appSymptoms,
+        appNotes
+      ];
 }
 
-typedef $$UserSettingsTableTableCreateCompanionBuilder
-    = UserSettingsTableCompanion Function({
+typedef $$AppUserSettingsTableCreateCompanionBuilder = AppUserSettingsCompanion
+    Function({
   required String key,
   required String value,
   required String userId,
   Value<int> rowid,
 });
-typedef $$UserSettingsTableTableUpdateCompanionBuilder
-    = UserSettingsTableCompanion Function({
+typedef $$AppUserSettingsTableUpdateCompanionBuilder = AppUserSettingsCompanion
+    Function({
   Value<String> key,
   Value<String> value,
   Value<String> userId,
   Value<int> rowid,
 });
 
-class $$UserSettingsTableTableFilterComposer
-    extends Composer<_$AppDatabase, $UserSettingsTableTable> {
-  $$UserSettingsTableTableFilterComposer({
+class $$AppUserSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $AppUserSettingsTable> {
+  $$AppUserSettingsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -1949,9 +1958,9 @@ class $$UserSettingsTableTableFilterComposer
       column: $table.userId, builder: (column) => ColumnFilters(column));
 }
 
-class $$UserSettingsTableTableOrderingComposer
-    extends Composer<_$AppDatabase, $UserSettingsTableTable> {
-  $$UserSettingsTableTableOrderingComposer({
+class $$AppUserSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppUserSettingsTable> {
+  $$AppUserSettingsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -1968,9 +1977,9 @@ class $$UserSettingsTableTableOrderingComposer
       column: $table.userId, builder: (column) => ColumnOrderings(column));
 }
 
-class $$UserSettingsTableTableAnnotationComposer
-    extends Composer<_$AppDatabase, $UserSettingsTableTable> {
-  $$UserSettingsTableTableAnnotationComposer({
+class $$AppUserSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppUserSettingsTable> {
+  $$AppUserSettingsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -1987,41 +1996,39 @@ class $$UserSettingsTableTableAnnotationComposer
       $composableBuilder(column: $table.userId, builder: (column) => column);
 }
 
-class $$UserSettingsTableTableTableManager extends RootTableManager<
+class $$AppUserSettingsTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $UserSettingsTableTable,
-    UserSettingsTableData,
-    $$UserSettingsTableTableFilterComposer,
-    $$UserSettingsTableTableOrderingComposer,
-    $$UserSettingsTableTableAnnotationComposer,
-    $$UserSettingsTableTableCreateCompanionBuilder,
-    $$UserSettingsTableTableUpdateCompanionBuilder,
+    $AppUserSettingsTable,
+    AppUserSetting,
+    $$AppUserSettingsTableFilterComposer,
+    $$AppUserSettingsTableOrderingComposer,
+    $$AppUserSettingsTableAnnotationComposer,
+    $$AppUserSettingsTableCreateCompanionBuilder,
+    $$AppUserSettingsTableUpdateCompanionBuilder,
     (
-      UserSettingsTableData,
-      BaseReferences<_$AppDatabase, $UserSettingsTableTable,
-          UserSettingsTableData>
+      AppUserSetting,
+      BaseReferences<_$AppDatabase, $AppUserSettingsTable, AppUserSetting>
     ),
-    UserSettingsTableData,
+    AppUserSetting,
     PrefetchHooks Function()> {
-  $$UserSettingsTableTableTableManager(
-      _$AppDatabase db, $UserSettingsTableTable table)
+  $$AppUserSettingsTableTableManager(
+      _$AppDatabase db, $AppUserSettingsTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$UserSettingsTableTableFilterComposer($db: db, $table: table),
+              $$AppUserSettingsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$UserSettingsTableTableOrderingComposer($db: db, $table: table),
+              $$AppUserSettingsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$UserSettingsTableTableAnnotationComposer(
-                  $db: db, $table: table),
+              $$AppUserSettingsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<String> key = const Value.absent(),
             Value<String> value = const Value.absent(),
             Value<String> userId = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
-              UserSettingsTableCompanion(
+              AppUserSettingsCompanion(
             key: key,
             value: value,
             userId: userId,
@@ -2033,7 +2040,7 @@ class $$UserSettingsTableTableTableManager extends RootTableManager<
             required String userId,
             Value<int> rowid = const Value.absent(),
           }) =>
-              UserSettingsTableCompanion.insert(
+              AppUserSettingsCompanion.insert(
             key: key,
             value: value,
             userId: userId,
@@ -2046,23 +2053,22 @@ class $$UserSettingsTableTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$UserSettingsTableTableProcessedTableManager = ProcessedTableManager<
+typedef $$AppUserSettingsTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
-    $UserSettingsTableTable,
-    UserSettingsTableData,
-    $$UserSettingsTableTableFilterComposer,
-    $$UserSettingsTableTableOrderingComposer,
-    $$UserSettingsTableTableAnnotationComposer,
-    $$UserSettingsTableTableCreateCompanionBuilder,
-    $$UserSettingsTableTableUpdateCompanionBuilder,
+    $AppUserSettingsTable,
+    AppUserSetting,
+    $$AppUserSettingsTableFilterComposer,
+    $$AppUserSettingsTableOrderingComposer,
+    $$AppUserSettingsTableAnnotationComposer,
+    $$AppUserSettingsTableCreateCompanionBuilder,
+    $$AppUserSettingsTableUpdateCompanionBuilder,
     (
-      UserSettingsTableData,
-      BaseReferences<_$AppDatabase, $UserSettingsTableTable,
-          UserSettingsTableData>
+      AppUserSetting,
+      BaseReferences<_$AppDatabase, $AppUserSettingsTable, AppUserSetting>
     ),
-    UserSettingsTableData,
+    AppUserSetting,
     PrefetchHooks Function()>;
-typedef $$DaysTableCreateCompanionBuilder = DaysCompanion Function({
+typedef $$AppDaysTableCreateCompanionBuilder = AppDaysCompanion Function({
   required String date,
   Value<bool> isPeriodDay,
   Value<String?> note,
@@ -2071,7 +2077,7 @@ typedef $$DaysTableCreateCompanionBuilder = DaysCompanion Function({
   required String userId,
   Value<int> rowid,
 });
-typedef $$DaysTableUpdateCompanionBuilder = DaysCompanion Function({
+typedef $$AppDaysTableUpdateCompanionBuilder = AppDaysCompanion Function({
   Value<String> date,
   Value<bool> isPeriodDay,
   Value<String?> note,
@@ -2081,8 +2087,9 @@ typedef $$DaysTableUpdateCompanionBuilder = DaysCompanion Function({
   Value<int> rowid,
 });
 
-class $$DaysTableFilterComposer extends Composer<_$AppDatabase, $DaysTable> {
-  $$DaysTableFilterComposer({
+class $$AppDaysTableFilterComposer
+    extends Composer<_$AppDatabase, $AppDaysTable> {
+  $$AppDaysTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2108,8 +2115,9 @@ class $$DaysTableFilterComposer extends Composer<_$AppDatabase, $DaysTable> {
       column: $table.userId, builder: (column) => ColumnFilters(column));
 }
 
-class $$DaysTableOrderingComposer extends Composer<_$AppDatabase, $DaysTable> {
-  $$DaysTableOrderingComposer({
+class $$AppDaysTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppDaysTable> {
+  $$AppDaysTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2135,9 +2143,9 @@ class $$DaysTableOrderingComposer extends Composer<_$AppDatabase, $DaysTable> {
       column: $table.userId, builder: (column) => ColumnOrderings(column));
 }
 
-class $$DaysTableAnnotationComposer
-    extends Composer<_$AppDatabase, $DaysTable> {
-  $$DaysTableAnnotationComposer({
+class $$AppDaysTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppDaysTable> {
+  $$AppDaysTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2163,28 +2171,28 @@ class $$DaysTableAnnotationComposer
       $composableBuilder(column: $table.userId, builder: (column) => column);
 }
 
-class $$DaysTableTableManager extends RootTableManager<
+class $$AppDaysTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $DaysTable,
-    Day,
-    $$DaysTableFilterComposer,
-    $$DaysTableOrderingComposer,
-    $$DaysTableAnnotationComposer,
-    $$DaysTableCreateCompanionBuilder,
-    $$DaysTableUpdateCompanionBuilder,
-    (Day, BaseReferences<_$AppDatabase, $DaysTable, Day>),
-    Day,
+    $AppDaysTable,
+    AppDay,
+    $$AppDaysTableFilterComposer,
+    $$AppDaysTableOrderingComposer,
+    $$AppDaysTableAnnotationComposer,
+    $$AppDaysTableCreateCompanionBuilder,
+    $$AppDaysTableUpdateCompanionBuilder,
+    (AppDay, BaseReferences<_$AppDatabase, $AppDaysTable, AppDay>),
+    AppDay,
     PrefetchHooks Function()> {
-  $$DaysTableTableManager(_$AppDatabase db, $DaysTable table)
+  $$AppDaysTableTableManager(_$AppDatabase db, $AppDaysTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$DaysTableFilterComposer($db: db, $table: table),
+              $$AppDaysTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$DaysTableOrderingComposer($db: db, $table: table),
+              $$AppDaysTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$DaysTableAnnotationComposer($db: db, $table: table),
+              $$AppDaysTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<String> date = const Value.absent(),
             Value<bool> isPeriodDay = const Value.absent(),
@@ -2194,7 +2202,7 @@ class $$DaysTableTableManager extends RootTableManager<
             Value<String> userId = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
-              DaysCompanion(
+              AppDaysCompanion(
             date: date,
             isPeriodDay: isPeriodDay,
             note: note,
@@ -2212,7 +2220,7 @@ class $$DaysTableTableManager extends RootTableManager<
             required String userId,
             Value<int> rowid = const Value.absent(),
           }) =>
-              DaysCompanion.insert(
+              AppDaysCompanion.insert(
             date: date,
             isPeriodDay: isPeriodDay,
             note: note,
@@ -2228,19 +2236,20 @@ class $$DaysTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$DaysTableProcessedTableManager = ProcessedTableManager<
+typedef $$AppDaysTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
-    $DaysTable,
-    Day,
-    $$DaysTableFilterComposer,
-    $$DaysTableOrderingComposer,
-    $$DaysTableAnnotationComposer,
-    $$DaysTableCreateCompanionBuilder,
-    $$DaysTableUpdateCompanionBuilder,
-    (Day, BaseReferences<_$AppDatabase, $DaysTable, Day>),
-    Day,
+    $AppDaysTable,
+    AppDay,
+    $$AppDaysTableFilterComposer,
+    $$AppDaysTableOrderingComposer,
+    $$AppDaysTableAnnotationComposer,
+    $$AppDaysTableCreateCompanionBuilder,
+    $$AppDaysTableUpdateCompanionBuilder,
+    (AppDay, BaseReferences<_$AppDatabase, $AppDaysTable, AppDay>),
+    AppDay,
     PrefetchHooks Function()>;
-typedef $$PeriodDaysTableCreateCompanionBuilder = PeriodDaysCompanion Function({
+typedef $$AppPeriodDaysTableCreateCompanionBuilder = AppPeriodDaysCompanion
+    Function({
   required String date,
   Value<int?> flowWeight,
   Value<bool> isPeriodStartDay,
@@ -2248,7 +2257,8 @@ typedef $$PeriodDaysTableCreateCompanionBuilder = PeriodDaysCompanion Function({
   required String userId,
   Value<int> rowid,
 });
-typedef $$PeriodDaysTableUpdateCompanionBuilder = PeriodDaysCompanion Function({
+typedef $$AppPeriodDaysTableUpdateCompanionBuilder = AppPeriodDaysCompanion
+    Function({
   Value<String> date,
   Value<int?> flowWeight,
   Value<bool> isPeriodStartDay,
@@ -2257,9 +2267,9 @@ typedef $$PeriodDaysTableUpdateCompanionBuilder = PeriodDaysCompanion Function({
   Value<int> rowid,
 });
 
-class $$PeriodDaysTableFilterComposer
-    extends Composer<_$AppDatabase, $PeriodDaysTable> {
-  $$PeriodDaysTableFilterComposer({
+class $$AppPeriodDaysTableFilterComposer
+    extends Composer<_$AppDatabase, $AppPeriodDaysTable> {
+  $$AppPeriodDaysTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2284,9 +2294,9 @@ class $$PeriodDaysTableFilterComposer
       column: $table.userId, builder: (column) => ColumnFilters(column));
 }
 
-class $$PeriodDaysTableOrderingComposer
-    extends Composer<_$AppDatabase, $PeriodDaysTable> {
-  $$PeriodDaysTableOrderingComposer({
+class $$AppPeriodDaysTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppPeriodDaysTable> {
+  $$AppPeriodDaysTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2311,9 +2321,9 @@ class $$PeriodDaysTableOrderingComposer
       column: $table.userId, builder: (column) => ColumnOrderings(column));
 }
 
-class $$PeriodDaysTableAnnotationComposer
-    extends Composer<_$AppDatabase, $PeriodDaysTable> {
-  $$PeriodDaysTableAnnotationComposer({
+class $$AppPeriodDaysTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppPeriodDaysTable> {
+  $$AppPeriodDaysTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2336,28 +2346,31 @@ class $$PeriodDaysTableAnnotationComposer
       $composableBuilder(column: $table.userId, builder: (column) => column);
 }
 
-class $$PeriodDaysTableTableManager extends RootTableManager<
+class $$AppPeriodDaysTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $PeriodDaysTable,
-    PeriodDay,
-    $$PeriodDaysTableFilterComposer,
-    $$PeriodDaysTableOrderingComposer,
-    $$PeriodDaysTableAnnotationComposer,
-    $$PeriodDaysTableCreateCompanionBuilder,
-    $$PeriodDaysTableUpdateCompanionBuilder,
-    (PeriodDay, BaseReferences<_$AppDatabase, $PeriodDaysTable, PeriodDay>),
-    PeriodDay,
+    $AppPeriodDaysTable,
+    AppPeriodDay,
+    $$AppPeriodDaysTableFilterComposer,
+    $$AppPeriodDaysTableOrderingComposer,
+    $$AppPeriodDaysTableAnnotationComposer,
+    $$AppPeriodDaysTableCreateCompanionBuilder,
+    $$AppPeriodDaysTableUpdateCompanionBuilder,
+    (
+      AppPeriodDay,
+      BaseReferences<_$AppDatabase, $AppPeriodDaysTable, AppPeriodDay>
+    ),
+    AppPeriodDay,
     PrefetchHooks Function()> {
-  $$PeriodDaysTableTableManager(_$AppDatabase db, $PeriodDaysTable table)
+  $$AppPeriodDaysTableTableManager(_$AppDatabase db, $AppPeriodDaysTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$PeriodDaysTableFilterComposer($db: db, $table: table),
+              $$AppPeriodDaysTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$PeriodDaysTableOrderingComposer($db: db, $table: table),
+              $$AppPeriodDaysTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$PeriodDaysTableAnnotationComposer($db: db, $table: table),
+              $$AppPeriodDaysTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<String> date = const Value.absent(),
             Value<int?> flowWeight = const Value.absent(),
@@ -2366,7 +2379,7 @@ class $$PeriodDaysTableTableManager extends RootTableManager<
             Value<String> userId = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
-              PeriodDaysCompanion(
+              AppPeriodDaysCompanion(
             date: date,
             flowWeight: flowWeight,
             isPeriodStartDay: isPeriodStartDay,
@@ -2382,7 +2395,7 @@ class $$PeriodDaysTableTableManager extends RootTableManager<
             required String userId,
             Value<int> rowid = const Value.absent(),
           }) =>
-              PeriodDaysCompanion.insert(
+              AppPeriodDaysCompanion.insert(
             date: date,
             flowWeight: flowWeight,
             isPeriodStartDay: isPeriodStartDay,
@@ -2397,26 +2410,29 @@ class $$PeriodDaysTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$PeriodDaysTableProcessedTableManager = ProcessedTableManager<
+typedef $$AppPeriodDaysTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
-    $PeriodDaysTable,
-    PeriodDay,
-    $$PeriodDaysTableFilterComposer,
-    $$PeriodDaysTableOrderingComposer,
-    $$PeriodDaysTableAnnotationComposer,
-    $$PeriodDaysTableCreateCompanionBuilder,
-    $$PeriodDaysTableUpdateCompanionBuilder,
-    (PeriodDay, BaseReferences<_$AppDatabase, $PeriodDaysTable, PeriodDay>),
-    PeriodDay,
+    $AppPeriodDaysTable,
+    AppPeriodDay,
+    $$AppPeriodDaysTableFilterComposer,
+    $$AppPeriodDaysTableOrderingComposer,
+    $$AppPeriodDaysTableAnnotationComposer,
+    $$AppPeriodDaysTableCreateCompanionBuilder,
+    $$AppPeriodDaysTableUpdateCompanionBuilder,
+    (
+      AppPeriodDay,
+      BaseReferences<_$AppDatabase, $AppPeriodDaysTable, AppPeriodDay>
+    ),
+    AppPeriodDay,
     PrefetchHooks Function()>;
-typedef $$CyclesTableCreateCompanionBuilder = CyclesCompanion Function({
+typedef $$AppCyclesTableCreateCompanionBuilder = AppCyclesCompanion Function({
   Value<int> id,
   required String startDate,
   Value<String?> periodEndDate,
   Value<String?> endDate,
   required String userId,
 });
-typedef $$CyclesTableUpdateCompanionBuilder = CyclesCompanion Function({
+typedef $$AppCyclesTableUpdateCompanionBuilder = AppCyclesCompanion Function({
   Value<int> id,
   Value<String> startDate,
   Value<String?> periodEndDate,
@@ -2424,9 +2440,9 @@ typedef $$CyclesTableUpdateCompanionBuilder = CyclesCompanion Function({
   Value<String> userId,
 });
 
-class $$CyclesTableFilterComposer
-    extends Composer<_$AppDatabase, $CyclesTable> {
-  $$CyclesTableFilterComposer({
+class $$AppCyclesTableFilterComposer
+    extends Composer<_$AppDatabase, $AppCyclesTable> {
+  $$AppCyclesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2449,9 +2465,9 @@ class $$CyclesTableFilterComposer
       column: $table.userId, builder: (column) => ColumnFilters(column));
 }
 
-class $$CyclesTableOrderingComposer
-    extends Composer<_$AppDatabase, $CyclesTable> {
-  $$CyclesTableOrderingComposer({
+class $$AppCyclesTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppCyclesTable> {
+  $$AppCyclesTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2475,9 +2491,9 @@ class $$CyclesTableOrderingComposer
       column: $table.userId, builder: (column) => ColumnOrderings(column));
 }
 
-class $$CyclesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $CyclesTable> {
-  $$CyclesTableAnnotationComposer({
+class $$AppCyclesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppCyclesTable> {
+  $$AppCyclesTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2500,28 +2516,28 @@ class $$CyclesTableAnnotationComposer
       $composableBuilder(column: $table.userId, builder: (column) => column);
 }
 
-class $$CyclesTableTableManager extends RootTableManager<
+class $$AppCyclesTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $CyclesTable,
-    Cycle,
-    $$CyclesTableFilterComposer,
-    $$CyclesTableOrderingComposer,
-    $$CyclesTableAnnotationComposer,
-    $$CyclesTableCreateCompanionBuilder,
-    $$CyclesTableUpdateCompanionBuilder,
-    (Cycle, BaseReferences<_$AppDatabase, $CyclesTable, Cycle>),
-    Cycle,
+    $AppCyclesTable,
+    AppCycle,
+    $$AppCyclesTableFilterComposer,
+    $$AppCyclesTableOrderingComposer,
+    $$AppCyclesTableAnnotationComposer,
+    $$AppCyclesTableCreateCompanionBuilder,
+    $$AppCyclesTableUpdateCompanionBuilder,
+    (AppCycle, BaseReferences<_$AppDatabase, $AppCyclesTable, AppCycle>),
+    AppCycle,
     PrefetchHooks Function()> {
-  $$CyclesTableTableManager(_$AppDatabase db, $CyclesTable table)
+  $$AppCyclesTableTableManager(_$AppDatabase db, $AppCyclesTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$CyclesTableFilterComposer($db: db, $table: table),
+              $$AppCyclesTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$CyclesTableOrderingComposer($db: db, $table: table),
+              $$AppCyclesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$CyclesTableAnnotationComposer($db: db, $table: table),
+              $$AppCyclesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> startDate = const Value.absent(),
@@ -2529,7 +2545,7 @@ class $$CyclesTableTableManager extends RootTableManager<
             Value<String?> endDate = const Value.absent(),
             Value<String> userId = const Value.absent(),
           }) =>
-              CyclesCompanion(
+              AppCyclesCompanion(
             id: id,
             startDate: startDate,
             periodEndDate: periodEndDate,
@@ -2543,7 +2559,7 @@ class $$CyclesTableTableManager extends RootTableManager<
             Value<String?> endDate = const Value.absent(),
             required String userId,
           }) =>
-              CyclesCompanion.insert(
+              AppCyclesCompanion.insert(
             id: id,
             startDate: startDate,
             periodEndDate: periodEndDate,
@@ -2557,31 +2573,32 @@ class $$CyclesTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$CyclesTableProcessedTableManager = ProcessedTableManager<
+typedef $$AppCyclesTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
-    $CyclesTable,
-    Cycle,
-    $$CyclesTableFilterComposer,
-    $$CyclesTableOrderingComposer,
-    $$CyclesTableAnnotationComposer,
-    $$CyclesTableCreateCompanionBuilder,
-    $$CyclesTableUpdateCompanionBuilder,
-    (Cycle, BaseReferences<_$AppDatabase, $CyclesTable, Cycle>),
-    Cycle,
+    $AppCyclesTable,
+    AppCycle,
+    $$AppCyclesTableFilterComposer,
+    $$AppCyclesTableOrderingComposer,
+    $$AppCyclesTableAnnotationComposer,
+    $$AppCyclesTableCreateCompanionBuilder,
+    $$AppCyclesTableUpdateCompanionBuilder,
+    (AppCycle, BaseReferences<_$AppDatabase, $AppCyclesTable, AppCycle>),
+    AppCycle,
     PrefetchHooks Function()>;
-typedef $$MoodsTableCreateCompanionBuilder = MoodsCompanion Function({
+typedef $$AppMoodsTableCreateCompanionBuilder = AppMoodsCompanion Function({
   required String date,
   required String name,
   Value<int> rowid,
 });
-typedef $$MoodsTableUpdateCompanionBuilder = MoodsCompanion Function({
+typedef $$AppMoodsTableUpdateCompanionBuilder = AppMoodsCompanion Function({
   Value<String> date,
   Value<String> name,
   Value<int> rowid,
 });
 
-class $$MoodsTableFilterComposer extends Composer<_$AppDatabase, $MoodsTable> {
-  $$MoodsTableFilterComposer({
+class $$AppMoodsTableFilterComposer
+    extends Composer<_$AppDatabase, $AppMoodsTable> {
+  $$AppMoodsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2595,9 +2612,9 @@ class $$MoodsTableFilterComposer extends Composer<_$AppDatabase, $MoodsTable> {
       column: $table.name, builder: (column) => ColumnFilters(column));
 }
 
-class $$MoodsTableOrderingComposer
-    extends Composer<_$AppDatabase, $MoodsTable> {
-  $$MoodsTableOrderingComposer({
+class $$AppMoodsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppMoodsTable> {
+  $$AppMoodsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2611,9 +2628,9 @@ class $$MoodsTableOrderingComposer
       column: $table.name, builder: (column) => ColumnOrderings(column));
 }
 
-class $$MoodsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $MoodsTable> {
-  $$MoodsTableAnnotationComposer({
+class $$AppMoodsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppMoodsTable> {
+  $$AppMoodsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2627,34 +2644,34 @@ class $$MoodsTableAnnotationComposer
       $composableBuilder(column: $table.name, builder: (column) => column);
 }
 
-class $$MoodsTableTableManager extends RootTableManager<
+class $$AppMoodsTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $MoodsTable,
-    Mood,
-    $$MoodsTableFilterComposer,
-    $$MoodsTableOrderingComposer,
-    $$MoodsTableAnnotationComposer,
-    $$MoodsTableCreateCompanionBuilder,
-    $$MoodsTableUpdateCompanionBuilder,
-    (Mood, BaseReferences<_$AppDatabase, $MoodsTable, Mood>),
-    Mood,
+    $AppMoodsTable,
+    AppMood,
+    $$AppMoodsTableFilterComposer,
+    $$AppMoodsTableOrderingComposer,
+    $$AppMoodsTableAnnotationComposer,
+    $$AppMoodsTableCreateCompanionBuilder,
+    $$AppMoodsTableUpdateCompanionBuilder,
+    (AppMood, BaseReferences<_$AppDatabase, $AppMoodsTable, AppMood>),
+    AppMood,
     PrefetchHooks Function()> {
-  $$MoodsTableTableManager(_$AppDatabase db, $MoodsTable table)
+  $$AppMoodsTableTableManager(_$AppDatabase db, $AppMoodsTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$MoodsTableFilterComposer($db: db, $table: table),
+              $$AppMoodsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$MoodsTableOrderingComposer($db: db, $table: table),
+              $$AppMoodsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$MoodsTableAnnotationComposer($db: db, $table: table),
+              $$AppMoodsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<String> date = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
-              MoodsCompanion(
+              AppMoodsCompanion(
             date: date,
             name: name,
             rowid: rowid,
@@ -2664,7 +2681,7 @@ class $$MoodsTableTableManager extends RootTableManager<
             required String name,
             Value<int> rowid = const Value.absent(),
           }) =>
-              MoodsCompanion.insert(
+              AppMoodsCompanion.insert(
             date: date,
             name: name,
             rowid: rowid,
@@ -2676,32 +2693,34 @@ class $$MoodsTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$MoodsTableProcessedTableManager = ProcessedTableManager<
+typedef $$AppMoodsTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
-    $MoodsTable,
-    Mood,
-    $$MoodsTableFilterComposer,
-    $$MoodsTableOrderingComposer,
-    $$MoodsTableAnnotationComposer,
-    $$MoodsTableCreateCompanionBuilder,
-    $$MoodsTableUpdateCompanionBuilder,
-    (Mood, BaseReferences<_$AppDatabase, $MoodsTable, Mood>),
-    Mood,
+    $AppMoodsTable,
+    AppMood,
+    $$AppMoodsTableFilterComposer,
+    $$AppMoodsTableOrderingComposer,
+    $$AppMoodsTableAnnotationComposer,
+    $$AppMoodsTableCreateCompanionBuilder,
+    $$AppMoodsTableUpdateCompanionBuilder,
+    (AppMood, BaseReferences<_$AppDatabase, $AppMoodsTable, AppMood>),
+    AppMood,
     PrefetchHooks Function()>;
-typedef $$SymptomsTableCreateCompanionBuilder = SymptomsCompanion Function({
+typedef $$AppSymptomsTableCreateCompanionBuilder = AppSymptomsCompanion
+    Function({
   required String date,
   required String name,
   Value<int> rowid,
 });
-typedef $$SymptomsTableUpdateCompanionBuilder = SymptomsCompanion Function({
+typedef $$AppSymptomsTableUpdateCompanionBuilder = AppSymptomsCompanion
+    Function({
   Value<String> date,
   Value<String> name,
   Value<int> rowid,
 });
 
-class $$SymptomsTableFilterComposer
-    extends Composer<_$AppDatabase, $SymptomsTable> {
-  $$SymptomsTableFilterComposer({
+class $$AppSymptomsTableFilterComposer
+    extends Composer<_$AppDatabase, $AppSymptomsTable> {
+  $$AppSymptomsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2715,9 +2734,9 @@ class $$SymptomsTableFilterComposer
       column: $table.name, builder: (column) => ColumnFilters(column));
 }
 
-class $$SymptomsTableOrderingComposer
-    extends Composer<_$AppDatabase, $SymptomsTable> {
-  $$SymptomsTableOrderingComposer({
+class $$AppSymptomsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppSymptomsTable> {
+  $$AppSymptomsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2731,9 +2750,9 @@ class $$SymptomsTableOrderingComposer
       column: $table.name, builder: (column) => ColumnOrderings(column));
 }
 
-class $$SymptomsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $SymptomsTable> {
-  $$SymptomsTableAnnotationComposer({
+class $$AppSymptomsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppSymptomsTable> {
+  $$AppSymptomsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2747,34 +2766,34 @@ class $$SymptomsTableAnnotationComposer
       $composableBuilder(column: $table.name, builder: (column) => column);
 }
 
-class $$SymptomsTableTableManager extends RootTableManager<
+class $$AppSymptomsTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $SymptomsTable,
-    Symptom,
-    $$SymptomsTableFilterComposer,
-    $$SymptomsTableOrderingComposer,
-    $$SymptomsTableAnnotationComposer,
-    $$SymptomsTableCreateCompanionBuilder,
-    $$SymptomsTableUpdateCompanionBuilder,
-    (Symptom, BaseReferences<_$AppDatabase, $SymptomsTable, Symptom>),
-    Symptom,
+    $AppSymptomsTable,
+    AppSymptom,
+    $$AppSymptomsTableFilterComposer,
+    $$AppSymptomsTableOrderingComposer,
+    $$AppSymptomsTableAnnotationComposer,
+    $$AppSymptomsTableCreateCompanionBuilder,
+    $$AppSymptomsTableUpdateCompanionBuilder,
+    (AppSymptom, BaseReferences<_$AppDatabase, $AppSymptomsTable, AppSymptom>),
+    AppSymptom,
     PrefetchHooks Function()> {
-  $$SymptomsTableTableManager(_$AppDatabase db, $SymptomsTable table)
+  $$AppSymptomsTableTableManager(_$AppDatabase db, $AppSymptomsTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$SymptomsTableFilterComposer($db: db, $table: table),
+              $$AppSymptomsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$SymptomsTableOrderingComposer($db: db, $table: table),
+              $$AppSymptomsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$SymptomsTableAnnotationComposer($db: db, $table: table),
+              $$AppSymptomsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<String> date = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
-              SymptomsCompanion(
+              AppSymptomsCompanion(
             date: date,
             name: name,
             rowid: rowid,
@@ -2784,7 +2803,7 @@ class $$SymptomsTableTableManager extends RootTableManager<
             required String name,
             Value<int> rowid = const Value.absent(),
           }) =>
-              SymptomsCompanion.insert(
+              AppSymptomsCompanion.insert(
             date: date,
             name: name,
             rowid: rowid,
@@ -2796,26 +2815,26 @@ class $$SymptomsTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$SymptomsTableProcessedTableManager = ProcessedTableManager<
+typedef $$AppSymptomsTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
-    $SymptomsTable,
-    Symptom,
-    $$SymptomsTableFilterComposer,
-    $$SymptomsTableOrderingComposer,
-    $$SymptomsTableAnnotationComposer,
-    $$SymptomsTableCreateCompanionBuilder,
-    $$SymptomsTableUpdateCompanionBuilder,
-    (Symptom, BaseReferences<_$AppDatabase, $SymptomsTable, Symptom>),
-    Symptom,
+    $AppSymptomsTable,
+    AppSymptom,
+    $$AppSymptomsTableFilterComposer,
+    $$AppSymptomsTableOrderingComposer,
+    $$AppSymptomsTableAnnotationComposer,
+    $$AppSymptomsTableCreateCompanionBuilder,
+    $$AppSymptomsTableUpdateCompanionBuilder,
+    (AppSymptom, BaseReferences<_$AppDatabase, $AppSymptomsTable, AppSymptom>),
+    AppSymptom,
     PrefetchHooks Function()>;
-typedef $$NotesTableCreateCompanionBuilder = NotesCompanion Function({
+typedef $$AppNotesTableCreateCompanionBuilder = AppNotesCompanion Function({
   Value<int> id,
   required String title,
   required String content,
   required String createdAt,
   required String updatedAt,
 });
-typedef $$NotesTableUpdateCompanionBuilder = NotesCompanion Function({
+typedef $$AppNotesTableUpdateCompanionBuilder = AppNotesCompanion Function({
   Value<int> id,
   Value<String> title,
   Value<String> content,
@@ -2823,8 +2842,9 @@ typedef $$NotesTableUpdateCompanionBuilder = NotesCompanion Function({
   Value<String> updatedAt,
 });
 
-class $$NotesTableFilterComposer extends Composer<_$AppDatabase, $NotesTable> {
-  $$NotesTableFilterComposer({
+class $$AppNotesTableFilterComposer
+    extends Composer<_$AppDatabase, $AppNotesTable> {
+  $$AppNotesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2847,9 +2867,9 @@ class $$NotesTableFilterComposer extends Composer<_$AppDatabase, $NotesTable> {
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 }
 
-class $$NotesTableOrderingComposer
-    extends Composer<_$AppDatabase, $NotesTable> {
-  $$NotesTableOrderingComposer({
+class $$AppNotesTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppNotesTable> {
+  $$AppNotesTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2872,9 +2892,9 @@ class $$NotesTableOrderingComposer
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 }
 
-class $$NotesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $NotesTable> {
-  $$NotesTableAnnotationComposer({
+class $$AppNotesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppNotesTable> {
+  $$AppNotesTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2897,28 +2917,28 @@ class $$NotesTableAnnotationComposer
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
 
-class $$NotesTableTableManager extends RootTableManager<
+class $$AppNotesTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $NotesTable,
-    Note,
-    $$NotesTableFilterComposer,
-    $$NotesTableOrderingComposer,
-    $$NotesTableAnnotationComposer,
-    $$NotesTableCreateCompanionBuilder,
-    $$NotesTableUpdateCompanionBuilder,
-    (Note, BaseReferences<_$AppDatabase, $NotesTable, Note>),
-    Note,
+    $AppNotesTable,
+    AppNote,
+    $$AppNotesTableFilterComposer,
+    $$AppNotesTableOrderingComposer,
+    $$AppNotesTableAnnotationComposer,
+    $$AppNotesTableCreateCompanionBuilder,
+    $$AppNotesTableUpdateCompanionBuilder,
+    (AppNote, BaseReferences<_$AppDatabase, $AppNotesTable, AppNote>),
+    AppNote,
     PrefetchHooks Function()> {
-  $$NotesTableTableManager(_$AppDatabase db, $NotesTable table)
+  $$AppNotesTableTableManager(_$AppDatabase db, $AppNotesTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$NotesTableFilterComposer($db: db, $table: table),
+              $$AppNotesTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$NotesTableOrderingComposer($db: db, $table: table),
+              $$AppNotesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$NotesTableAnnotationComposer($db: db, $table: table),
+              $$AppNotesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> title = const Value.absent(),
@@ -2926,7 +2946,7 @@ class $$NotesTableTableManager extends RootTableManager<
             Value<String> createdAt = const Value.absent(),
             Value<String> updatedAt = const Value.absent(),
           }) =>
-              NotesCompanion(
+              AppNotesCompanion(
             id: id,
             title: title,
             content: content,
@@ -2940,7 +2960,7 @@ class $$NotesTableTableManager extends RootTableManager<
             required String createdAt,
             required String updatedAt,
           }) =>
-              NotesCompanion.insert(
+              AppNotesCompanion.insert(
             id: id,
             title: title,
             content: content,
@@ -2954,33 +2974,34 @@ class $$NotesTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$NotesTableProcessedTableManager = ProcessedTableManager<
+typedef $$AppNotesTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
-    $NotesTable,
-    Note,
-    $$NotesTableFilterComposer,
-    $$NotesTableOrderingComposer,
-    $$NotesTableAnnotationComposer,
-    $$NotesTableCreateCompanionBuilder,
-    $$NotesTableUpdateCompanionBuilder,
-    (Note, BaseReferences<_$AppDatabase, $NotesTable, Note>),
-    Note,
+    $AppNotesTable,
+    AppNote,
+    $$AppNotesTableFilterComposer,
+    $$AppNotesTableOrderingComposer,
+    $$AppNotesTableAnnotationComposer,
+    $$AppNotesTableCreateCompanionBuilder,
+    $$AppNotesTableUpdateCompanionBuilder,
+    (AppNote, BaseReferences<_$AppDatabase, $AppNotesTable, AppNote>),
+    AppNote,
     PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$UserSettingsTableTableTableManager get userSettingsTable =>
-      $$UserSettingsTableTableTableManager(_db, _db.userSettingsTable);
-  $$DaysTableTableManager get days => $$DaysTableTableManager(_db, _db.days);
-  $$PeriodDaysTableTableManager get periodDays =>
-      $$PeriodDaysTableTableManager(_db, _db.periodDays);
-  $$CyclesTableTableManager get cycles =>
-      $$CyclesTableTableManager(_db, _db.cycles);
-  $$MoodsTableTableManager get moods =>
-      $$MoodsTableTableManager(_db, _db.moods);
-  $$SymptomsTableTableManager get symptoms =>
-      $$SymptomsTableTableManager(_db, _db.symptoms);
-  $$NotesTableTableManager get notes =>
-      $$NotesTableTableManager(_db, _db.notes);
+  $$AppUserSettingsTableTableManager get appUserSettings =>
+      $$AppUserSettingsTableTableManager(_db, _db.appUserSettings);
+  $$AppDaysTableTableManager get appDays =>
+      $$AppDaysTableTableManager(_db, _db.appDays);
+  $$AppPeriodDaysTableTableManager get appPeriodDays =>
+      $$AppPeriodDaysTableTableManager(_db, _db.appPeriodDays);
+  $$AppCyclesTableTableManager get appCycles =>
+      $$AppCyclesTableTableManager(_db, _db.appCycles);
+  $$AppMoodsTableTableManager get appMoods =>
+      $$AppMoodsTableTableManager(_db, _db.appMoods);
+  $$AppSymptomsTableTableManager get appSymptoms =>
+      $$AppSymptomsTableTableManager(_db, _db.appSymptoms);
+  $$AppNotesTableTableManager get appNotes =>
+      $$AppNotesTableTableManager(_db, _db.appNotes);
 }

@@ -3,6 +3,6 @@
 part of 'mood_dao.dart';
 
 // ignore_for_file: type=lint
-mixin _$MoodsDaoMixin on DatabaseAccessor<AppDatabase> {
-  $MoodsTable get moods => attachedDatabase.moods;
+mixin _$AppMoodsDaoMixin on DatabaseAccessor<AppDatabase> {
+  $AppMoodsTable get appMoods => attachedDatabase.appMoods;
 }

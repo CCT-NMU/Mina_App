@@ -18,6 +18,7 @@ import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/data/model/day.dart';
 import 'package:mina_app/services/auth_service.dart'; // Add this import
+import 'package:mina_app/services/fake_auth_service.dart';
 import 'package:intl/intl.dart';
 
 class DashboardView extends StatefulWidget {
@@ -32,7 +33,8 @@ class _DashboardViewState extends State<DashboardView> {
   DateTime? _selectedDay;
 
   // Get current user ID from AuthService
-  String get currentUserId => AuthService.instance.requireUserId;
+//  String get currentUserId => AuthService.instance.requireUserId;
+  String get currentUserId => FakeAuthService().requireUserId;
 
   @override
   void initState() {
@@ -43,7 +45,9 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   Widget build(BuildContext context) {
     // Get user info for display
-    final userName = AuthService.instance.currentUserName ?? 'User';
+//    final userName = AuthService.instance.currentUserName ?? 'User';
+    final userName = FakeAuthService().currentUserName ?? 'User';
+
     return BlocProvider.value(
       value: context.read<AuthBloc>(),
       child: BlocBuilder<DashboardBloc, DashboardState>(

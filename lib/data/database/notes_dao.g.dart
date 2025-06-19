@@ -3,6 +3,6 @@
 part of 'notes_dao.dart';
 
 // ignore_for_file: type=lint
-mixin _$NotesDaoMixin on DatabaseAccessor<AppDatabase> {
-  $NotesTable get notes => attachedDatabase.notes;
+mixin _$AppNotesDaoMixin on DatabaseAccessor<AppDatabase> {
+  $AppNotesTable get appNotes => attachedDatabase.appNotes;
 }

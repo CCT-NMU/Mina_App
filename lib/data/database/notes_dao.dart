@@ -4,12 +4,13 @@ import 'package:mina_app/data/model/note.dart';
 
 part 'notes_dao.g.dart';
 
-@DriftAccessor(tables: [Notes])
-class NotesDao extends DatabaseAccessor<AppDatabase> with _$NotesDaoMixin {
-  NotesDao(AppDatabase db) : super(db);
+@DriftAccessor(tables: [AppNotes])
+class AppNotesDao extends DatabaseAccessor<AppDatabase>
+    with _$AppNotesDaoMixin {
+  AppNotesDao(AppDatabase db) : super(db);
 
   // Mapping from Drift data class to custom model
-  Note fromDrift(NotesTableData row) => Note(
+  Note fromDrift(AppNote row) => Note(
         id: row.id,
         title: row.title,
         content: row.content,
@@ -18,7 +19,7 @@ class NotesDao extends DatabaseAccessor<AppDatabase> with _$NotesDaoMixin {
       );
 
   // Mapping from custom model to Drift companion
-  NotesCompanion toDrift(Note note) => NotesCompanion(
+  AppNotesCompanion toDrift(Note note) => AppNotesCompanion(
         id: note.id != null ? Value(note.id!) : const Value.absent(),
         title: Value(note.title),
         content: Value(note.content),
@@ -26,21 +27,21 @@ class NotesDao extends DatabaseAccessor<AppDatabase> with _$NotesDaoMixin {
         updatedAt: Value(note.updatedAt.toIso8601String()),
       );
 
-  Future<int> insertNote(Note note) => into(notes).insert(toDrift(note));
+  Future<int> insertNote(Note note) => into(appNotes).insert(toDrift(note));
 
   Future<List<Note>> getAllNotes() async {
-    final rows = await select(notes).get();
+    final rows = await select(appNotes).get();
     return rows.map(fromDrift).toList();
   }
 
   Future<Note?> getNoteById(int id) async {
-    final row = await (select(notes)..where((tbl) => tbl.id.equals(id)))
+    final row = await (select(appNotes)..where((tbl) => tbl.id.equals(id)))
         .getSingleOrNull();
     return row == null ? null : fromDrift(row);
   }
 
-  Future<bool> updateNote(Note note) => update(notes).replace(toDrift(note));
+  Future<bool> updateNote(Note note) => update(appNotes).replace(toDrift(note));
 
   Future<int> deleteNoteById(int id) =>
-      (delete(notes)..where((tbl) => tbl.id.equals(id))).go();
+      (delete(appNotes)..where((tbl) => tbl.id.equals(id))).go();
 }
