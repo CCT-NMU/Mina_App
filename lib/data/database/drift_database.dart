@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:mina_app/data/database/cycle_dao.dart';
 import 'package:mina_app/data/database/days_dao.dart';
 import 'package:mina_app/data/database/mood_dao.dart';
@@ -7,6 +6,10 @@ import 'package:mina_app/data/database/period_day_dao.dart';
 import 'package:mina_app/data/database/symptom_doa.dart';
 import 'package:mina_app/data/database/user_settings_dao.dart';
 import 'package:mina_app/data/database/users_dao.dart';
+import 'package:mina_app/data/model/day.dart';
+import 'package:mina_app/data/model/mood_list.dart';
+import 'package:mina_app/data/model/period_day.dart';
+import 'package:mina_app/data/model/symptom_list.dart';
 import 'notes_dao.dart';
 
 part 'drift_database.g.dart';
@@ -110,4 +113,51 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 1;
+
+  clearAllData() {}
+
+  Future<List<Day>> getCombinedDayAndPeriodDayRecords(String userId) async {
+    // Join AppDays and AppPeriodDays on date and userId
+    final query = select(appDays).join([
+      leftOuterJoin(
+        appPeriodDays,
+        appDays.date.equalsExp(appPeriodDays.date) &
+            appDays.userId.equalsExp(appPeriodDays.userId),
+      ),
+    ])
+      ..where(appDays.userId.equals(userId))
+      ..orderBy([OrderingTerm.asc(appDays.date)]);
+
+    final rows = await query.get();
+
+    // You can define your Day and PeriodDay models as needed.
+    // Here, we return a Map for each row, but you can map to your models.
+    return rows.map((row) {
+      final day = row.readTable(appDays);
+      final periodDay = row.readTableOrNull(appPeriodDays);
+
+      if (day.isPeriodDay) {
+        // Map to your PeriodDay model
+        return PeriodDay(
+          date: day.date,
+          note: day.note,
+          symptomList: SymptomList.fromString(day.symptomList),
+          moodList: MoodList.fromString(day.moodList),
+          flowWeight:
+              FlowWeight.values[periodDay!.flowWeight!] ?? FlowWeight.none,
+          isPeriodStartDay: periodDay.isPeriodStartDay,
+          isPeriodEndDay: periodDay.isPeriodEndDay,
+        );
+      } else {
+        // Map to your Day model
+        return Day(
+          date: day.date,
+          isPeriodDay: day.isPeriodDay,
+          note: day.note,
+          symptomList: SymptomList.fromString(day.symptomList),
+          moodList: MoodList.fromString(day.moodList),
+        );
+      }
+    }).toList();
+  }
 }

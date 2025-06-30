@@ -11,9 +11,12 @@ import 'package:mina_app/features/day_entry/bloc/day_entry_state.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/day_entry/view/day_entry_form.dart';
+import 'package:mina_app/services/auth_service.dart';
 
 class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
   DayEntryBloc() : super(const DayEntryInitialState()) {
+    String userId = AuthService().currentUserId!;
+
     on<DayEntryFetch>((event, emit) async {
       emit(const DayEntryLoadingState());
       try {
@@ -22,7 +25,8 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
             .getDayEntry(event.date, event.userId);
         //find if day is in present cycle
 
-        final presentCycle = await CycleRepository().getPresentCycle();
+        final presentCycle =
+            await CycleRepository.instance.getPresentCycle(userId);
 
         bool isInPresentCycle = false;
         if (presentCycle != null) {

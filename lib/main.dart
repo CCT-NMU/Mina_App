@@ -11,6 +11,7 @@ import 'package:mina_app/features/onboarding/view/welcome.dart';
 import 'package:mina_app/features/period_picker/last_period_start_date_view.dart';
 import 'package:mina_app/features/period_picker/bloc/period_day_picker_bloc.dart';
 import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
+import 'package:mina_app/services/auth_service.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -23,27 +24,22 @@ import 'package:mina_app/services/fake_auth_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  const bool useFakeAuth =
-      true; // Set to true to bypass Supabase and use fake user
+  // Initialize Supabase
+  // TODO: (refactor to be more secure)
 
-  if (!useFakeAuth) {
-    // Initialize Supabase
-    // TODO: (refactor to be more secure)
-    await Supabase.initialize(
-      url: 'https://qvlfvktdzzpcuximbdic.supabase.co',
+  await Supabase.initialize(
+      url: 'https://lljkykkolucqyudnicaq.supabase.co',
       anonKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2bGZ2a3RkenpwY3V4aW1iZGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0MjQ1OTcsImV4cCI6MjA2NDAwMDU5N30.gJbrV1oFuczqPUhs9RMn2ofc6BP1gYGml97jDEfFwzg',
-    );
-  }
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxsamt5a2tvbHVjcXl1ZG5pY2FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3NTU0MzYsImV4cCI6MjA2NjMzMTQzNn0.eRh0tgaAFJhxadh1clwaOVunGylz2uZUTrLgYiLKF0Q');
+
   // Initialize notifications
   // await NotificationService().initialize();
 
-  runApp(MinaApp(useFakeAuth: useFakeAuth));
+  runApp(MinaApp());
 }
 
 class MinaApp extends StatelessWidget {
-  final bool useFakeAuth;
-  const MinaApp({super.key, this.useFakeAuth = false});
+  const MinaApp({super.key});
 
 /*   Future<bool> userHasName() async {
     final name = await UserRepository.instance.getUserSetting('name',);
@@ -63,20 +59,16 @@ class MinaApp extends StatelessWidget {
             create: (context) => CycleTrackerBloc(),
           ),
           BlocProvider<DashboardBloc>(
-            create: (context) => DashboardBloc(
-              userId: '',
-            )..add(LoadDashboard(DateTime.now())),
+            create: (context) =>
+                DashboardBloc()..add(LoadDashboard(DateTime.now())),
           ),
           BlocProvider<OnboardingBloc>(
-            create: (_) => OnboardingBloc()..add(OnboardingCompleted()),
+            create: (context) => OnboardingBloc()..add(OnboardingCompleted()),
           ),
           BlocProvider<AuthBloc>(
-            create: (_) => useFakeAuth
-                ? AuthBloc(authService: FakeAuthService())
-                : AuthBloc(),
+            create: (context) => AuthBloc(),
           )
-        ], child: DashboardView() //AuthWrapper()
-            ));
+        ], child: AuthWrapper()));
   }
 }
 
@@ -91,10 +83,6 @@ class AuthWrapper extends StatelessWidget {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
-        } else if (state is AuthAuthenticated) {
-          //find any existing days.
-
-          return const DashboardView();
         } else {
           return const LoginView();
         }

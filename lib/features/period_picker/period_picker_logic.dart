@@ -65,6 +65,7 @@ class PeriodPickerLogic {
           : null; //cycle still to be completed
 
       newCycleRecords.add(Cycle(
+          userId: userId,
           startDate: Utils().normalizedDate(startDate),
           periodEndDate: Utils()
                   .normalizedDate(periodEndDate)

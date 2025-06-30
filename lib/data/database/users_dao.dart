@@ -42,4 +42,29 @@ class AppUsersDao extends DatabaseAccessor<AppDatabase>
           result.lastestCycleStart != null ? result.lastestCycleStart! : null,
     );
   }
+
+  clearUserData(String userId) {
+    (delete(appUsers)..where((tbl) => tbl.id.equals(userId))).go();
+  }
+
+  deleteUser(String id) {
+    return (delete(appUsers)..where((tbl) => tbl.id.equals(id))).go();
+  }
+
+  updateUser(User user) {
+    final companion = AppUsersCompanion(
+      id: Value(user.id!),
+      name: Value(user.name!),
+      surname: Value(user.surname!),
+      email: Value(user.email!),
+      birthday: Value(user.birthday!),
+      avgCycleLength: Value(user.avgCycleLength),
+      avgPeriodLength: Value(user.avgPeriodLength),
+      lastestCycleStart: user.lastestCycleStart != null
+          ? Value(user.lastestCycleStart!)
+          : const Value.absent(),
+    );
+    return (update(appUsers)..where((tbl) => tbl.id.equals(user.id!)))
+        .write(companion);
+  }
 }

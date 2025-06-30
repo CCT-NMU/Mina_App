@@ -54,7 +54,7 @@ It will only appear for :
 
 class PeriodDayPickerView extends StatefulWidget {
   final DateTime? focusedDay;
-  final String userId = AuthService.instance.requireUserId;
+  final String userId = AuthService().currentUserId!;
   PeriodDayPickerView({Key? key, this.focusedDay}) : super(key: key);
 
   @override
@@ -163,7 +163,6 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                               providers: [
                                 BlocProvider(
                                   create: (context) => DashboardBloc(
-                                      userId: widget.userId,
                                       predictionService: PredictionService(),
                                       dbHelper: DatabaseHelper()),
                                 ),

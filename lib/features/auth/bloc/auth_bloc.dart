@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
-import 'package:supabase_flutter/supabase_flutter.dart' as supabase show AuthState;
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase
+    show AuthState;
 import 'package:mina_app/services/auth_service.dart';
 
 // Events
@@ -112,10 +113,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthService _authService;
   late StreamSubscription<supabase.AuthState> _authStateSubscription;
 
-  AuthBloc({AuthService? authService})
-      : _authService = authService ?? AuthService(),
+  AuthBloc()
+      : _authService = AuthService(),
         super(AuthInitial()) {
-    
     on<AuthStarted>(_onAuthStarted);
     on<AuthSignInRequested>(_onSignInRequested);
     on<AuthSignUpRequested>(_onSignUpRequested);
@@ -136,7 +136,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    
+
     final user = _authService.currentUser;
     if (user != null) {
       try {
@@ -155,7 +155,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    
+
     try {
       final response = await _authService.signIn(
         email: event.email,
@@ -181,7 +181,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    
+
     try {
       final response = await _authService.signUp(
         name: event.name,
@@ -208,7 +208,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    
+
     try {
       await _authService.signOut();
       emit(AuthUnauthenticated());
@@ -222,7 +222,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    
+
     try {
       await _authService.resetPassword(event.email);
       emit(AuthPasswordResetSent(event.email));

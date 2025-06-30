@@ -2,16 +2,20 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:mina_app/data/model/cycle.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
+import 'package:mina_app/services/auth_service.dart';
 
 part 'cycle_tracker_event.dart';
 part 'cycle_tracker_state.dart';
 
 class CycleTrackerBloc extends Bloc<CycleTrackerEvent, CycleTrackerState> {
   CycleTrackerBloc() : super(CycleTrackerInitial()) {
+    final auth = AuthService();
+    final userId = auth.currentUserId!;
     //On dashboard startup
     on<CycleTrackerStarted>((event, emit) async {
       //fetch the global cycle
-      final cycle = await CycleRepository().getPresentCycle();
+
+      final cycle = await CycleRepository.instance.getPresentCycle(userId);
 
       //global cycle can be null
       if (cycle != null) {
@@ -25,7 +29,8 @@ class CycleTrackerBloc extends Bloc<CycleTrackerEvent, CycleTrackerState> {
     //Emit no Cycle exists state for
     on<FetchCycle>((event, emit) async {
       print("fetching cycle for ${event.date}");
-      final currentCycle = await CycleRepository().getCycle(event.date);
+      final currentCycle =
+          await CycleRepository.instance.getCycle(event.date, userId);
       if (currentCycle != null) {
         print("Cycle found for ${event.date}");
         emit(CycleTrackerCycleFetched(currentCycle,

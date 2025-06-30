@@ -10,7 +10,7 @@ class ExportService {
   final CycleRepository _cycleRepository;
 
   ExportService({CycleRepository? cycleRepository})
-      : _cycleRepository = cycleRepository ?? CycleRepository();
+      : _cycleRepository = cycleRepository ?? CycleRepository.instance;
 
   /* Future<void> exportCycleData() async {
     try {

@@ -49,7 +49,7 @@ class _WelcomeState extends State<Welcome> {
                       MaterialPageRoute(
                         builder: (context) => BlocProvider.value(
                           value: onboardingBloc,
-                          child: const NameCapture(),
+                          child: NameCapture(),
                         ),
                       ),
                     );

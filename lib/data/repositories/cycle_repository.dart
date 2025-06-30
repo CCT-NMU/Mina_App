@@ -1,22 +1,36 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mina_app/common/utils.dart';
+import 'package:mina_app/data/database/connection/shared.dart';
+import 'package:mina_app/data/database/cycle_dao.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
+import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/model/cycle.dart';
 import 'package:mina_app/data/model/day.dart';
 import 'package:mina_app/data/model/period_day.dart';
 
 class CycleRepository {
+  late final AppDatabase database;
+  late final AppCyclesDao _cyclesDao;
+
+  CycleRepository._privateConstructor() {
+    database = constructDb();
+    _cyclesDao = AppCyclesDao(database);
+  }
+  static final CycleRepository _instance =
+      CycleRepository._privateConstructor();
+  static CycleRepository get instance => _instance;
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  Future<Cycle?> getPresentCycle() async {
-    final Cycle? globalCycle = await _dbHelper.getPresentCycle();
+  Future<Cycle?> getPresentCycle(String userId) async {
+    final Cycle? globalCycle = await _cyclesDao.getPresentCycle(userId);
 
     return globalCycle;
   }
 
-  Future<Cycle?> getCycle(DateTime date) async {
-    final Cycle? cycle = await _dbHelper.getCycle(date);
+  Future<Cycle?> getCycleByStartDate(DateTime startDate, String userId) async {
+    final Cycle? cycle =
+        await _cyclesDao.getCycleByStartDate(startDate, userId);
 
     return cycle;
   }
@@ -109,7 +123,6 @@ class CycleRepository {
     }
   }
 
-/* 
   Future<int> calculateAvgPeriodLength(String userId) async {
     try {
       final cycles = await calculateCycleHistory(userId);
@@ -119,9 +132,13 @@ class CycleRepository {
       int validCycles = 0;
 
       for (var cycle in cycles) {
-        if (cycle.periodLength > 0) {
-          totalLength += cycle.periodLength;
-          validCycles++;
+        if (cycle.periodEndDate != null && cycle.startDate != null) {
+          if (cycle.startDate!.difference(cycle.periodEndDate!) >
+              Duration.zero) {
+            totalLength +=
+                cycle.startDate!.difference(cycle.periodEndDate!).inDays;
+            validCycles++;
+          }
         }
       }
 
@@ -131,7 +148,6 @@ class CycleRepository {
       return 0;
     }
   }
- */
 
   Future<DateTime?> predictNextPeriod(String userId) async {
     try {
@@ -151,28 +167,37 @@ class CycleRepository {
 
   // Additional methods for cycle CRUD operations using database helper
 
-  Future<void> insertCycle(Map<String, dynamic> cycle, String userId) async {
+  Future<void> insertCycle(Cycle cycle, String userId) async {
     try {
-      await _dbHelper.insertCycle(cycle, userId);
+      await _cyclesDao.insertCycle(cycle, userId);
     } catch (e) {
       debugPrint('Error inserting cycle: $e');
       throw Exception('Failed to insert cycle');
     }
   }
 
-  Future<List<Map<String, dynamic>>> getCycles(String userId) async {
+  Future<List<Cycle>> getCycles(String userId) async {
     try {
-      return await _dbHelper.getCycles(userId);
+      final appCycles = await _cyclesDao.getAllCycles(userId);
+      // Map AppCycle to Cycle
+      return appCycles
+          .map((appCycle) => Cycle(
+                userId: appCycle.userId,
+                startDate: appCycle.startDate,
+                endDate: appCycle.endDate,
+                periodEndDate: appCycle.periodEndDate,
+                // Add other fields as needed
+              ))
+          .toList();
     } catch (e) {
       debugPrint('Error retrieving cycles: $e');
       throw Exception('Failed to retrieve cycles');
     }
   }
 
-  Future<void> updateCycle(
-      int id, Map<String, dynamic> cycle, String userId) async {
+  Future<void> updateCycle(int id, Cycle cycle, String userId) async {
     try {
-      await _dbHelper.updateCycle(id, cycle, userId);
+      await _cyclesDao.updateCycle(id, cycle, userId);
     } catch (e) {
       debugPrint('Error updating cycle: $e');
       throw Exception('Failed to update cycle');
@@ -181,10 +206,30 @@ class CycleRepository {
 
   Future<void> deleteCycle(int id, String userId) async {
     try {
-      await _dbHelper.deleteCycle(id, userId);
+      await _cyclesDao.deleteCycle(id, userId);
     } catch (e) {
       debugPrint('Error deleting cycle: $e');
       throw Exception('Failed to delete cycle');
+    }
+  }
+
+  Future<Cycle?> getCycle(DateTime date, String userId) async {
+    // Normalize the date for comparison
+    final normalizedDate = Utils().normalizedDate(date);
+
+    // Use the DAO to query for a cycle containing the given date
+    final appCycle = await _cyclesDao.getCycleByDate(normalizedDate, userId);
+
+    if (appCycle != null) {
+      return Cycle(
+        userId: appCycle.userId,
+        startDate: appCycle.startDate,
+        endDate: appCycle.endDate,
+        periodEndDate: appCycle.periodEndDate,
+        // Add other fields as needed
+      );
+    } else {
+      return null;
     }
   }
 }

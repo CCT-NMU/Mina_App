@@ -13,10 +13,10 @@ class StatisticsView extends StatefulWidget {
 }
 
 class _StatisticsViewState extends State<StatisticsView> {
-  final CycleRepository _cycleRepository = CycleRepository();
+  final CycleRepository _cycleRepository = CycleRepository.instance;
   List<Cycle> _cycles = [];
   bool _isLoading = true;
-  final String userId = AuthService.instance.requireUserId;
+  final String userId = AuthService().requireUserId;
 
   @override
   void initState() {

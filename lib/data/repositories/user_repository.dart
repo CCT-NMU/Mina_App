@@ -1,16 +1,28 @@
 import 'package:flutter/foundation.dart';
+import 'package:mina_app/data/database/connection/shared.dart';
+import 'package:mina_app/data/database/drift_database.dart';
+import 'package:mina_app/data/database/user_settings_dao.dart';
+import 'package:mina_app/data/database/users_dao.dart';
 import 'package:mina_app/data/model/user.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 
 class UserRepository {
-  UserRepository._privateConstructor();
+  late final AppDatabase database;
+  late final AppUsersDao appUsersDao;
+  late final AppUserSettingsDao appUserSettingsDao;
+
+  UserRepository._privateConstructor() {
+    database = constructDb();
+    appUsersDao = AppUsersDao(database);
+    appUserSettingsDao = AppUserSettingsDao(database);
+  }
   static final UserRepository _instance = UserRepository._privateConstructor();
   static UserRepository get instance => _instance;
 
   Future<void> insertOrUpdateUserSetting(
       String key, String value, String userId) async {
     try {
-      await DatabaseHelper().insertOrUpdateUserSetting(key, value, userId);
+      await appUserSettingsDao.insertOrUpdateUserSetting(key, value, userId);
     } catch (e) {
       debugPrint('Error inserting or updating user setting: $e');
       rethrow;
@@ -19,7 +31,7 @@ class UserRepository {
 
   Future<String?> getUserSetting(String key, String userId) async {
     try {
-      return await DatabaseHelper().getUserSetting(key, userId);
+      return await appUserSettingsDao.getUserSetting(key, userId);
     } catch (e) {
       debugPrint('Error fetching user setting: $e');
       return null;
@@ -28,25 +40,70 @@ class UserRepository {
 
   Future<Map<String, String>> getUserSettings(String userId) async {
     try {
-      return await DatabaseHelper().getAllSettings(userId);
+      return await appUserSettingsDao.getAllSettings(userId);
     } catch (e) {
       debugPrint('Error fetching all user settings: $e');
       return {};
     }
   }
 
+  Future<void> clearUserSettings(String userId) async {
+    try {
+      await appUserSettingsDao.clearUserSettings(userId);
+    } catch (e) {
+      debugPrint('Error clearing user settings: $e');
+      throw Exception('Failed to clear user settings');
+    }
+  }
+
   Future<void> clearUserData(String userId) async {
     try {
-      await DatabaseHelper().clearUserData(userId);
+      await appUsersDao.clearUserData(userId);
     } catch (e) {
       debugPrint('Error clearing user data: $e');
       throw Exception('Failed to clear user data');
     }
   }
 
+  Future<int> insertUser(User user) async {
+    try {
+      return await appUsersDao.insertUser(user);
+    } catch (e) {
+      debugPrint('Error inserting user: $e');
+      throw Exception('Failed to insert user');
+    }
+  }
+
+  Future<User?> getUserById(String id) async {
+    try {
+      return await appUsersDao.getUserById(id);
+    } catch (e) {
+      debugPrint('Error fetching user by ID: $e');
+      return null;
+    }
+  }
+
+  Future<void> updateUser(User user) async {
+    try {
+      await appUsersDao.updateUser(user);
+    } catch (e) {
+      debugPrint('Error updating user: $e');
+      throw Exception('Failed to update user');
+    }
+  }
+
+  Future<void> deleteUser(String id) async {
+    try {
+      await appUsersDao.deleteUser(id);
+    } catch (e) {
+      debugPrint('Error deleting user: $e');
+      throw Exception('Failed to delete user');
+    }
+  }
+
   Future<void> clearAllData() async {
     try {
-      await DatabaseHelper().clearAllData();
+      await database.clearAllData();
     } catch (e) {
       debugPrint('Error clearing all data: $e');
       throw Exception('Failed to clear all data');

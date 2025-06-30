@@ -17,7 +17,7 @@ class _SettingsViewState extends State<SettingsView> {
   final NotificationService _notificationService = NotificationService();
   final BackupService _backupService = BackupService();
   final ExportService _exportService = ExportService();
-  final String userId = AuthService.instance.requireUserId;
+  final String userId = AuthService().requireUserId;
 
   bool _enableReminders = true;
   int _reminderDays = 2;

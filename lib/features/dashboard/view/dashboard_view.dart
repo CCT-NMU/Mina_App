@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:mina_app/data/model/period_day.dart';
 import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
@@ -8,18 +6,15 @@ import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_states.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_event.dart';
-import 'package:mina_app/features/onboarding/bloc/onboarding_bloc.dart';
 import 'package:mina_app/features/widgets/common/menu/menu_drawer.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:mina_app/features/day_entry/view/day_entry_view.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
-import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/data/model/day.dart';
-import 'package:mina_app/services/auth_service.dart'; // Add this import
+import 'package:mina_app/services/auth_service.dart';
 import 'package:mina_app/services/fake_auth_service.dart';
-import 'package:intl/intl.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -33,8 +28,7 @@ class _DashboardViewState extends State<DashboardView> {
   DateTime? _selectedDay;
 
   // Get current user ID from AuthService
-//  String get currentUserId => AuthService.instance.requireUserId;
-  String get currentUserId => FakeAuthService().requireUserId;
+  String get currentUserId => AuthService().currentUserId!;
 
   @override
   void initState() {

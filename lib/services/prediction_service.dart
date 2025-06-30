@@ -5,7 +5,7 @@ class PredictionService {
   final CycleRepository _cycleRepository;
 
   PredictionService({CycleRepository? cycleRepository})
-      : _cycleRepository = cycleRepository ?? CycleRepository();
+      : _cycleRepository = cycleRepository ?? CycleRepository.instance;
 
   Future<DateTime?> predictNextPeriod(String userId) async {
     try {

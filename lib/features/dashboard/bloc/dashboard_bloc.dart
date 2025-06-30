@@ -5,19 +5,19 @@ import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_states.dart';
+import 'package:mina_app/services/auth_service.dart';
 import 'package:mina_app/services/prediction_service.dart';
 import 'package:mina_app/services/notification_service.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
-  final CycleRepository cycleRepository = CycleRepository();
+  final CycleRepository cycleRepository = CycleRepository.instance;
   final PredictionService _predictionService;
   final NotificationService _notificationService;
   final DatabaseHelper _dbHelper;
-  final String userId;
+  final String userId = AuthService().currentUserId!;
 
   DashboardBloc({
-    required this.userId,
     PredictionService? predictionService,
     NotificationService? notificationService,
     DatabaseHelper? dbHelper,

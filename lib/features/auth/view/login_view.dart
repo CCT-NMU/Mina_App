@@ -52,10 +52,13 @@ class _LoginViewState extends State<LoginView> {
         );
   }
 
-  void _navigateToRegister() {
+  void _navigateToRegister(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => const RegisterView(),
+        builder: (_) => BlocProvider.value(
+          value: context.read<AuthBloc>(),
+          child: const RegisterView(),
+        ),
       ),
     );
   }
@@ -245,7 +248,9 @@ class _LoginViewState extends State<LoginView> {
 
                     // Register Link
                     TextButton(
-                      onPressed: _navigateToRegister,
+                      onPressed: () {
+                        _navigateToRegister(context);
+                      },
                       child: const Text(
                         'Don\'t have an account? Register',
                         style: TextStyle(

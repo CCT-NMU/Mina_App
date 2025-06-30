@@ -73,17 +73,17 @@ class MenuDrawer extends StatelessWidget {
                 },
               ),
               ListTile(
-            leading: const Icon(Icons.padding_rounded),
-            title: const Text('Notes'),
-            onTap: () {
-              Navigator.pop(context); // Close drawer
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotesView()),
-              );
-            },
-          ),
-          ListTile(
+                leading: const Icon(Icons.padding_rounded),
+                title: const Text('Notes'),
+                onTap: () {
+                  Navigator.pop(context); // Close drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => NotesView()),
+                  );
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.settings),
                 title: const Text('Settings'),
                 onTap: () {

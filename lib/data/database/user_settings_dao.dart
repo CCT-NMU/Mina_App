@@ -33,5 +33,9 @@ class AppUserSettingsDao extends DatabaseAccessor<AppDatabase>
     return {for (var s in settings) s.key: s.value};
   }
 
+  clearUserSettings(String userId) {
+    (delete(appUserSettings)..where((tbl) => tbl.userId.equals(userId))).go();
+  }
+
   // Load a User from the UserSettings table
 }

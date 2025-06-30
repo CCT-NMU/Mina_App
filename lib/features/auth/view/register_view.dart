@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
+import 'package:mina_app/features/onboarding/view/name_capture.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -47,9 +48,14 @@ class _RegisterViewState extends State<RegisterView> {
           listener: (context, state) {
             if (state is AuthAuthenticated) {
               // Navigate back to login and show success message
-              Navigator.of(context).pop();
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => BlocProvider.value(
+                  value: context.read<AuthBloc>(),
+                  child: NameCapture(),
+                ),
+              ));
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content:
                       Text('Registration successful! You are now logged in.'),
                   backgroundColor: Colors.green,

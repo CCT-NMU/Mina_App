@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:mina_app/data/database/connection/shared.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
+import 'package:mina_app/data/database/days_dao.dart';
+import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/model/model.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DayEntryRepository {
-  DayEntryRepository._privateConstructor();
+  late final AppDatabase database;
+  late final AppDaysDao _daysDao;
+
+  DayEntryRepository._privateConstructor() {
+    database = constructDb();
+    _daysDao = AppDaysDao(database);
+  }
   static final DayEntryRepository _instance =
       DayEntryRepository._privateConstructor();
   static DayEntryRepository get instance => _instance;
