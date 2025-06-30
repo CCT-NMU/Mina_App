@@ -6,12 +6,23 @@ import 'package:mina_app/data/database/mood_dao.dart';
 import 'package:mina_app/data/database/period_day_dao.dart';
 import 'package:mina_app/data/database/symptom_doa.dart';
 import 'package:mina_app/data/database/user_settings_dao.dart';
+import 'package:mina_app/data/database/users_dao.dart';
 import 'notes_dao.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
-import 'dart:io';
 
 part 'drift_database.g.dart';
+
+class AppUsers extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get surname => text().nullable()();
+  TextColumn get email => text().nullable()();
+  DateTimeColumn get birthday => dateTime().nullable()();
+  IntColumn get avgCycleLength => integer().nullable()();
+  IntColumn get avgPeriodLength => integer().nullable()();
+  DateTimeColumn get lastestCycleStart => dateTime().nullable()();
+  @override
+  Set<Column> get primaryKey => {id};
+}
 
 class AppUserSettings extends Table {
   TextColumn get key => text()();
@@ -23,7 +34,7 @@ class AppUserSettings extends Table {
 }
 
 class AppDays extends Table {
-  TextColumn get date => text()();
+  DateTimeColumn get date => dateTime()();
   BoolColumn get isPeriodDay => boolean().withDefault(const Constant(false))();
   TextColumn get note => text().nullable()();
   TextColumn get symptomList => text().nullable()();
@@ -35,7 +46,7 @@ class AppDays extends Table {
 }
 
 class AppPeriodDays extends Table {
-  TextColumn get date => text()();
+  DateTimeColumn get date => dateTime()();
   IntColumn get flowWeight => integer().nullable()();
   BoolColumn get isPeriodStartDay =>
       boolean().withDefault(const Constant(false))();
@@ -49,28 +60,29 @@ class AppPeriodDays extends Table {
 
 class AppCycles extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get startDate => text()();
-  TextColumn get periodEndDate => text().nullable()();
-  TextColumn get endDate => text().nullable()();
+  DateTimeColumn get startDate => dateTime()();
+  DateTimeColumn get periodEndDate => dateTime().nullable()();
+  DateTimeColumn get endDate => dateTime().nullable()();
   TextColumn get userId => text()();
 }
 
 class AppMoods extends Table {
-  TextColumn get date => text()();
+  DateTimeColumn get date => dateTime()();
   TextColumn get name => text()();
 }
 
 class AppSymptoms extends Table {
-  TextColumn get date => text()();
+  DateTimeColumn get date => dateTime()();
   TextColumn get name => text()();
 }
 
 class AppNotes extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get userId => text()();
   TextColumn get title => text()();
   TextColumn get content => text()();
-  TextColumn get createdAt => text()();
-  TextColumn get updatedAt => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
 }
 
 //,DaysDao,PeriodDaysDao,CyclesDao,MoodsDao,SymptomsDao
@@ -78,18 +90,20 @@ class AppNotes extends Table {
   AppUserSettings,
   AppDays,
   AppPeriodDays,
-  AppCycles,
   AppMoods,
   AppSymptoms,
-  AppNotes
+  AppUsers,
+  AppNotes,
+  AppCycles,
 ], daos: [
   AppUserSettingsDao,
   AppDaysDao,
   AppPeriodDaysDao,
-  AppCyclesDao,
   AppMoodsDao,
   AppSymptomsDao,
-  AppNotesDao
+  AppUsersDao,
+  AppNotesDao,
+  AppCyclesDao,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(QueryExecutor e) : super(e);

@@ -83,8 +83,7 @@ class _NameCaptureState extends State<NameCapture> {
               create: (context) {
                 final bloc = PeriodDayPickerBloc();
                 //ToDo fix the onboarding auth.
-                bloc.add(PeriodDaysFetched(
-                    DateTime.now(), AuthService.instance.currentUser!.id));
+                bloc.add(PeriodDaysFetched(DateTime.now(), "1"));
                 return bloc;
               },
             ),

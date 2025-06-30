@@ -14,7 +14,7 @@ class AppPeriodDaysDao extends DatabaseAccessor<AppDatabase>
   Future<int> insertPeriodDay(AppPeriodDaysCompanion periodDay) =>
       into(appPeriodDays).insert(periodDay);
 
-  Future<AppPeriodDay?> getPeriodDay(String date, String userId) async {
+  Future<AppPeriodDay?> getPeriodDay(DateTime date, String userId) async {
     final row = await (select(appPeriodDays)
           ..where((tbl) => tbl.date.equals(date) & tbl.userId.equals(userId)))
         .getSingleOrNull();
@@ -24,7 +24,7 @@ class AppPeriodDaysDao extends DatabaseAccessor<AppDatabase>
   Future<bool> updatePeriodDay(AppPeriodDay periodDay) =>
       update(appPeriodDays).replace(periodDay);
 
-  Future<int> deletePeriodDay(String date, String userId) async {
+  Future<int> deletePeriodDay(DateTime date, String userId) async {
     return await transaction(() async {
       // Set isPeriodDay to false in AppDays
       final appDays = AppDaysDao(attachedDatabase).appDays;
@@ -39,7 +39,7 @@ class AppPeriodDaysDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  Future<PeriodDay?> getFullPeriodDay(String date, String userId) async {
+  Future<PeriodDay?> getFullPeriodDay(DateTime date, String userId) async {
     // Fetch the period day row
     final periodDay = await (select(appPeriodDays)
           ..where((tbl) => tbl.date.equals(date) & tbl.userId.equals(userId)))
@@ -53,7 +53,7 @@ class AppPeriodDaysDao extends DatabaseAccessor<AppDatabase>
     final day = await appDaysDao.getDay(date, userId);
 
     return PeriodDay(
-      date: DateTime.parse(periodDay.date),
+      date: periodDay.date,
       flowWeight: FlowWeight.values[periodDay.flowWeight ?? 0],
       isPeriodStartDay: periodDay.isPeriodStartDay,
       isPeriodEndDay: periodDay.isPeriodEndDay,
@@ -70,7 +70,7 @@ class AppPeriodDaysDao extends DatabaseAccessor<AppDatabase>
     await transaction(() async {
       // Insert into AppDays
       final dayCompanion = AppDaysCompanion(
-        date: Value(periodDay.date.toIso8601String()),
+        date: Value(periodDay.date),
         isPeriodDay: const Value(true),
         note: Value(periodDay.note),
         symptomList: Value(periodDay.symptomList?.toString()),
@@ -82,7 +82,7 @@ class AppPeriodDaysDao extends DatabaseAccessor<AppDatabase>
 
       // Insert into AppPeriodDays
       final periodDayCompanion = AppPeriodDaysCompanion(
-        date: Value(periodDay.date.toIso8601String()),
+        date: Value(periodDay.date),
         flowWeight: Value(periodDay.flowWeight.index),
         isPeriodStartDay: Value(periodDay.isPeriodStartDay),
         isPeriodEndDay: Value(periodDay.isPeriodEndDay),

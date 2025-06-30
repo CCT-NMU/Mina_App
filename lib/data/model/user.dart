@@ -1,14 +1,16 @@
 class User {
+  String? id; // Unique identifier for the user
   String? name;
   String? surname;
   String? email;
-  String? birthday;
+  DateTime? birthday;
   int? avgCycleLength; // average length of menstrual cycle
   int? avgPeriodLength; // average length of period
   DateTime? lastestCycleStart;
 
   User(
-      {this.name,
+      {this.id,
+      this.name,
       this.surname,
       this.email,
       this.birthday,
@@ -38,6 +40,7 @@ class User {
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'name': name,
       'surname': surname,
       'email': email,
@@ -49,6 +52,7 @@ class User {
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
+      id: map['id'],
       name: map['name'],
       surname: map['surname'],
       email: map['email'],

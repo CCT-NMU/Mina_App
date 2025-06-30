@@ -12,7 +12,7 @@ class AppDaysDao extends DatabaseAccessor<AppDatabase> with _$AppDaysDaoMixin {
   Future<int> insertDay(Day day, String userId) =>
       into(appDays).insert(toDriftDay(day, userId));
 
-  Future<Day?> getDay(String date, String userId) async {
+  Future<Day?> getDay(DateTime date, String userId) async {
     final row = await (select(appDays)
           ..where((tbl) => tbl.date.equals(date) & tbl.userId.equals(userId)))
         .getSingleOrNull();
@@ -31,14 +31,14 @@ class AppDaysDao extends DatabaseAccessor<AppDatabase> with _$AppDaysDaoMixin {
     return update(appDays).replace(companion);
   }
 
-  Future<int> deleteDay(String date, String userId) => (delete(appDays)
+  Future<int> deleteDay(DateTime date, String userId) => (delete(appDays)
         ..where((tbl) => tbl.date.equals(date) & tbl.userId.equals(userId)))
       .go();
 }
 
 Day fromDriftDay(AppDay row) {
   return Day(
-      date: DateTime.parse(row.date),
+      date: row.date,
       isPeriodDay: row.isPeriodDay,
       note: row.note,
       symptomList: SymptomList.fromString(row.symptomList ?? ""),
@@ -47,7 +47,7 @@ Day fromDriftDay(AppDay row) {
 
 AppDaysCompanion toDriftDay(Day day, String userId) {
   return AppDaysCompanion(
-    date: Value(day.date.toIso8601String()),
+    date: Value(day.date),
     isPeriodDay: Value(day.isPeriodDay),
     note: Value(day.note),
     symptomList: Value(day.symptomList?.toString()),

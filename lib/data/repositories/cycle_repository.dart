@@ -54,6 +54,7 @@ class CycleRepository {
             // If we had a previous cycle, we can now calculate its end date
             if (currentStartDate != null) {
               cycles.add(Cycle(
+                userId: userId,
                 startDate: currentStartDate,
                 endDate: day.date.subtract(const Duration(
                     days: 1)), // End date is day before next start
@@ -76,6 +77,7 @@ class CycleRepository {
         // For the last cycle, end date is today if we don't have a next start date
         final endDate = DateTime.now();
         cycles.add(Cycle(
+          userId: userId,
           startDate: currentStartDate,
           endDate: endDate,
           periodEndDate: endDate,
