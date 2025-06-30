@@ -162,11 +162,6 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                             child: MultiBlocProvider(
                               providers: [
                                 BlocProvider(
-                                  create: (context) => DashboardBloc(
-                                      predictionService: PredictionService(),
-                                      dbHelper: DatabaseHelper()),
-                                ),
-                                BlocProvider(
                                   create: (context) => CycleTrackerBloc()
                                     ..add(CycleTrackerStarted()),
                                 ),

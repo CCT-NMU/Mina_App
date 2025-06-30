@@ -7,12 +7,9 @@ class NoteRepository {
   late final AppDatabase database;
   late final AppNotesDao _notesDao;
 
-  NoteRepository._privateConstructor() {
-    database = constructDb();
-    _notesDao = AppNotesDao(database);
+  NoteRepository(this.database) {
+    _notesDao = database.appNotesDao;
   }
-  static final NoteRepository _instance = NoteRepository._privateConstructor();
-  static NoteRepository get instance => _instance;
 
   Future<List<Note>> getAllNotes(String userId) {
     return _notesDao.getNotes(userId);

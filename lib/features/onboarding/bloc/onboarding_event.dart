@@ -11,11 +11,7 @@ class OnboardingStarted extends OboardingEvent {}
 
 class OnboardingNameAsked extends OboardingEvent {}
 
-class OnboardingNameSubmitted extends OboardingEvent {
-  String name;
-
-  OnboardingNameSubmitted({required this.name});
-}
+class OnboardingNameSubmitted extends OboardingEvent {}
 
 class LastPeriodPickerViewLoaded extends OboardingEvent {}
 

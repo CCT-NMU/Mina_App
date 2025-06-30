@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:mina_app/data/model/cycle.dart';
+import 'package:mina_app/data/model/user.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/repositories/user_repository.dart';
 
@@ -19,10 +20,9 @@ class OnboardingBloc extends Bloc<OboardingEvent, OnboardingState> {
       emit(OnboardingInProgress());
     });
 
-    /*    on<OnboardingNameSubmitted>((event, emit) {
-      UserRepository.instance.insertOrUpdateUserSetting('name', event.name,);
+    on<OnboardingNameSubmitted>((event, emit) {
       emit(OnboardingInProgress());
-    }); */
+    });
 
     on<LastPeriodPickerViewLoaded>((event, emit) {
       emit(OnboardingInProgress());

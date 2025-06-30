@@ -20,7 +20,6 @@ class CycleRepository {
   static final CycleRepository _instance =
       CycleRepository._privateConstructor();
   static CycleRepository get instance => _instance;
-  final DatabaseHelper _dbHelper = DatabaseHelper();
 
   Future<Cycle?> getPresentCycle(String userId) async {
     final Cycle? globalCycle = await _cyclesDao.getPresentCycle(userId);
@@ -52,7 +51,7 @@ class CycleRepository {
   Future<List<Cycle>> calculateCycleHistory(String userId) async {
     try {
       List<Cycle> cycles = [];
-      final days = await _dbHelper.getCombinedDayAndPeriodDayRecords(userId);
+      final days = await database.getCombinedDayAndPeriodDayRecords(userId);
 
       // Sort days by date to ensure proper order
       days.sort((a, b) => a.date.compareTo(b.date));

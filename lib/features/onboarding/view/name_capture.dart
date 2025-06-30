@@ -70,9 +70,7 @@ class _NameCaptureState extends State<NameCapture> {
       );
       return;
     }
-    context.read<OnboardingBloc>().add(
-          OnboardingNameSubmitted(name: name),
-        );
+
     final onboardingBloc = context.read<OnboardingBloc>();
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -88,9 +86,7 @@ class _NameCaptureState extends State<NameCapture> {
               },
             ),
             BlocProvider(
-              create: (context) => DashboardBloc(
-                userId: '',
-              ),
+              create: (context) => DashboardBloc(),
             )
           ],
           child: PeriodDayPickerView(focusedDay: DateTime.now()),

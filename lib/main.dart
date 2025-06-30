@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mina_app/data/database/connection/shared.dart';
+import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/repositories/user_repository.dart';
 import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
@@ -12,6 +14,7 @@ import 'package:mina_app/features/period_picker/last_period_start_date_view.dart
 import 'package:mina_app/features/period_picker/bloc/period_day_picker_bloc.dart';
 import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
 import 'package:mina_app/services/auth_service.dart';
+import 'package:provider/provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -35,7 +38,13 @@ void main() async {
   // Initialize notifications
   // await NotificationService().initialize();
 
-  runApp(MinaApp());
+  runApp(Provider<AppDatabase>(
+    create: (context) => constructDb(),
+    dispose: (_, db) {
+      db.close();
+    },
+    child: const MinaApp(),
+  ));
 }
 
 class MinaApp extends StatelessWidget {

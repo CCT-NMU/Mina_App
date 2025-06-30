@@ -1,28 +1,35 @@
 /// lib/ui/notes_view.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/repositories/note_repository.dart';
 import 'package:mina_app/services/auth_service.dart';
 import '/data/model/note.dart';
 import 'note_editor_view.dart';
 
 class NotesView extends StatefulWidget {
-  final String userId = AuthService().currentUserId!;
-  NotesView({super.key});
+  const NotesView({super.key});
+
   @override
   State<NotesView> createState() => _NotesViewState();
 }
 
 class _NotesViewState extends State<NotesView> {
   late Future<List<Note>> _notesFuture;
+  late NoteRepository noteRepository;
+  late String userId;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Get the database from Provider
+    final db = Provider.of<AppDatabase>(context, listen: false);
+    noteRepository = NoteRepository(db);
+    userId = AuthService().currentUserId!;
     _reload();
   }
 
-  void _reload() =>
-      _notesFuture = NoteRepository.instance.getAllNotes(widget.userId);
+  void _reload() => _notesFuture = noteRepository.getAllNotes(userId);
 
   Future<void> _openEditor([Note? note]) async {
     final changed = await Navigator.push<bool>(
@@ -33,7 +40,7 @@ class _NotesViewState extends State<NotesView> {
   }
 
   Future<void> _delete(Note n) async {
-    await NoteRepository.instance.deleteNote(n.id!, widget.userId);
+    await noteRepository.deleteNote(n.id!, userId);
     if (mounted) {
       setState(_reload);
       ScaffoldMessenger.of(context)

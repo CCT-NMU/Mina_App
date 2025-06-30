@@ -3,12 +3,12 @@ import 'package:mina_app/data/database/connection/shared.dart';
 import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/repositories/note_repository.dart';
 import 'package:mina_app/data/database/notes_dao.dart';
+import 'package:provider/provider.dart';
 import '/data/model/note.dart';
 
 class NoteEditorView extends StatefulWidget {
   final Note? note; // null ⇒ new note
   const NoteEditorView({super.key, this.note});
-
   @override
   State<NoteEditorView> createState() => _NoteEditorViewState();
 }
@@ -17,6 +17,15 @@ class _NoteEditorViewState extends State<NoteEditorView> {
   late final _titleCtrl = TextEditingController(text: widget.note?.title ?? '');
   late final _contentCtrl =
       TextEditingController(text: widget.note?.content ?? '');
+  late NoteRepository noteRepository;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final db = Provider.of<AppDatabase>(context, listen: false);
+    noteRepository = NoteRepository(db);
+  }
+
   Future<void> _save() async {
     final title = _titleCtrl.text.trim();
     final content = _contentCtrl.text.trim();
@@ -33,9 +42,9 @@ class _NoteEditorViewState extends State<NoteEditorView> {
         .copyWith(title: title, content: content, updatedAt: now);
 
     if (note.id == null) {
-      await NoteRepository.instance.insertNote(note);
+      await noteRepository.insertNote(note);
     } else {
-      await NoteRepository.instance.updateNote(note);
+      await noteRepository.updateNote(note);
     }
     if (mounted) Navigator.pop(context, true); // tell caller to refresh
   }
