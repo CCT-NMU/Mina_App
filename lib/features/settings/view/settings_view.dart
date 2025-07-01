@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
+import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/services/auth_service.dart';
 import 'package:mina_app/services/notification_service.dart';
 import 'package:mina_app/services/backup_service.dart';
 import 'package:mina_app/services/export_service.dart';
+import 'package:provider/provider.dart';
 
 class SettingsView extends StatefulWidget {
-  const SettingsView({super.key});
+  final CycleRepository cycleRepository;
+  const SettingsView({required this.cycleRepository, super.key});
 
   @override
   State<SettingsView> createState() => _SettingsViewState();
@@ -16,7 +19,7 @@ class _SettingsViewState extends State<SettingsView> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
   final NotificationService _notificationService = NotificationService();
   final BackupService _backupService = BackupService();
-  final ExportService _exportService = ExportService();
+  late final ExportService _exportService;
   final String userId = AuthService().requireUserId;
 
   bool _enableReminders = true;
@@ -26,6 +29,7 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   void initState() {
     super.initState();
+    _exportService = ExportService(cycleRepository: widget.cycleRepository);
     _loadSettings();
   }
 

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mina_app/data/database/connection/shared.dart';
+import 'package:mina_app/data/database/connection/shared.dart' as db_connection;
 import 'package:mina_app/data/database/drift_database.dart';
+import 'package:mina_app/data/repositories/cycle_repository.dart';
+import 'package:mina_app/data/repositories/day_entry_repository.dart';
+import 'package:mina_app/data/repositories/note_repository.dart';
 import 'package:mina_app/data/repositories/user_repository.dart';
 import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
@@ -39,11 +42,31 @@ void main() async {
   // await NotificationService().initialize();
 
   runApp(Provider<AppDatabase>(
-    create: (context) => constructDb(),
+    create: (context) => db_connection.constructDb(),
     dispose: (_, db) {
       db.close();
     },
-    child: const MinaApp(),
+    child: MultiProvider(
+      providers: [
+        Provider<DayEntryRepository>(
+          create: (context) => DayEntryRepository(
+              Provider.of<AppDatabase>(context, listen: false)),
+        ),
+        Provider<UserRepository>(
+          create: (context) =>
+              UserRepository(Provider.of<AppDatabase>(context, listen: false)),
+        ),
+        Provider<CycleRepository>(
+          create: (context) =>
+              CycleRepository(Provider.of<AppDatabase>(context, listen: false)),
+        ),
+        Provider<NoteRepository>(
+          create: (context) =>
+              NoteRepository(Provider.of<AppDatabase>(context, listen: false)),
+        ),
+      ],
+      child: MinaApp(),
+    ),
   ));
 }
 
@@ -65,11 +88,20 @@ class MinaApp extends StatelessWidget {
         debugShowCheckedModeBanner: true,
         home: MultiBlocProvider(providers: [
           BlocProvider<CycleTrackerBloc>(
-            create: (context) => CycleTrackerBloc(),
+            create: (context) => CycleTrackerBloc(
+                Provider.of<CycleRepository>(context, listen: false))
+              ..add(CycleTrackerStarted()),
           ),
           BlocProvider<DashboardBloc>(
-            create: (context) =>
-                DashboardBloc()..add(LoadDashboard(DateTime.now())),
+            create: (context) => DashboardBloc(
+              userRepository:
+                  Provider.of<UserRepository>(context, listen: false),
+              cycleRepository:
+                  Provider.of<CycleRepository>(context, listen: false),
+              dayEntryRepository:
+                  Provider.of<DayEntryRepository>(context, listen: false),
+              dbHelper: Provider.of<AppDatabase>(context, listen: false),
+            )..add(LoadDashboard(DateTime.now())),
           ),
           BlocProvider<OnboardingBloc>(
             create: (context) => OnboardingBloc()..add(OnboardingCompleted()),
@@ -77,7 +109,7 @@ class MinaApp extends StatelessWidget {
           BlocProvider<AuthBloc>(
             create: (context) => AuthBloc(),
           )
-        ], child: AuthWrapper()));
+        ], child: LoginView()));
   }
 }
 
@@ -93,7 +125,10 @@ class AuthWrapper extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         } else {
-          return const LoginView();
+          return BlocProvider.value(
+            value: context.read<AuthBloc>(),
+            child: LoginView(),
+          );
         }
       },
     );

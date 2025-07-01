@@ -6,6 +6,7 @@ import 'package:mina_app/common/utils.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
+import 'package:provider/provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:mina_app/data/model/cycle.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
@@ -15,7 +16,11 @@ import 'package:flutter/foundation.dart';
 
 class PeriodPickerLogic {
   final String userId;
-  PeriodPickerLogic(this.userId);
+  final DayEntryRepository dayEntryRepository;
+  PeriodPickerLogic(
+    this.userId,
+    this.dayEntryRepository,
+  );
   List<DateTime> deselecetedPeriodDates = [];
 
   //selectedDates are a list of all the dates that have been selected.
@@ -147,7 +152,7 @@ class PeriodPickerLogic {
           bool isEnd = !isOngoing;
           if (existingPeriodDay == null) {
             if (existingDay == null) {
-              await DayEntryRepository.instance.insertPeriodDayEntry(
+              await dayEntryRepository.insertPeriodDayEntry(
                   PeriodDay(
                     date: curDate,
                     flowWeight:
@@ -159,7 +164,7 @@ class PeriodPickerLogic {
                   txn);
               continue;
             } else {
-              await DayEntryRepository.instance.updateDayToPeriodDay(
+              await dayEntryRepository.updateDayToPeriodDay(
                   PeriodDay(
                     date: curDate,
                     flowWeight:
@@ -201,7 +206,7 @@ class PeriodPickerLogic {
               await DatabaseHelper()
                   .insertPeriodDay(newPeriodDay, userId, txn: txn);
             } else {
-              await DayEntryRepository.instance.updateDayToPeriodDay(
+              await dayEntryRepository.updateDayToPeriodDay(
                 PeriodDay(
                   date: curDate,
                   flowWeight: FlowWeight.none,
@@ -235,7 +240,7 @@ class PeriodPickerLogic {
               await DatabaseHelper()
                   .insertPeriodDay(newPeriodDay, userId, txn: txn);
             } else {
-              await DayEntryRepository.instance.updateDayToPeriodDay(
+              await dayEntryRepository.updateDayToPeriodDay(
                 PeriodDay(
                   date: curDate,
                   flowWeight: FlowWeight.none,
@@ -270,7 +275,7 @@ class PeriodPickerLogic {
               await DatabaseHelper()
                   .insertPeriodDay(newPeriodDay, userId, txn: txn);
             } else {
-              await DayEntryRepository.instance.updateDayToPeriodDay(
+              await dayEntryRepository.updateDayToPeriodDay(
                 PeriodDay(
                   date: curDate,
                   flowWeight: FlowWeight.none,

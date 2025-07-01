@@ -23,6 +23,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/period_picker/period_picker_logic.dart';
 import 'package:mina_app/services/auth_service.dart';
 import 'package:mina_app/services/prediction_service.dart';
+import 'package:provider/provider.dart';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'bloc/period_day_picker_bloc.dart';
@@ -162,9 +163,13 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                             child: MultiBlocProvider(
                               providers: [
                                 BlocProvider(
-                                  create: (context) => CycleTrackerBloc()
+                                  create: (context) => CycleTrackerBloc(
+                                      Provider.of<CycleRepository>(context,
+                                          listen: false))
                                     ..add(CycleTrackerStarted()),
                                 ),
+                                BlocProvider.value(
+                                    value: context.read<DashboardBloc>()),
                               ],
                               child: const DashboardView(),
                             ),

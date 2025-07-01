@@ -13,14 +13,9 @@ class CycleRepository {
   late final AppDatabase database;
   late final AppCyclesDao _cyclesDao;
 
-  CycleRepository._privateConstructor() {
-    database = constructDb();
+  CycleRepository(this.database) {
     _cyclesDao = AppCyclesDao(database);
   }
-  static final CycleRepository _instance =
-      CycleRepository._privateConstructor();
-  static CycleRepository get instance => _instance;
-
   Future<Cycle?> getPresentCycle(String userId) async {
     final Cycle? globalCycle = await _cyclesDao.getPresentCycle(userId);
 

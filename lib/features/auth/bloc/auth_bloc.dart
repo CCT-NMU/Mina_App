@@ -78,15 +78,16 @@ class AuthLoading extends AuthState {}
 
 class AuthAuthenticated extends AuthState {
   final User user;
-  final Map<String, dynamic>? profile;
+  //final Map<String, dynamic>? profile;
 
   const AuthAuthenticated({
     required this.user,
-    this.profile,
+    // this.profile,
   });
 
   @override
-  List<Object?> get props => [user, profile];
+  List<Object?> get props => [user]; //, profile];
+  // List<Object?> get props => [user, profile];
 }
 
 class AuthUnauthenticated extends AuthState {}
@@ -140,8 +141,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final user = _authService.currentUser;
     if (user != null) {
       try {
-        final profile = await _authService.getUserProfile();
-        emit(AuthAuthenticated(user: user, profile: profile));
+        // final profile = await _authService.getUserProfile();
+        emit(AuthAuthenticated(user: user));
+        //emit(AuthAuthenticated(user: user, profile: profile));
       } catch (e) {
         emit(AuthAuthenticated(user: user));
       }
@@ -163,10 +165,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (response.user != null) {
+        print('User signed in: ${response.user!.email}');
         final profile = await _authService.getUserProfile();
+
         emit(AuthAuthenticated(
           user: response.user!,
-          profile: profile,
+          // profile: profile,
         ));
       } else {
         emit(const AuthError('Sign in failed'));
@@ -190,10 +194,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (response.user != null) {
-        final profile = await _authService.getUserProfile();
+        //   final profile = await _authService.getUserProfile();
         emit(AuthAuthenticated(
           user: response.user!,
-          profile: profile,
+          //  profile: profile,
         ));
       } else {
         emit(const AuthError('Sign up failed'));
@@ -237,10 +241,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     if (event.user != null) {
       try {
-        final profile = await _authService.getUserProfile();
+        //  final profile = await _authService.getUserProfile();
         emit(AuthAuthenticated(
           user: event.user!,
-          profile: profile,
+          //    profile: profile,
         ));
       } catch (e) {
         emit(AuthAuthenticated(user: event.user!));
@@ -248,6 +252,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } else {
       emit(AuthUnauthenticated());
     }
+  }
+
+  @override
+  void onTransition(Transition<AuthEvent, AuthState> transition) {
+    super.onTransition(transition);
+    print('AuthEvent: ${transition.event}');
+    print('Transition: ${transition.currentState} -> ${transition.nextState}');
   }
 
   @override

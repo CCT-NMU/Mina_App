@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
+import 'package:mina_app/data/repositories/user_repository.dart';
+import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/period_picker/bloc/period_day_picker_bloc.dart';
 import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/onboarding/bloc/onboarding_bloc.dart';
 import 'package:mina_app/services/auth_service.dart';
+import 'package:provider/provider.dart';
 
 class NameCapture extends StatefulWidget {
   const NameCapture({super.key});
@@ -79,15 +83,25 @@ class _NameCaptureState extends State<NameCapture> {
             BlocProvider.value(value: onboardingBloc),
             BlocProvider(
               create: (context) {
-                final bloc = PeriodDayPickerBloc();
+                final bloc = PeriodDayPickerBloc(
+                    Provider.of<DayEntryRepository>(context, listen: false))
+                  ..add(PeriodDaysFetched(DateTime.now(), "1"));
                 //ToDo fix the onboarding auth.
                 bloc.add(PeriodDaysFetched(DateTime.now(), "1"));
                 return bloc;
               },
             ),
             BlocProvider(
-              create: (context) => DashboardBloc(),
-            )
+              create: (context) => DashboardBloc(
+                userRepository:
+                    Provider.of<UserRepository>(context, listen: false),
+                cycleRepository:
+                    Provider.of<CycleRepository>(context, listen: false),
+                dayEntryRepository:
+                    Provider.of<DayEntryRepository>(context, listen: false),
+                dbHelper: Provider.of<AppDatabase>(context, listen: false),
+              )..add(LoadDashboard(DateTime.now())),
+            ),
           ],
           child: PeriodDayPickerView(focusedDay: DateTime.now()),
         ),

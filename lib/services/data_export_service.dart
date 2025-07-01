@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:csv/csv.dart';
+import 'package:mina_app/data/database/drift_database.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -8,18 +9,14 @@ import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/model/period_day.dart';
 
 class DataExportService {
-  final DatabaseHelper _dbHelper;
-  final CycleRepository _cycleRepository;
+  final AppDatabase dbHelper;
+  final CycleRepository cycleRepository;
 
-  DataExportService({
-    DatabaseHelper? dbHelper,
-    CycleRepository? cycleRepository,
-  })  : _dbHelper = dbHelper ?? DatabaseHelper(),
-        _cycleRepository = cycleRepository ?? CycleRepository.instance;
+  DataExportService({required this.cycleRepository, required this.dbHelper});
 
   Future<String> exportToCsv(String userId) async {
-    final days = await _dbHelper.getCombinedDayAndPeriodDayRecords(userId);
-    final cycles = await _cycleRepository.calculateCycleHistory(userId);
+    final days = await dbHelper.getCombinedDayAndPeriodDayRecords(userId);
+    final cycles = await cycleRepository.calculateCycleHistory(userId);
 
     // Prepare data for CSV
     List<List<dynamic>> cycleRows = [

@@ -1,8 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:mina_app/data/database/drift_database.dart';
+import 'package:mina_app/data/model/cycle.dart';
 import 'package:mina_app/data/model/day.dart';
+import 'package:mina_app/data/model/model.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
+import 'package:mina_app/data/repositories/user_repository.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_states.dart';
 import 'package:mina_app/services/auth_service.dart';
@@ -11,19 +15,24 @@ import 'package:mina_app/services/notification_service.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
-  final CycleRepository cycleRepository = CycleRepository.instance;
   final PredictionService _predictionService;
   final NotificationService _notificationService;
-  final DatabaseHelper _dbHelper;
+  final DayEntryRepository dayEntryRepository;
+  final CycleRepository cycleRepository;
+  final UserRepository userRepository;
   final String userId = AuthService().currentUserId!;
+  final AppDatabase dbHelper;
 
   DashboardBloc({
     PredictionService? predictionService,
     NotificationService? notificationService,
-    DatabaseHelper? dbHelper,
-  })  : _predictionService = predictionService ?? PredictionService(),
+    required this.cycleRepository,
+    required this.dayEntryRepository,
+    required this.userRepository,
+    required this.dbHelper,
+  })  : _predictionService = predictionService ??
+            PredictionService(cycleRepository: cycleRepository),
         _notificationService = notificationService ?? NotificationService(),
-        _dbHelper = dbHelper ?? DatabaseHelper(),
         super(DashboardInitial()) {
     on<LoadDashboard>((event, emit) async {
       emit(DashboardLoadInProgress());
@@ -79,8 +88,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       );
 
       // Fetch days from repository
-      return await DayEntryRepository.instance
-          .getDaysInRange(firstDayOfPrevMonth, lastDayOfNextMonth);
+      return await dayEntryRepository.getDaysInRange(
+          firstDayOfPrevMonth, lastDayOfNextMonth);
 
       // Update state with new events
     } catch (e) {
@@ -108,7 +117,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         final cycles = await cycleRepository.calculateCycleHistory(userId);
         final days = await _loadEventsFromDatabase(event.focusedDay);
         // Schedule notification if enabled
-        final settings = await _dbHelper.getAllSettings(userId);
+        final settings = await userRepository.getAllSettings(userId);
         final enableReminders = settings['enable_period_reminders'] == 'true';
         final reminderDays = int.parse(settings['reminder_days'] ?? '2');
 

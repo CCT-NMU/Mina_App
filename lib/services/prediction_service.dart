@@ -2,14 +2,13 @@ import 'package:mina_app/data/model/cycle.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 
 class PredictionService {
-  final CycleRepository _cycleRepository;
+  final CycleRepository cycleRepository;
 
-  PredictionService({CycleRepository? cycleRepository})
-      : _cycleRepository = cycleRepository ?? CycleRepository.instance;
+  PredictionService({required this.cycleRepository});
 
   Future<DateTime?> predictNextPeriod(String userId) async {
     try {
-      final cycles = await _cycleRepository.calculateCycleHistory(userId);
+      final cycles = await cycleRepository.calculateCycleHistory(userId);
       if (cycles.isEmpty) return null;
 
       // Calculate average cycle length from the last 6 cycles or all available cycles
@@ -39,7 +38,7 @@ class PredictionService {
 
   Future<Map<String, dynamic>> getPredictionStats(String userId) async {
     try {
-      final cycles = await _cycleRepository.calculateCycleHistory(userId);
+      final cycles = await cycleRepository.calculateCycleHistory(userId);
       if (cycles.isEmpty) {
         return {
           'averageCycleLength': 0,

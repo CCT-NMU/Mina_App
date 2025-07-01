@@ -2,7 +2,10 @@ import 'package:drift/drift.dart';
 import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/model/day.dart';
 import 'package:mina_app/data/model/mood_list.dart';
+import 'package:mina_app/data/model/period_day.dart';
 import 'package:mina_app/data/model/symptom_list.dart';
+import 'package:mina_app/services/auth_service.dart';
+import 'package:sqflite_common/sqlite_api.dart';
 part 'days_dao.g.dart';
 
 @DriftAccessor(tables: [AppDays])
@@ -34,6 +37,44 @@ class AppDaysDao extends DatabaseAccessor<AppDatabase> with _$AppDaysDaoMixin {
   Future<int> deleteDay(DateTime date, String userId) => (delete(appDays)
         ..where((tbl) => tbl.date.equals(date) & tbl.userId.equals(userId)))
       .go();
+
+  insertPeriodDay(PeriodDay periodDay, String userId, {Transaction? txn}) {}
+
+  getPeriodDaysInRange(DateTime startDate, DateTime endDate, String userId) {
+    return (select(appDays)
+          ..where((tbl) =>
+              tbl.date.isBetweenValues(startDate, endDate) &
+              tbl.userId.equals(userId)))
+        .get()
+        .then((rows) => rows.map(fromDriftDay).toList());
+  }
+
+  deletePeriodDay(DateTime date, String userId) {
+    return (delete(appDays)
+          ..where((tbl) => tbl.date.equals(date) & tbl.userId.equals(userId)))
+        .go();
+  }
+
+  getDaysInRange(DateTime firstDayOfPrevMonth, DateTime lastDayOfNextMonth) {
+    return (select(appDays)
+          ..where((tbl) => tbl.date
+              .isBetweenValues(firstDayOfPrevMonth, lastDayOfNextMonth)))
+        .get()
+        .then((rows) => rows.map(fromDriftDay).toList());
+  }
+
+  updateDayToPeriodDay(PeriodDay periodDay, {Transaction? txn}) {
+    final userId = AuthService().currentUser!.id;
+    final companion = AppDaysCompanion(
+      date: Value(periodDay.date),
+      isPeriodDay: Value(true),
+      note: Value(periodDay.note),
+      symptomList: Value(periodDay.symptomList?.toString()),
+      moodList: Value(periodDay.moodList?.toString()),
+      userId: Value(userId),
+    );
+    return update(appDays).replace(companion);
+  }
 }
 
 Day fromDriftDay(AppDay row) {

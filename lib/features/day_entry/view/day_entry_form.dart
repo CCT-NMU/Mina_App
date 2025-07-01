@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/common/utils.dart';
 import 'package:mina_app/data/model/cycle.dart';
+import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
@@ -280,7 +281,8 @@ Widget _periodDayStartButton(BuildContext context, DateTime focusedDay,
                     value: context.read<DayEntryBloc>(),
                   ),
                   BlocProvider(
-                    create: (_) => PeriodDayPickerBloc()
+                    create: (_) => PeriodDayPickerBloc(
+                        Provider.of<DayEntryRepository>(context, listen: false))
                       ..add(PeriodDaysFetched(focusedDay, userId)),
                   ),
                   BlocProvider(
@@ -313,7 +315,8 @@ Widget _periodDayEndButton(BuildContext context, DateTime focusedDay,
                   value: context.read<DayEntryBloc>(),
                 ),
                 BlocProvider(
-                  create: (_) => PeriodDayPickerBloc()
+                  create: (_) => PeriodDayPickerBloc(
+                      Provider.of<DayEntryRepository>(context, listen: false))
                     ..add(PeriodDaysFetched(focusedDay, userId)),
                 ),
                 BlocProvider(

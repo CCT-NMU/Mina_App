@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mina_app/data/model/period_day.dart';
+import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
@@ -7,6 +8,7 @@ import 'package:mina_app/features/dashboard/bloc/dashboard_states.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_event.dart';
 import 'package:mina_app/features/widgets/common/menu/menu_drawer.dart';
+import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:mina_app/features/day_entry/view/day_entry_view.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -43,8 +45,8 @@ class _DashboardViewState extends State<DashboardView> {
     final userName = AuthService().currentUserName ?? 'User';
 
     return BlocBuilder<DashboardBloc, DashboardState>(
-      bloc: DashboardBloc(),
       builder: (context, state) {
+        print('DashboardView: Building with state: $state');
         return SafeArea(
           child: Scaffold(
             backgroundColor: Color.fromARGB(255, 255, 255, 255),
@@ -57,9 +59,10 @@ class _DashboardViewState extends State<DashboardView> {
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     // Hero Section
                     Container(
-                      height: MediaQuery.of(context).size.height * 0.15,
+                      height: 150,
                       width: double.infinity,
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 24, horizontal: 16),
                       decoration: const BoxDecoration(
                         color: Color.fromARGB(178, 132, 77, 151),
                         borderRadius: BorderRadius.only(
@@ -71,20 +74,26 @@ class _DashboardViewState extends State<DashboardView> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "Welcome to My Mina $userName!",
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                          Expanded(
+                            flex: 1,
+                            child: Text(
+                              "Welcome to My Mina $userName!",
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                          SizedBox(height: 8),
-                          Text(
-                            "Track your days and stay organized.",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white70,
+                          Expanded(flex: 1, child: SizedBox(height: 8)),
+                          Expanded(
+                            flex: 1,
+                            child: Text(
+                              "Track your days and stay organized.",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white70,
+                              ),
                             ),
                           ),
                         ],
@@ -252,7 +261,7 @@ class _DashboardViewState extends State<DashboardView> {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) {
         return FutureBuilder<Day?>(
-            future: DayEntryRepository.instance
+            future: Provider.of<DayEntryRepository>(context, listen: false)
                 .getDayEntry(focusedDay, currentUserId),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -271,7 +280,12 @@ class _DashboardViewState extends State<DashboardView> {
                           ..add(const CycleTrackerStarted())),
                     BlocProvider.value(value: dashboardBloc),
                     BlocProvider(
-                      create: (_) => DayEntryBloc()
+                      create: (_) => DayEntryBloc(
+                          dayEntryRepository: Provider.of<DayEntryRepository>(
+                              context,
+                              listen: false),
+                          cycleRepository: Provider.of<CycleRepository>(context,
+                              listen: false))
                         ..add(DayEntryFetch(focusedDay, currentUserId)),
                     ),
                   ],
@@ -288,7 +302,12 @@ class _DashboardViewState extends State<DashboardView> {
                     BlocProvider.value(value: cycleTrackerBloc),
                     BlocProvider.value(value: dashboardBloc),
                     BlocProvider(
-                      create: (_) => DayEntryBloc()
+                      create: (_) => DayEntryBloc(
+                          dayEntryRepository: Provider.of<DayEntryRepository>(
+                              context,
+                              listen: false),
+                          cycleRepository: Provider.of<CycleRepository>(context,
+                              listen: false))
                         ..add(DayEntryFetch(focusedDay, currentUserId)),
                     ),
                   ],
@@ -304,7 +323,12 @@ class _DashboardViewState extends State<DashboardView> {
                   BlocProvider.value(value: cycleTrackerBloc),
                   BlocProvider.value(value: dashboardBloc),
                   BlocProvider(
-                    create: (_) => DayEntryBloc()
+                    create: (_) => DayEntryBloc(
+                        dayEntryRepository: Provider.of<DayEntryRepository>(
+                            context,
+                            listen: false),
+                        cycleRepository: Provider.of<CycleRepository>(context,
+                            listen: false))
                       ..add(DayEntryFetch(focusedDay, currentUserId)),
                   ),
                 ],

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/features/note_taking/note_view.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/settings/view/settings_view.dart';
 import 'package:mina_app/features/statistics/view/statistics_view.dart';
+import 'package:provider/provider.dart';
 
 class MenuDrawer extends StatelessWidget {
   const MenuDrawer({super.key});
@@ -23,14 +25,14 @@ class MenuDrawer extends StatelessWidget {
             final user = state.user;
 
             // Try to get display name from user metadata or profile
-            if (state.profile != null && state.profile!['name'] != null) {
+            /*   if (state.profile != null && state.profile!['name'] != null) {
               displayName = state.profile!['name'];
             } else if (user.userMetadata?['name'] != null) {
               displayName = user.userMetadata!['name'];
             } else if (user.email != null) {
               // Fallback to email username part
               displayName = user.email!.split('@')[0];
-            }
+            } */
 
             email = user.email ?? '';
             initials =
@@ -68,7 +70,11 @@ class MenuDrawer extends StatelessWidget {
                   Navigator.pop(context); // Close drawer
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const StatisticsView()),
+                    MaterialPageRoute(
+                        builder: (_) => StatisticsView(
+                            cycleRepository: Provider.of<CycleRepository>(
+                                context,
+                                listen: false))),
                   );
                 },
               ),
@@ -90,7 +96,11 @@ class MenuDrawer extends StatelessWidget {
                   Navigator.pop(context); // Close drawer
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const SettingsView()),
+                    MaterialPageRoute(
+                        builder: (_) => SettingsView(
+                            cycleRepository: Provider.of<CycleRepository>(
+                                context,
+                                listen: false))),
                   );
                 },
               ),

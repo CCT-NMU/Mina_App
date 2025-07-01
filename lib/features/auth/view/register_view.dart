@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/model/user.dart';
+import 'package:mina_app/data/repositories/cycle_repository.dart';
+import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/data/repositories/user_repository.dart';
 import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
@@ -9,6 +12,7 @@ import 'package:mina_app/features/onboarding/view/name_capture.dart';
 import 'package:mina_app/features/period_picker/bloc/period_day_picker_bloc.dart';
 import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
 import 'package:mina_app/services/auth_service.dart';
+import 'package:provider/provider.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -57,23 +61,48 @@ class _RegisterViewState extends State<RegisterView> {
               // Only now is the user guaranteed to be authenticated
               final currentUser = AuthService().currentUser;
               if (currentUser != null) {
-                await UserRepository.instance.insertUser(
+                await Provider.of<UserRepository>(context, listen: false)
+                    .insertUser(
                   User(
                     id: currentUser.id,
                     name: _nameController.text.trim(),
                     email: _emailController.text.trim(),
                   ),
                 );
+                final db = Provider.of<AppDatabase>(context, listen: false);
+                final allUsers = db.select(db.appUsers).get();
+
+                allUsers.then((users) {
+                  print("All users are: $users");
+                }).catchError((error) {
+                  print("Error fetching users: $error");
+                });
               }
               Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => MultiBlocProvider(
                   providers: [
+                    BlocProvider<DashboardBloc>(
+                        create: (context) => DashboardBloc(
+                              userRepository: Provider.of<UserRepository>(
+                                  context,
+                                  listen: false),
+                              cycleRepository: Provider.of<CycleRepository>(
+                                  context,
+                                  listen: false),
+                              dayEntryRepository:
+                                  Provider.of<DayEntryRepository>(context,
+                                      listen: false),
+                              dbHelper: Provider.of<AppDatabase>(context,
+                                  listen: false),
+                            )),
                     BlocProvider(
                         create: (context) =>
                             OnboardingBloc()..add(OnboardingNameSubmitted())),
                     BlocProvider(
                       create: (context) {
-                        final bloc = PeriodDayPickerBloc();
+                        final bloc = PeriodDayPickerBloc(
+                            Provider.of<DayEntryRepository>(context,
+                                listen: false));
                         //ToDo fix the onboarding auth.
                         bloc.add(PeriodDaysFetched(
                             DateTime.now(), currentUser?.id ?? ''));

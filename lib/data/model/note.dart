@@ -50,4 +50,8 @@ class Note {
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
+
+  static List<Note> fromJson(note) {
+    return (note as List).map((item) => Note.fromMap(item)).toList();
+  }
 }

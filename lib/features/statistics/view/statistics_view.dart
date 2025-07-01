@@ -6,14 +6,14 @@ import 'package:intl/intl.dart';
 import 'package:mina_app/services/auth_service.dart';
 
 class StatisticsView extends StatefulWidget {
-  const StatisticsView({super.key});
+  final CycleRepository cycleRepository;
+  const StatisticsView({super.key, required this.cycleRepository});
 
   @override
   State<StatisticsView> createState() => _StatisticsViewState();
 }
 
 class _StatisticsViewState extends State<StatisticsView> {
-  final CycleRepository _cycleRepository = CycleRepository.instance;
   List<Cycle> _cycles = [];
   bool _isLoading = true;
   final String userId = AuthService().requireUserId;
@@ -27,7 +27,7 @@ class _StatisticsViewState extends State<StatisticsView> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final cycles = await _cycleRepository.calculateCycleHistory(userId);
+      final cycles = await widget.cycleRepository.calculateCycleHistory(userId);
       setState(() {
         _cycles = cycles;
         _isLoading = false;

@@ -7,10 +7,9 @@ import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ExportService {
-  final CycleRepository _cycleRepository;
+  final CycleRepository cycleRepository;
 
-  ExportService({CycleRepository? cycleRepository})
-      : _cycleRepository = cycleRepository ?? CycleRepository.instance;
+  ExportService({required this.cycleRepository});
 
   /* Future<void> exportCycleData() async {
     try {

@@ -61,4 +61,26 @@ class User {
       avgPeriodLength: map['periodLength'],
     );
   }
+
+  User copyWith({
+    String? id,
+    String? name,
+    String? surname,
+    String? email,
+    DateTime? birthday,
+    int? avgCycleLength,
+    int? avgPeriodLength,
+    DateTime? lastestCycleStart,
+  }) {
+    return User(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      surname: surname ?? this.surname,
+      email: email ?? this.email,
+      birthday: birthday ?? this.birthday,
+      avgCycleLength: avgCycleLength ?? this.avgCycleLength,
+      avgPeriodLength: avgPeriodLength ?? this.avgPeriodLength,
+      lastestCycleStart: lastestCycleStart ?? this.lastestCycleStart,
+    );
+  }
 }

@@ -14,19 +14,22 @@ import 'package:mina_app/features/day_entry/view/day_entry_form.dart';
 import 'package:mina_app/services/auth_service.dart';
 
 class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
-  DayEntryBloc() : super(const DayEntryInitialState()) {
+  final DayEntryRepository dayEntryRepository;
+  final CycleRepository cycleRepository;
+  DayEntryBloc(
+      {required this.dayEntryRepository, required this.cycleRepository})
+      : super(const DayEntryInitialState()) {
     String userId = AuthService().currentUserId!;
 
     on<DayEntryFetch>((event, emit) async {
       emit(const DayEntryLoadingState());
       try {
         //find if day exists
-        final day = await DayEntryRepository.instance
-            .getDayEntry(event.date, event.userId);
+        final day =
+            await dayEntryRepository.getDayEntry(event.date, event.userId);
         //find if day is in present cycle
 
-        final presentCycle =
-            await CycleRepository.instance.getPresentCycle(userId);
+        final presentCycle = await cycleRepository.getPresentCycle(userId);
 
         bool isInPresentCycle = false;
         if (presentCycle != null) {
@@ -276,7 +279,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
     on<DayEntryInsertOrUpdate>((event, emit) async {
       if (state is PeriodDayEntryLoadedState) {
         final s = state as PeriodDayEntryLoadedState;
-        DayEntryRepository.instance.insertPeriodDayEntry(
+        dayEntryRepository.insertPeriodDayEntry(
             PeriodDay(
                 date: s.date,
                 flowWeight:
@@ -292,7 +295,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
       }
       if (state is DayEntryLoadedState) {
         final s = state as DayEntryLoadedState;
-        DayEntryRepository.instance.insertDayEntry(
+        dayEntryRepository.insertDayEntry(
             Day(
                 date: s.date,
                 isPeriodDay: s.isPeriodDay,

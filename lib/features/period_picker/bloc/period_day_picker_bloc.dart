@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/features/period_picker/period_picker_logic.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
@@ -12,7 +13,9 @@ part 'period_day_picker_state.dart';
 
 class PeriodDayPickerBloc
     extends Bloc<PeriodDayPickerEvent, PeriodDayPickerState> {
-  PeriodDayPickerBloc() : super(const PeriodDayPickerState()) {
+  final DayEntryRepository dayEntryRepository;
+  PeriodDayPickerBloc(this.dayEntryRepository)
+      : super(const PeriodDayPickerState()) {
     on<PeriodDaysFetched>(_onFetched);
     on<PeriodDayToggled>(_onToggled);
     on<SavedPeriodDays>(_onSavedPeriodDays);
@@ -27,7 +30,7 @@ class PeriodDayPickerBloc
     emit(state.copyWith(status: PeriodDayPickerStatus.loading));
     try {
       final now = DateTime.now();
-      List<Day> periodDays = await DatabaseHelper().getPeriodDaysInRange(
+      List<Day> periodDays = await dayEntryRepository.getPeriodDaysInRange(
           DateTime(1960, 1, 1),
           DateTime(now.year + 1, now.month + 1, 0),
           event.userId);
@@ -66,7 +69,7 @@ class PeriodDayPickerBloc
     Emitter<PeriodDayPickerState> emit,
   ) async {
     emit(state.copyWith(status: PeriodDayPickerStatus.saving));
-    final result = await PeriodPickerLogic(event.userId)
+    final result = await PeriodPickerLogic(event.userId, dayEntryRepository)
         .saveEditedDays(state.selectedDays, state.oldDays, event.context);
     if (result == true)
       emit(state.copyWith(status: PeriodDayPickerStatus.success));

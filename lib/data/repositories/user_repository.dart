@@ -11,13 +11,10 @@ class UserRepository {
   late final AppUsersDao appUsersDao;
   late final AppUserSettingsDao appUserSettingsDao;
 
-  UserRepository._privateConstructor() {
-    database = constructDb();
+  UserRepository(this.database) {
     appUsersDao = AppUsersDao(database);
     appUserSettingsDao = AppUserSettingsDao(database);
   }
-  static final UserRepository _instance = UserRepository._privateConstructor();
-  static UserRepository get instance => _instance;
 
   Future<void> insertOrUpdateUserSetting(
       String key, String value, String userId) async {
@@ -38,7 +35,7 @@ class UserRepository {
     }
   }
 
-  Future<Map<String, String>> getUserSettings(String userId) async {
+  Future<Map<String, String>> getAllSettings(String userId) async {
     try {
       return await appUserSettingsDao.getAllSettings(userId);
     } catch (e) {
