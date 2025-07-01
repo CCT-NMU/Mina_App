@@ -93,8 +93,10 @@ class _LoginViewState extends State<LoginView> {
                           dayEntryRepository:
                               Provider.of<DayEntryRepository>(context),
                           userRepository: Provider.of<UserRepository>(context),
-                          dbHelper: Provider.of<AppDatabase>(context))),
+                          dbHelper: Provider.of<AppDatabase>(context))
+                        ..add(LoadDashboard(DateTime.now()))),
                   BlocProvider(create: (_) => context.read<CycleTrackerBloc>()),
+                  BlocProvider.value(value: context.read<AuthBloc>())
                 ],
                 child: const DashboardView(),
               ),
