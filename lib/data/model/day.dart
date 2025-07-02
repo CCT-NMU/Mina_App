@@ -28,7 +28,7 @@ class Day {
       'IsPeriodDay': isPeriodDayInt,
       'Note': note,
       'symptomList': symptomList?.toString(),
-      'moodlist': moodList?.toString(),
+      'moodList': moodList?.toString(),
     };
   }
 
@@ -39,7 +39,7 @@ class Day {
       isPeriodDay: intToBool(map['IsPeriodDay']),
       note: map['Note'],
       symptomList: SymptomList.fromString(map['symptomList']),
-      moodList: MoodList.fromString(map['moodlist']),
+      moodList: MoodList.fromString(map['moodList']),
     );
   }
 

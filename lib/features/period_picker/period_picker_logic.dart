@@ -13,13 +13,16 @@ import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/model/period_day.dart';
 import 'package:mina_app/data/model/day.dart';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PeriodPickerLogic {
   final String userId;
   final DayEntryRepository dayEntryRepository;
+  final bool isOnboarding;
   PeriodPickerLogic(
     this.userId,
     this.dayEntryRepository,
+    this.isOnboarding,
   );
   List<DateTime> deselecetedPeriodDates = [];
 
@@ -42,7 +45,6 @@ class PeriodPickerLogic {
   }
 
   Future<bool> saveCycles(List<DateTime> sortedDates) async {
-    final Database db = await DatabaseHelper().database;
     //  Group dates into contiguous ranges
     final List<List<DateTime>> cycles = [];
     List<DateTime> currentCycle = [sortedDates.first];
@@ -91,34 +93,24 @@ class PeriodPickerLogic {
             .toIso8601String())
         .toList();
 
-    return await db.transaction((txn) async {
-      //Process periodDays into database
+    // Delete existing Cycle records for the affected months using Supabase
+    final supabase = Supabase.instance.client;
+    for (int i = 0; i < affectedMonthsStart.length; i++) {
+      await supabase
+          .from('Cycles')
+          .delete()
+          .or('and(startDate.gte.${affectedMonthsStart[i]},startDate.lte.${affectedMonthsEnd[i]})'
+              ',and(endDate.gte.${affectedMonthsStart[i]},endDate.lte.${affectedMonthsEnd[i]} )')
+          .eq('user_id', userId);
+    }
 
-      for (int i = 0; i < affectedMonthsStart.length; i++) {
-        await txn.delete(
-          'Cycle',
-          where: '(startDate BETWEEN ? AND ?) OR (endDate BETWEEN ? AND ?)',
-          whereArgs: [
-            affectedMonthsStart[i],
-            affectedMonthsEnd[i],
-            affectedMonthsStart[i],
-            affectedMonthsEnd[i],
-          ],
-        );
-      }
-
-      // Insert the new cycle records
-      for (final record in newCycleRecords) {
-        await txn.insert('Cycle', record.toMap());
-      }
-      return savePeriodDays(newCycleRecords, cycles, txn);
-    });
+    return savePeriodDays(newCycleRecords, cycles);
   }
 
   /*List<Cycle> startDate_and_endDate_CycleRecords and
       List<List<DateTime>> cycleDateTimeRangeList will always have the same size*/
   Future<bool> savePeriodDays(List<Cycle> cycleRecords,
-      List<List<DateTime>> daysInCycleRangeList, Transaction txn) async {
+      List<List<DateTime>> daysInCycleRangeList) async {
     List<List<DateTime>> cycles = daysInCycleRangeList;
 
     for (int i = 0; i < cycles.length; i++) {
@@ -128,14 +120,16 @@ class PeriodPickerLogic {
       for (int j = 0; j < cycles[i].length; j++) {
         // Normalize date to remove time
         DateTime curDate = Utils().normalizedDate(cycles[i][j]);
+        PeriodDay? existingPeriodDay;
+        Day? existingDay;
+        if (!isOnboarding) {
+          // 1. Try to get existing PeriodDay for this date
+          existingPeriodDay =
+              await dayEntryRepository.getPeriodDayEntry(curDate, userId);
 
-        // 1. Try to get existing PeriodDay for this date
-        PeriodDay? existingPeriodDay = await DatabaseHelper()
-            .getPeriodDayByDate(curDate, userId, txn: txn);
-
-        //1.1 Check to see if the day exists in Day table
-        Day? existingDay =
-            await DatabaseHelper().getDay(curDate, userId, txn: txn);
+          //1.1 Check to see if the day exists in Day table
+          existingDay = await dayEntryRepository.getDayEntry(curDate, userId);
+        }
         //If a DateTime matches an existing PeriodDay in the PeriodDay table
         //it should only be updated if it is now a periodStartDay or periodEndDay.
 
@@ -160,26 +154,25 @@ class PeriodPickerLogic {
                     isPeriodStartDay: true,
                     isPeriodEndDay: isEnd,
                   ),
-                  userId,
-                  txn);
+                  userId);
               continue;
             } else {
               await dayEntryRepository.updateDayToPeriodDay(
-                  PeriodDay(
-                    date: curDate,
-                    flowWeight:
-                        FlowWeight.none, // or your default/desired value
-                    isPeriodStartDay: true,
-                    isPeriodEndDay: isEnd,
-                  ),
-                  txn);
+                PeriodDay(
+                  date: curDate,
+                  flowWeight: FlowWeight.none, // or your default/desired value
+                  isPeriodStartDay: true,
+                  isPeriodEndDay: isEnd,
+                ),
+                userId,
+              );
               continue;
             }
           } else {
             //record does exist, update it as a start and end day
             PeriodDay updated = existingPeriodDay.copyWith(
                 isPeriodStartDay: true, isPeriodEndDay: isEnd);
-            await DatabaseHelper().updatePeriodDay(updated, userId, txn: txn);
+            await dayEntryRepository.updatePeriodDayEntry(updated, userId);
             continue;
           }
         }
@@ -192,7 +185,7 @@ class PeriodPickerLogic {
               // 3. If not a start day, update it to be a start day, keep flowWeight
               PeriodDay updated = existingPeriodDay.copyWith(
                   isPeriodStartDay: true, isPeriodEndDay: false);
-              await DatabaseHelper().updatePeriodDay(updated, userId, txn: txn);
+              await dayEntryRepository.updatePeriodDayEntry(updated, userId);
             }
           } else {
             // 4. If it does not exist, insert/update as start day
@@ -203,8 +196,8 @@ class PeriodPickerLogic {
                 isPeriodStartDay: true,
                 isPeriodEndDay: false,
               );
-              await DatabaseHelper()
-                  .insertPeriodDay(newPeriodDay, userId, txn: txn);
+              await dayEntryRepository.insertPeriodDayEntry(
+                  newPeriodDay, userId);
             } else {
               await dayEntryRepository.updateDayToPeriodDay(
                 PeriodDay(
@@ -213,7 +206,7 @@ class PeriodPickerLogic {
                   isPeriodStartDay: true,
                   isPeriodEndDay: false,
                 ),
-                txn,
+                userId,
               );
             }
           }
@@ -227,7 +220,7 @@ class PeriodPickerLogic {
               //Existing record is a periodDay that is not a start or end day; update flags as necessary
               PeriodDay updated = existingPeriodDay.copyWith(
                   isPeriodStartDay: false, isPeriodEndDay: false);
-              await DatabaseHelper().updatePeriodDay(updated, userId, txn: txn);
+              await dayEntryRepository.updatePeriodDayEntry(updated, userId);
             }
           } else {
             if (existingDay == null) {
@@ -237,18 +230,17 @@ class PeriodPickerLogic {
                 isPeriodStartDay: false,
                 isPeriodEndDay: false,
               );
-              await DatabaseHelper()
-                  .insertPeriodDay(newPeriodDay, userId, txn: txn);
+              await dayEntryRepository.insertPeriodDayEntry(
+                  newPeriodDay, userId);
             } else {
               await dayEntryRepository.updateDayToPeriodDay(
-                PeriodDay(
-                  date: curDate,
-                  flowWeight: FlowWeight.none,
-                  isPeriodStartDay: false,
-                  isPeriodEndDay: false,
-                ),
-                txn,
-              );
+                  PeriodDay(
+                    date: curDate,
+                    flowWeight: FlowWeight.none,
+                    isPeriodStartDay: false,
+                    isPeriodEndDay: false,
+                  ),
+                  userId);
             }
           }
         }
@@ -257,11 +249,10 @@ class PeriodPickerLogic {
           if (existingPeriodDay != null) {
             if (!existingPeriodDay.isPeriodEndDay) {
               //Existing record is not a periodEndDay
-              await DatabaseHelper().updatePeriodDay(
+              await dayEntryRepository.updatePeriodDayEntry(
                   existingPeriodDay.copyWith(
                       isPeriodEndDay: true, isPeriodStartDay: false),
-                  userId,
-                  txn: txn);
+                  userId);
             }
             //Existing record is a periodEndDay; do nothing
           } else {
@@ -272,8 +263,8 @@ class PeriodPickerLogic {
                 isPeriodStartDay: false,
                 isPeriodEndDay: true,
               );
-              await DatabaseHelper()
-                  .insertPeriodDay(newPeriodDay, userId, txn: txn);
+              await dayEntryRepository.insertPeriodDayEntry(
+                  newPeriodDay, userId);
             } else {
               await dayEntryRepository.updateDayToPeriodDay(
                 PeriodDay(
@@ -282,7 +273,7 @@ class PeriodPickerLogic {
                   isPeriodStartDay: false,
                   isPeriodEndDay: true,
                 ),
-                txn,
+                userId,
               );
             }
           }
@@ -295,7 +286,7 @@ class PeriodPickerLogic {
     //If a Day is not a PeriodDay anymore, it should be deleted from the PeriodDay table
     if (deselecetedPeriodDates.isNotEmpty) {
       for (DateTime date in deselecetedPeriodDates) {
-        await DatabaseHelper().deletePeriodDay(date, userId, txn: txn);
+        await dayEntryRepository.deletePeriodDayEntry(date, userId);
       }
     }
     //The database helper class helps on deletion of a PeriodDay entry by marking the

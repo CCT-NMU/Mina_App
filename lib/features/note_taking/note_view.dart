@@ -36,16 +36,32 @@ class _NotesViewState extends State<NotesView> {
       context,
       MaterialPageRoute(builder: (_) => NoteEditorView(note: note)),
     );
-    if (changed == true && mounted) setState(_reload);
+    if (changed == true && mounted) {
+      _reload();
+      setState(() {}); // Refresh the notes list
+    }
   }
 
   Future<void> _delete(Note n) async {
     await noteRepository.deleteNote(n.id!, userId);
     if (mounted) {
-      setState(_reload);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Note deleted')));
+      _reload();
     }
+  }
+
+  void undoDeleteSnackBar(Note deletedNote, BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Note deleted'),
+        /*  action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () async {
+            await noteRepository.insertNote(deletedNote);
+            _reload();
+          },
+        ), */
+      ),
+    );
   }
 
   @override
@@ -58,7 +74,7 @@ class _NotesViewState extends State<NotesView> {
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          final notes = snap.data!;
+          var notes = snap.data!;
           if (notes.isEmpty) {
             return const Center(child: Text('No notes yet. Tap + to add one.'));
           }
@@ -68,7 +84,7 @@ class _NotesViewState extends State<NotesView> {
             itemCount: notes.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (_, i) {
-              final n = notes[i];
+              var n = notes[i];
               return Dismissible(
                 key: ValueKey(n.id),
                 direction: DismissDirection.endToStart,
@@ -81,7 +97,10 @@ class _NotesViewState extends State<NotesView> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),
-                onDismissed: (_) => _delete(n),
+                onDismissed: (_) {
+                  _delete(n);
+                  undoDeleteSnackBar(n, context);
+                },
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: ListTile(

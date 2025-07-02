@@ -11,6 +11,21 @@ class PeriodDaysFetched extends PeriodDayPickerEvent {
   PeriodDaysFetched(this.focusedDay, this.userId);
 }
 
+class PeriodDayPickerUptake extends PeriodDayPickerEvent {
+  @override
+  List<Object> get props => [focusedDay, userId];
+
+  @override
+  String toString() {
+    return 'PeriodDayPickerUptake{focusedDay: $focusedDay, userId: $userId}';
+  }
+
+  final DateTime focusedDay;
+  final String userId;
+
+  PeriodDayPickerUptake(this.focusedDay, this.userId);
+}
+
 class PeriodStartToday extends PeriodDaysFetched {
   PeriodStartToday(super.focusedDay, super.userId);
 }
@@ -35,7 +50,8 @@ class PeriodDayToggled extends PeriodDayPickerEvent {
 class SavedPeriodDays extends PeriodDayPickerEvent {
   final BuildContext context;
   String userId;
-  SavedPeriodDays(this.context, this.userId);
+  bool isOnboarding;
+  SavedPeriodDays(this.context, this.userId, this.isOnboarding);
 }
 
 class ScrollToIndex extends PeriodDayPickerEvent {

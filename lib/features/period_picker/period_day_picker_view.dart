@@ -165,8 +165,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                                 BlocProvider(
                                   create: (context) => CycleTrackerBloc(
                                       Provider.of<CycleRepository>(context,
-                                          listen: false))
-                                    ..add(CycleTrackerStarted()),
+                                          listen: false)),
                                 ),
                                 BlocProvider.value(
                                     value: context.read<DashboardBloc>()),
@@ -274,7 +273,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                                           is OnboardingComplete) {
                                         context.read<PeriodDayPickerBloc>().add(
                                             SavedPeriodDays(
-                                                context, widget.userId));
+                                                context, widget.userId, false));
                                         context.read<DayEntryBloc>().add(
                                             DayEntryFetch(widget.focusedDay!,
                                                 widget.userId));
@@ -283,7 +282,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                                           is OnboardingInProgress) {
                                         context.read<PeriodDayPickerBloc>().add(
                                             SavedPeriodDays(
-                                                context, widget.userId));
+                                                context, widget.userId, true));
                                       }
 
                                       // Navigate to Day_Entry view with the current Day Entry

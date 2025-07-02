@@ -21,8 +21,8 @@ class Note {
         userId: map['user_id'] as String?, // Optional userId
         title: map['title'] as String,
         content: map['content'] as String,
-        createdAt: map['created_at'] as DateTime,
-        updatedAt: map['updated_at'] as DateTime,
+        createdAt: DateTime.parse(map['created_at'] as String),
+        updatedAt: DateTime.parse(map['updated_at'] as String),
       );
 
   Map<String, Object?> toMap() => {

@@ -36,6 +36,8 @@ class _DashboardViewState extends State<DashboardView> {
   void initState() {
     super.initState();
     _focusedDay = DateTime.now();
+    Provider.of<CycleTrackerBloc>(context, listen: false)
+        .add(const CycleTrackerStarted());
   }
 
   @override

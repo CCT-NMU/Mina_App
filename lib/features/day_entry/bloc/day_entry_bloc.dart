@@ -280,17 +280,17 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
       if (state is PeriodDayEntryLoadedState) {
         final s = state as PeriodDayEntryLoadedState;
         dayEntryRepository.insertPeriodDayEntry(
-            PeriodDay(
-                date: s.date,
-                flowWeight:
-                    PeriodDay.flowWeightValues[int.parse(s.selectedFlow!)],
-                symptomList: SymptomList(symptoms: s.selectedSymptoms),
-                moodList: MoodList(moods: s.selectedMoods),
-                isPeriodStartDay: s.isPeriodStartDay,
-                isPeriodEndDay: s.isPeriodEndDay,
-                note: s.notes),
-            event.userId,
-            null);
+          PeriodDay(
+              date: s.date,
+              flowWeight:
+                  PeriodDay.flowWeightValues[int.parse(s.selectedFlow!)],
+              symptomList: SymptomList(symptoms: s.selectedSymptoms),
+              moodList: MoodList(moods: s.selectedMoods),
+              isPeriodStartDay: s.isPeriodStartDay,
+              isPeriodEndDay: s.isPeriodEndDay,
+              note: s.notes),
+          event.userId,
+        );
         return;
       }
       if (state is DayEntryLoadedState) {

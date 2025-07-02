@@ -79,7 +79,7 @@ class _RegisterViewState extends State<RegisterView> {
                 });
               }
               Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => MultiBlocProvider(
+                builder: (context) => MultiBlocProvider(
                   providers: [
                     BlocProvider<DashboardBloc>(
                         create: (context) => DashboardBloc(
@@ -99,16 +99,11 @@ class _RegisterViewState extends State<RegisterView> {
                         create: (context) =>
                             OnboardingBloc()..add(OnboardingNameSubmitted())),
                     BlocProvider(
-                      create: (context) {
-                        final bloc = PeriodDayPickerBloc(
+                        create: (context) => PeriodDayPickerBloc(
                             Provider.of<DayEntryRepository>(context,
-                                listen: false));
-                        //ToDo fix the onboarding auth.
-                        bloc.add(PeriodDaysFetched(
-                            DateTime.now(), currentUser?.id ?? ''));
-                        return bloc;
-                      },
-                    ),
+                                listen: false))
+                          ..add(PeriodDayPickerUptake(
+                              DateTime.now(), currentUser?.id ?? ''))),
                   ],
                   child: PeriodDayPickerView(focusedDay: DateTime.now()),
                 ),

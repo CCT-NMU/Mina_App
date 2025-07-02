@@ -240,3 +240,6 @@ windows/flutter/generated_plugin_registrant.h
 windows/flutter/generated_plugins.cmake
 lib/local_libraries/table_calendar/example/pubspec.lock
 lib/local_libraries/table_calendar/pubspec.lock
+windows/flutter/generated_plugins.cmake
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake

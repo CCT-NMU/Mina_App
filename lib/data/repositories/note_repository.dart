@@ -17,7 +17,7 @@ class NoteRepository {
     final notes = await Supabase.instance.client
         .from('Notes')
         .select()
-        .eq('userId', userId);
+        .eq('user_id', userId);
 
     if (notes == null || notes.isEmpty) {
       return [];
@@ -33,20 +33,49 @@ class NoteRepository {
         .from('Notes')
         .select()
         .eq('id', id)
-        .eq('userId', userId)
+        .eq('user_id', userId)
         .single()
         .then((data) => data != null ? Note.fromMap(data) : null);
   }
 
-  Future<void> insertNote(Note note) {
-    return _notesDao.insertNoteFromModel(note);
+  Future<void> insertNote(Note note) async {
+    try {
+      await Supabase.instance.client.from('Notes').insert({
+        'user_id': note.userId,
+        'title': note.title,
+        'content': note.content,
+        'created_at': note.createdAt.toIso8601String(),
+        'updated_at': note.updatedAt.toIso8601String(),
+      });
+    } catch (e) {
+      throw Exception('Failed to insert note: $e');
+    }
   }
 
-  Future<void> updateNote(Note note) {
-    return _notesDao.updateNote(note);
+  Future<void> updateNote(Note note) async {
+    try {
+      await Supabase.instance.client.from('Notes').update({
+        'user_id': note.userId,
+        'title': note.title,
+        'content': note.content,
+        'created_at': note.createdAt.toIso8601String(),
+        'updated_at': note.updatedAt.toIso8601String(),
+      });
+    } catch (e) {
+      throw Exception('Failed to update note: $e');
+    }
   }
 
-  Future<void> deleteNote(int id, String userId) {
-    return _notesDao.deleteNote(id, userId);
+  Future<void> deleteNote(int id, String userId) async {
+    // return _notesDao.deleteNote(id, userId);
+    try {
+      await Supabase.instance.client
+          .from('Notes')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', userId);
+    } catch (e) {
+      throw Exception('Failed to delete note: $e');
+    }
   }
 }

@@ -21,6 +21,35 @@ class PeriodDayPickerBloc
     on<SavedPeriodDays>(_onSavedPeriodDays);
     on<LoadMoreMonthsForward>(_onLoadMoreMonthsForward);
     on<LoadMoreMonthsBackward>(_onLoadMoreMonthsBackward);
+    on<PeriodDayPickerUptake>(_onUptake);
+  }
+
+  void _onUptake(
+    PeriodDayPickerUptake event,
+    Emitter<PeriodDayPickerState> emit,
+  ) {
+    emit(state.copyWith(
+      status: PeriodDayPickerStatus.loading,
+    ));
+    List<DateTime> initialMonths = List.generate(
+      24,
+      (i) {
+        int month = event.focusedDay.month - i + 1;
+        int year = event.focusedDay.year;
+        while (month < 1) {
+          month += 12;
+          year -= 1;
+        }
+        return DateTime(year, month, 1);
+      },
+    ).toList();
+    // Initialize the state with the focused day and userId
+    emit(state.copyWith(
+      selectedDays: const {},
+      oldDays: const {},
+      months: initialMonths,
+      status: PeriodDayPickerStatus.initial,
+    ));
   }
 
   Future<void> _onFetched(
@@ -69,7 +98,8 @@ class PeriodDayPickerBloc
     Emitter<PeriodDayPickerState> emit,
   ) async {
     emit(state.copyWith(status: PeriodDayPickerStatus.saving));
-    final result = await PeriodPickerLogic(event.userId, dayEntryRepository)
+    final result = await PeriodPickerLogic(
+            event.userId, dayEntryRepository, event.isOnboarding)
         .saveEditedDays(state.selectedDays, state.oldDays, event.context);
     if (result == true)
       emit(state.copyWith(status: PeriodDayPickerStatus.success));
