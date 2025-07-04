@@ -61,6 +61,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
   Future<List<Day>?> _loadEventsFromDatabase(DateTime _focusedDay) async {
     try {
+      print('Loading events for month: ${_focusedDay.month}');
       // Get the current 3 month's range
       int previousMonth = _focusedDay.month - 1;
       int previousMonthYear = _focusedDay.year;
@@ -112,18 +113,20 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   ) async {
     {
       try {
+        print(
+            'Loading dashboard in dashboardBloc for date: ${event.focusedDay}');
         final stats = await _predictionService.getPredictionStats(userId);
         final nextPeriod = await _predictionService.predictNextPeriod(userId);
         final cycles = await cycleRepository.calculateCycleHistory(userId);
         final days = await _loadEventsFromDatabase(event.focusedDay);
         // Schedule notification if enabled
-        final settings = await userRepository.getAllSettings(userId);
+        /*   final settings = await userRepository.getAllSettings(userId);
         final enableReminders = settings['enable_period_reminders'] == 'true';
         final reminderDays = int.parse(settings['reminder_days'] ?? '2');
-
+ */ /* 
         if (enableReminders && nextPeriod != null) {
           await _notificationService.schedulePeriodReminder(nextPeriod, userId);
-        }
+        } */
 
         if (days == null) {
           emit(DashboardLoadSuccess(

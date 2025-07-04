@@ -81,16 +81,12 @@ class MinaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
         ),
         home: MultiBlocProvider(providers: [
-          BlocProvider<CycleTrackerBloc>(
-            create: (context) => CycleTrackerBloc(
-                Provider.of<CycleRepository>(context, listen: false))
-              ..add(CycleTrackerStarted()),
-          ),
           BlocProvider<DashboardBloc>(
             create: (context) => DashboardBloc(
               userRepository:
@@ -100,7 +96,7 @@ class MinaApp extends StatelessWidget {
               dayEntryRepository:
                   Provider.of<DayEntryRepository>(context, listen: false),
               dbHelper: Provider.of<AppDatabase>(context, listen: false),
-            )..add(LoadDashboard(DateTime.now())),
+            ),
           ),
           BlocProvider<OnboardingBloc>(
             create: (context) => OnboardingBloc()..add(OnboardingCompleted()),

@@ -16,9 +16,9 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PeriodPickerLogic {
-  final String userId;
-  final DayEntryRepository dayEntryRepository;
-  final bool isOnboarding;
+  String userId;
+  DayEntryRepository dayEntryRepository;
+  bool isOnboarding;
   PeriodPickerLogic(
     this.userId,
     this.dayEntryRepository,
@@ -27,26 +27,25 @@ class PeriodPickerLogic {
   List<DateTime> deselecetedPeriodDates = [];
 
   //selectedDates are a list of all the dates that have been selected.
-  Future<bool> saveEditedDays(Set<DateTime> selectedDates,
-      Set<DateTime> oldPeriodSet, BuildContext context) async {
+  Future<bool> saveEditedDays(
+      Set<DateTime> selectedDates, Set<DateTime> oldPeriodSet) async {
     if (selectedDates.isEmpty) return Future.value(null);
 
     //  Sort the selected dates
-    final sortedDates = selectedDates.toList()..sort();
+    var sortedDates = selectedDates.toList()..sort();
 
     //
     deselecetedPeriodDates = oldPeriodSet.difference(selectedDates).toList()
       ..sort();
-    saveCycles(sortedDates);
 
-    final result = await saveCycles(sortedDates);
+    var result = await saveCycles(sortedDates);
 
     return result;
   }
 
   Future<bool> saveCycles(List<DateTime> sortedDates) async {
     //  Group dates into contiguous ranges
-    final List<List<DateTime>> cycles = [];
+    List<List<DateTime>> cycles = [];
     List<DateTime> currentCycle = [sortedDates.first];
 
     for (int i = 1; i < sortedDates.length; i++) {
@@ -63,11 +62,11 @@ class PeriodPickerLogic {
     //TODO: Make exception for initial cycle entry for new users: periodEndDate may not be reached yet.
     //...Perhaps if last day in period selection is DateTime.now() we must set periodEndDate to null
     //--
-    final List<Cycle> newCycleRecords = [];
+    List<Cycle> newCycleRecords = [];
     for (int i = 0; i < cycles.length; i++) {
-      final startDate = cycles[i].first;
-      final periodEndDate = cycles[i].last;
-      final endDate = (i < cycles.length - 1)
+      var startDate = cycles[i].first;
+      var periodEndDate = cycles[i].last;
+      var endDate = (i < cycles.length - 1)
           ? cycles[i + 1].first.subtract(Duration(days: 1))
           : null; //cycle still to be completed
 
@@ -83,27 +82,30 @@ class PeriodPickerLogic {
     }
 
     // Delete existing Cycle records for the affected months
-    final affectedMonths =
+    var affectedMonths =
         sortedDates.map((date) => DateTime(date.year, date.month, 1)).toSet();
-    final affectedMonthsStart =
+    var affectedMonthsStart =
         affectedMonths.map((month) => month.toIso8601String()).toList();
-    final affectedMonthsEnd = affectedMonths
+    var affectedMonthsEnd = affectedMonths
         .map((date) => DateTime(date.year, date.month + 1, 1)
             .subtract(Duration(days: 1))
             .toIso8601String())
         .toList();
 
     // Delete existing Cycle records for the affected months using Supabase
-    final supabase = Supabase.instance.client;
+
     for (int i = 0; i < affectedMonthsStart.length; i++) {
-      await supabase
+      await Supabase.instance.client
           .from('Cycles')
           .delete()
           .or('and(startDate.gte.${affectedMonthsStart[i]},startDate.lte.${affectedMonthsEnd[i]})'
               ',and(endDate.gte.${affectedMonthsStart[i]},endDate.lte.${affectedMonthsEnd[i]} )')
           .eq('user_id', userId);
     }
-
+    // Insert new Cycle records
+    for (var cycle in newCycleRecords) {
+      await Supabase.instance.client.from('Cycles').insert(cycle.toMap());
+    }
     return savePeriodDays(newCycleRecords, cycles);
   }
 

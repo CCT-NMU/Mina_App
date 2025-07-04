@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mina_app/data/model/period_day.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
+import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
@@ -38,13 +39,15 @@ class _DashboardViewState extends State<DashboardView> {
     _focusedDay = DateTime.now();
     Provider.of<CycleTrackerBloc>(context, listen: false)
         .add(const CycleTrackerStarted());
+    Provider.of<DashboardBloc>(context, listen: false)
+        .add(LoadDashboard(_focusedDay));
   }
 
   @override
   Widget build(BuildContext context) {
     // Get user info for display
 //    final userName = AuthService.instance.currentUserName ?? 'User';
-    final userName = AuthService().currentUserName ?? 'User';
+    var userName = AuthService().currentUserName ?? 'User';
 
     return BlocBuilder<DashboardBloc, DashboardState>(
       builder: (context, state) {
@@ -273,8 +276,9 @@ class _DashboardViewState extends State<DashboardView> {
                   body: Center(child: Text('Error: ${snapshot.error}')),
                 );
               }
+              //Period Day
               if (snapshot.data is PeriodDay) {
-                final periodDay = snapshot.data as PeriodDay;
+                var periodDay = snapshot.data as PeriodDay;
                 return MultiBlocProvider(
                   providers: [
                     BlocProvider.value(
@@ -297,8 +301,8 @@ class _DashboardViewState extends State<DashboardView> {
                     userId: currentUserId,
                   ),
                 );
+                //Normal Day
               } else if (snapshot.data is Day) {
-                final day = snapshot.data as Day;
                 return MultiBlocProvider(
                   providers: [
                     BlocProvider.value(value: cycleTrackerBloc),
@@ -320,6 +324,7 @@ class _DashboardViewState extends State<DashboardView> {
                   ),
                 );
               }
+              //Empty Day with no record yet
               return MultiBlocProvider(
                 providers: [
                   BlocProvider.value(value: cycleTrackerBloc),
@@ -370,11 +375,13 @@ class _DashboardViewState extends State<DashboardView> {
         setState(() {
           _selectedDay = selectedDay;
           _focusedDay = focusedDay;
+          print('This is the focused day $_focusedDay');
+          print('This is the selected day $_selectedDay');
         });
         final dashboardBloc = context.read<DashboardBloc>();
         final cycleTrackerBloc = context.read<CycleTrackerBloc>();
-        final result = await Navigator.of(context).push(_createRoute(
-            normalizeDate(_focusedDay), dashboardBloc, cycleTrackerBloc));
+        var result = await Navigator.of(context).push(_createRoute(
+            normalizeDate(_selectedDay!), dashboardBloc, cycleTrackerBloc));
         if (result == true) {
           dashboardBloc.add(LoadDashboard(_focusedDay));
         }
@@ -382,6 +389,7 @@ class _DashboardViewState extends State<DashboardView> {
       onPageChanged: (focusedDay) {
         context.read<DashboardBloc>().add(CalendarChanged(focusedDay));
         setState(() {
+          print('onPageChange(): This is the focused day $focusedDay');
           _focusedDay = focusedDay;
         });
       },

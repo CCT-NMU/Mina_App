@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
+import 'package:mina_app/features/auth/view/login_view.dart';
+import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/note_taking/note_view.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/settings/view/settings_view.dart';
 import 'package:mina_app/features/statistics/view/statistics_view.dart';
+import 'package:mina_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
 
 class MenuDrawer extends StatelessWidget {
@@ -16,7 +19,7 @@ class MenuDrawer extends StatelessWidget {
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           // Extract user info from the authentication state
-          String displayName = 'User';
+          String displayName = AuthService().currentUserName ?? 'User';
           String email = '';
           String initials = 'U';
 
@@ -112,6 +115,13 @@ class MenuDrawer extends StatelessWidget {
                   // Trigger sign out through BLoC
                   context.read<AuthBloc>().add(AuthSignOutRequested());
                   Navigator.pop(context); // Close drawer
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => MultiBlocProvider(providers: [
+                                BlocProvider.value(
+                                    value: context.read<AuthBloc>()),
+                              ], child: LoginView())));
                 },
               ),
             ],

@@ -125,6 +125,7 @@ class _RegisterViewState extends State<RegisterView> {
             }
           },
           child: Container(
+            height: MediaQuery.of(context).size.height,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [

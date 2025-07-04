@@ -166,12 +166,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (response.user != null) {
         print('User signed in: ${response.user!.email}');
-        final profile = await _authService.getUserProfile();
-
-        emit(AuthAuthenticated(
-          user: response.user!,
-          // profile: profile,
-        ));
+        //final profile = await _authService.getUserProfile();
+        if (state is! AuthAuthenticated) {
+          emit(AuthAuthenticated(
+            user: response.user!,
+            // profile: profile,
+          ));
+        }
       } else {
         emit(const AuthError('Sign in failed'));
       }

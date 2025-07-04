@@ -8,26 +8,25 @@ class PredictionService {
 
   Future<DateTime?> predictNextPeriod(String userId) async {
     try {
-      final cycles = await cycleRepository.calculateCycleHistory(userId);
+      var cycles = await cycleRepository.calculateCycleHistory(userId);
       if (cycles.isEmpty) return null;
 
       // Calculate average cycle length from the last 6 cycles or all available cycles
-      final cyclesForAverage =
-          cycles.length > 6 ? cycles.sublist(0, 6) : cycles;
+      var cyclesForAverage = cycles.length > 6 ? cycles.sublist(0, 6) : cycles;
       int totalDays = 0;
 
       for (int i = 0; i < cyclesForAverage.length - 1; i++) {
-        final cycle = cyclesForAverage[i];
-        final nextCycle = cyclesForAverage[i + 1];
-        final difference =
+        var cycle = cyclesForAverage[i];
+        var nextCycle = cyclesForAverage[i + 1];
+        var difference =
             nextCycle.startDate!.difference(cycle.startDate!).inDays;
         totalDays += difference;
       }
 
       if (cyclesForAverage.length <= 1) return null;
 
-      final averageCycleLength = totalDays ~/ (cyclesForAverage.length - 1);
-      final lastCycle = cycles.first; // Most recent cycle
+      var averageCycleLength = totalDays ~/ (cyclesForAverage.length - 1);
+      var lastCycle = cycles.first; // Most recent cycle
 
       // Predict next period start date
       return lastCycle.startDate!.add(Duration(days: averageCycleLength));
@@ -38,7 +37,7 @@ class PredictionService {
 
   Future<Map<String, dynamic>> getPredictionStats(String userId) async {
     try {
-      final cycles = await cycleRepository.calculateCycleHistory(userId);
+      var cycles = await cycleRepository.calculateCycleHistory(userId);
       if (cycles.isEmpty) {
         return {
           'averageCycleLength': 0,
@@ -48,7 +47,7 @@ class PredictionService {
       }
 
       // Calculate averages from the last 6 cycles or all available cycles
-      final cyclesForStats = cycles.length > 6 ? cycles.sublist(0, 6) : cycles;
+      var cyclesForStats = cycles.length > 6 ? cycles.sublist(0, 6) : cycles;
 
       // Calculate average cycle length
       int totalCycleDays = 0;
@@ -63,7 +62,7 @@ class PredictionService {
       }
 
       // Calculate average period length
-      final totalPeriodDays = 6;
+      var totalPeriodDays = 6;
       // cyclesForStats.fold(0, (sum, cycle) => sum + cycle.periodLength);
 
       // Calculate cycle regularity (as a percentage based on variance)

@@ -5,9 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
+import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/model/day.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
+import 'package:mina_app/data/repositories/user_repository.dart';
+import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
@@ -74,7 +77,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
   @override
   void initState() {
     super.initState();
-    final bloc = context.read<PeriodDayPickerBloc>();
+    var bloc = context.read<PeriodDayPickerBloc>();
 
     bloc.stream.listen((state) {
       //After days update, restore scroll if needed
@@ -101,15 +104,15 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
     });
 
     void onScroll() {
-      final positions = _itemPositionsListener.itemPositions.value;
+      var positions = _itemPositionsListener.itemPositions.value;
       if (positions.isEmpty) return;
 
-      final first = positions
+      var first = positions
           .where((p) => p.itemLeadingEdge >= 0 && p.itemLeadingEdge <= 1)
           .reduce((min, p) => p.index < min.index ? p : min);
       _firstVisible = first.index;
 
-      final last = positions
+      var last = positions
           .where((p) => p.itemTrailingEdge <= 1 && p.itemTrailingEdge >= 0)
           .reduce((max, p) => p.index > max.index ? p : max);
 
@@ -144,7 +147,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
 
   @override
   Widget build(BuildContext context) {
-    final OnboardingBloc onboardingBloc = context.read<OnboardingBloc>();
+    OnboardingBloc onboardingBloc = context.read<OnboardingBloc>();
     //OnboardingBloc
 
     return MultiBlocListener(
@@ -154,7 +157,8 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                 previous.status == PeriodDayPickerStatus.saving &&
                 current.status == PeriodDayPickerStatus.success,
             listener: (context, state) {
-              if (onboardingBloc.state is OnboardingInProgress) {
+              if (onboardingBloc.state is OnboardingInProgress &&
+                  state.status == PeriodDayPickerStatus.success) {
                 onboardingBloc.add(LastPeriodPickerViewSubmitted());
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -167,8 +171,24 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                                       Provider.of<CycleRepository>(context,
                                           listen: false)),
                                 ),
-                                BlocProvider.value(
-                                    value: context.read<DashboardBloc>()),
+                                BlocProvider<DashboardBloc>(
+                                  create: (context) => DashboardBloc(
+                                    userRepository: Provider.of<UserRepository>(
+                                        context,
+                                        listen: false),
+                                    cycleRepository:
+                                        Provider.of<CycleRepository>(context,
+                                            listen: false),
+                                    dayEntryRepository:
+                                        Provider.of<DayEntryRepository>(context,
+                                            listen: false),
+                                    dbHelper: Provider.of<AppDatabase>(context,
+                                        listen: false),
+                                  ),
+                                ),
+                                BlocProvider(
+                                  create: (context) => AuthBloc(),
+                                )
                               ],
                               child: const DashboardView(),
                             ),

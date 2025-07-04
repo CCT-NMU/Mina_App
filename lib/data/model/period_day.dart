@@ -30,30 +30,24 @@ class PeriodDay extends Day {
 
   Map<String, dynamic> toPeriodDayMap() {
     return {
-      'Date': date.toIso8601String(),
-      'FlowWeight': '${flowWeight.index}',
-      'IsPeriodStartDay': isPeriodStartDay ? '1' : '0',
-      'IsPeriodEndDay': isPeriodEndDay ? '1' : '0',
+      'date': date.toIso8601String(),
+      'flowWeight': '${flowWeight.index}',
+      'isPeriodStartDay': isPeriodStartDay,
+      'isPeriodEndDay': isPeriodEndDay,
     };
   }
 
   static PeriodDay fromMap(Map<String, dynamic> map) {
-    bool intToBool(int value) => value == 1;
     return PeriodDay(
-        date: DateTime.parse(map['Date']),
-        flowWeight: map['FlowWeight'] == null
+        date: DateTime.parse(map['date']),
+        flowWeight: map['flowWeight'] == null
             ? FlowWeight.values[0]
-            : FlowWeight.values[map[
-                'FlowWeight']], //convert database value [0,1,2,3] to enum FlowWeight
-        isPeriodStartDay: map['IsPeriodStartDay'] == null
-            ? false
-            : intToBool(map['IsPeriodStartDay']),
-        isPeriodEndDay: map['IsPeriodEndDay'] == null
-            ? false
-            : intToBool(map['IsPeriodEndDay']),
-        note: map['Note'],
+            : FlowWeight.values[map['flowWeight']],
+        isPeriodStartDay: map['isPeriodStartDay'] ?? false,
+        isPeriodEndDay: map['isPeriodEndDay'] ?? false,
+        note: map['note'] ?? '',
         symptomList: SymptomList.fromString(map['symptomList']),
-        moodList: MoodList.fromString(map['moodlist']));
+        moodList: MoodList.fromString(map['moodList']));
   }
 
   PeriodDay copyWith({

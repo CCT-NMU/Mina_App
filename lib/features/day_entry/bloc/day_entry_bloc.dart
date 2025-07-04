@@ -14,8 +14,8 @@ import 'package:mina_app/features/day_entry/view/day_entry_form.dart';
 import 'package:mina_app/services/auth_service.dart';
 
 class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
-  final DayEntryRepository dayEntryRepository;
-  final CycleRepository cycleRepository;
+  DayEntryRepository dayEntryRepository;
+  CycleRepository cycleRepository;
   DayEntryBloc(
       {required this.dayEntryRepository, required this.cycleRepository})
       : super(const DayEntryInitialState()) {
@@ -25,22 +25,26 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
       emit(const DayEntryLoadingState());
       try {
         //find if day exists
-        final day =
+        print(
+            'DayEntryBloc: Fetching day entry for date: ${event.date} and userId: $userId');
+        var day =
             await dayEntryRepository.getDayEntry(event.date, event.userId);
         //find if day is in present cycle
-
-        final presentCycle = await cycleRepository.getPresentCycle(userId);
-
+        print(
+            'DayEntryBloc: Day entry for date: ${event.date} and userId: $userId found: ${day != null}');
+        var presentCycle = await cycleRepository.getPresentCycle(userId);
+        print(
+            'DayEntryBloc: Present cycle for userId: $userId found: ${presentCycle != null}');
         bool isInPresentCycle = false;
         if (presentCycle != null) {
-          isInPresentCycle = isInPresentCycle =
+          isInPresentCycle =
               presentCycle.isInCycle(Utils().normalizedDate(event.date));
         }
 
         if (day != null) {
           if (day is PeriodDay) {
             //check if day is in the present cycle
-
+            print('DayEntryBloc: Day is a PeriodDay ');
             if (isInPresentCycle == true) {
               emit(PeriodDayEntryOngoingPeriodState(
                 date: day.date,
@@ -69,6 +73,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
 
             return;
           }
+          print('DayEntryBloc: Day is a not a Normal Day');
           //Day entry is not a period day
           //check if day is in the future
           if (event.date.isAfter(DateTime.now())) {
@@ -83,7 +88,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
             return;
           }
           //Day entry is in the past
-          //Check if part of cycle
+          //Check if part of present cycle
           if (isInPresentCycle == true) {
             emit(DayEntryInPresentCycleState(
               date: day.date,
@@ -102,6 +107,9 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
           ));
           return;
         } else {
+          print(isInPresentCycle
+              ? 'DayEntryBloc: New Day entry Day is in the present cycle'
+              : 'DayEntryBloc: New Day entry Day is not in the present cycle');
           if (isInPresentCycle == true) {
             emit(DayEntryInPresentCycleState(
               date: event.date,
@@ -126,9 +134,9 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
     });
 
     on<FlowChanged>((event, emit) {
-      final currentState = state;
+      var currentState = state;
       if (currentState is PeriodDayEntryOngoingPeriodState) {
-        final s = state as PeriodDayEntryOngoingPeriodState;
+        var s = state as PeriodDayEntryOngoingPeriodState;
         emit(PeriodDayEntryOngoingPeriodState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
@@ -141,7 +149,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
         ));
       }
       if (state is PeriodDayEntryInHistoricalCycleState) {
-        final s = state as PeriodDayEntryInHistoricalCycleState;
+        var s = state as PeriodDayEntryInHistoricalCycleState;
         emit(PeriodDayEntryInHistoricalCycleState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
@@ -156,9 +164,9 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
     });
 
     on<SymptomsChanged>((event, emit) {
-      final currentState = state;
+      var currentState = state;
       if (currentState is DayEntryLoadedState) {
-        final s = state as DayEntryLoadedState;
+        var s = state as DayEntryLoadedState;
         emit(DayEntryLoadedState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
@@ -169,7 +177,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
       }
 
       if (currentState is PeriodDayEntryOngoingPeriodState) {
-        final s = state as PeriodDayEntryOngoingPeriodState;
+        var s = state as PeriodDayEntryOngoingPeriodState;
         emit(PeriodDayEntryOngoingPeriodState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
@@ -182,7 +190,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
         ));
       }
       if (state is PeriodDayEntryInHistoricalCycleState) {
-        final s = state as PeriodDayEntryInHistoricalCycleState;
+        var s = state as PeriodDayEntryInHistoricalCycleState;
         emit(PeriodDayEntryInHistoricalCycleState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
@@ -197,9 +205,9 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
     });
 
     on<MoodsChanged>((event, emit) {
-      final currentState = state;
+      var currentState = state;
       if (currentState is PeriodDayEntryOngoingPeriodState) {
-        final s = state as PeriodDayEntryOngoingPeriodState;
+        var s = state as PeriodDayEntryOngoingPeriodState;
         emit(PeriodDayEntryOngoingPeriodState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
@@ -212,7 +220,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
         ));
       }
       if (state is PeriodDayEntryInHistoricalCycleState) {
-        final s = state as PeriodDayEntryInHistoricalCycleState;
+        var s = state as PeriodDayEntryInHistoricalCycleState;
         emit(PeriodDayEntryInHistoricalCycleState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
@@ -225,7 +233,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
         ));
       }
       if (state is DayEntryLoadedState) {
-        final s = state as DayEntryLoadedState;
+        var s = state as DayEntryLoadedState;
         emit(DayEntryLoadedState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
@@ -237,9 +245,9 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
     });
 
     on<NotesChanged>((event, emit) {
-      final currentState = state;
+      var currentState = state;
       if (currentState is PeriodDayEntryOngoingPeriodState) {
-        final s = state as PeriodDayEntryOngoingPeriodState;
+        var s = state as PeriodDayEntryOngoingPeriodState;
         emit(PeriodDayEntryOngoingPeriodState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
@@ -252,7 +260,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
         ));
       }
       if (state is PeriodDayEntryInHistoricalCycleState) {
-        final s = state as PeriodDayEntryInHistoricalCycleState;
+        var s = state as PeriodDayEntryInHistoricalCycleState;
         emit(PeriodDayEntryInHistoricalCycleState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
@@ -265,7 +273,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
         ));
       }
       if (state is DayEntryLoadedState) {
-        final s = state as DayEntryLoadedState;
+        var s = state as DayEntryLoadedState;
         emit(DayEntryLoadedState(
           date: s.date,
           isPeriodDay: s.isPeriodDay,
@@ -278,7 +286,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
 
     on<DayEntryInsertOrUpdate>((event, emit) async {
       if (state is PeriodDayEntryLoadedState) {
-        final s = state as PeriodDayEntryLoadedState;
+        var s = state as PeriodDayEntryLoadedState;
         dayEntryRepository.insertPeriodDayEntry(
           PeriodDay(
               date: s.date,
@@ -294,7 +302,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
         return;
       }
       if (state is DayEntryLoadedState) {
-        final s = state as DayEntryLoadedState;
+        var s = state as DayEntryLoadedState;
         dayEntryRepository.insertDayEntry(
             Day(
                 date: s.date,
@@ -305,5 +313,15 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
             event.userId);
       }
     });
+  }
+
+  @override
+  void onTransition(
+      Transition<DayEntryBlocEvent, DayEntryBlocState> transition) {
+    super.onTransition(transition);
+
+    print('Transition: ${transition.event} '
+        'from ${transition.currentState}'
+        'to ${transition.nextState} ');
   }
 }

@@ -10,13 +10,13 @@ part 'cycle_tracker_state.dart';
 class CycleTrackerBloc extends Bloc<CycleTrackerEvent, CycleTrackerState> {
   final CycleRepository cycleRepository;
   CycleTrackerBloc(this.cycleRepository) : super(CycleTrackerInitial()) {
-    final auth = AuthService();
-    final userId = auth.currentUserId!;
+    var auth = AuthService();
+    var userId = auth.currentUserId!;
     //On dashboard startup
     on<CycleTrackerStarted>((event, emit) async {
       //fetch the global cycle
-
-      final cycle = await cycleRepository.getPresentCycle(userId);
+      print('CycleTrackerBloc $event Fetching global cycle for user: $userId');
+      var cycle = await cycleRepository.getPresentCycle(userId);
 
       //global cycle can be null
       if (cycle != null) {
@@ -30,7 +30,7 @@ class CycleTrackerBloc extends Bloc<CycleTrackerEvent, CycleTrackerState> {
     //Emit no Cycle exists state for
     on<FetchCycle>((event, emit) async {
       print("fetching cycle for ${event.date}");
-      final currentCycle = await cycleRepository.getCycle(event.date, userId);
+      var currentCycle = await cycleRepository.getCycle(event.date, userId);
       if (currentCycle != null) {
         print("Cycle found for ${event.date}");
         emit(CycleTrackerCycleFetched(currentCycle,

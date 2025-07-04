@@ -98,9 +98,9 @@ class PeriodDayPickerBloc
     Emitter<PeriodDayPickerState> emit,
   ) async {
     emit(state.copyWith(status: PeriodDayPickerStatus.saving));
-    final result = await PeriodPickerLogic(
+    var result = await PeriodPickerLogic(
             event.userId, dayEntryRepository, event.isOnboarding)
-        .saveEditedDays(state.selectedDays, state.oldDays, event.context);
+        .saveEditedDays(state.selectedDays, state.oldDays);
     if (result == true)
       emit(state.copyWith(status: PeriodDayPickerStatus.success));
   }
@@ -202,7 +202,7 @@ class PeriodDayPickerBloc
     super.onTransition(transition);
 
     print('Transition: ${transition.event} '
-        'from ${state.status} scroll index '
-        'to ${state.status} scroll index');
+        'from ${transition.currentState.status}  '
+        'to ${transition.nextState.status} ');
   }
 }

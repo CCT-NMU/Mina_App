@@ -13,30 +13,32 @@ import 'package:mina_app/data/model/symptom_list.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CycleRepository {
-  late final AppDatabase database;
-  late final AppCyclesDao _cyclesDao;
+  late AppDatabase database;
+  late AppCyclesDao _cyclesDao;
 
   CycleRepository(this.database) {
     _cyclesDao = AppCyclesDao(database);
   }
   Future<Cycle?> getPresentCycle(String userId) async {
-    final globalCycle = await Supabase.instance.client
+    var globalCycle = await Supabase.instance.client
         .from('Cycles')
         .select()
         .eq('user_id', userId)
         .order('startDate', ascending: false)
         .limit(1)
         .single();
-    if (globalCycle != null && globalCycle is List && globalCycle.isNotEmpty) {
-      final cycleData = globalCycle;
+    if (globalCycle.isNotEmpty) {
+      print(
+          'CycleRepository: Present cycle for userId: $userId found: ${globalCycle != null}');
+      var cycleData = globalCycle;
       return Cycle(
         userId: cycleData['user_id'] as String,
-        startDate: DateTime.parse(cycleData['start_date'] as String),
-        endDate: cycleData['end_date'] != null
-            ? DateTime.parse(cycleData['end_date'] as String)
+        startDate: DateTime.parse(cycleData['startDate'] as String),
+        endDate: cycleData['endDate'] != null
+            ? DateTime.parse(cycleData['endDate'] as String)
             : null,
-        periodEndDate: cycleData['period_end_date'] != null
-            ? DateTime.parse(cycleData['period_end_date'] as String)
+        periodEndDate: cycleData['periodEndDate'] != null
+            ? DateTime.parse(cycleData['periodEndDate'] as String)
             : null,
         // Add other fields as needed
       );
@@ -46,23 +48,23 @@ class CycleRepository {
   }
 
   Future<Cycle?> getCycleByStartDate(DateTime startDate, String userId) async {
-    final response = await Supabase.instance.client
+    var response = await Supabase.instance.client
         .from('Cycles')
         .select()
         .eq('user_id', userId)
-        .eq('start_date', startDate.toIso8601String())
+        .eq('startDate', startDate.toIso8601String())
         .maybeSingle();
 
     if (response != null) {
-      final cycleData = response;
-      final cycle = Cycle(
+      var cycleData = response;
+      var cycle = Cycle(
         userId: cycleData['user_id'] as String,
-        startDate: DateTime.parse(cycleData['start_date'] as String),
-        endDate: cycleData['end_date'] != null
-            ? DateTime.parse(cycleData['end_date'] as String)
+        startDate: DateTime.parse(cycleData['startDate'] as String),
+        endDate: cycleData['endDate'] != null
+            ? DateTime.parse(cycleData['endDate'] as String)
             : null,
-        periodEndDate: cycleData['period_end_date'] != null
-            ? DateTime.parse(cycleData['period_end_date'] as String)
+        periodEndDate: cycleData['periodEndDate'] != null
+            ? DateTime.parse(cycleData['periodEndDate'] as String)
             : null,
         // Add other fields as needed
       );
@@ -72,33 +74,35 @@ class CycleRepository {
   }
 
   Future<List<Day>> getCombinedDayAndPeriodDayRecords(String userId) async {
+    print('Fetching combined day and period day records for user: $userId');
     // Fetch Days and PeriodDays from Supabase
-    final daysResponse = await Supabase.instance.client
+    var daysResponse = await Supabase.instance.client
         .from('Days')
         .select()
         .eq('user_id', userId);
 
-    final periodDaysResponse = await Supabase.instance.client
+    var periodDaysResponse = await Supabase.instance.client
         .from('PeriodDays')
         .select()
         .eq('user_id', userId);
-
+    print(
+        'Fetched ${daysResponse.length} days and ${periodDaysResponse.length} period days for user: $userId');
     // Convert responses to maps for easier lookup
-    final periodDaysMap = {for (var pd in periodDaysResponse) pd['date']: pd};
+    var periodDaysMap = {for (var pd in periodDaysResponse) pd['date']: pd};
 
     List<Day> result = [];
 
     for (var day in daysResponse) {
-      final dateStr = day['date'] as String;
-      final periodDay = periodDaysMap[dateStr];
+      var dateStr = day['date'] as String;
+      var periodDay = periodDaysMap[dateStr];
 
       if (day['isPeriodDay'] == true && periodDay != null) {
         // Map to PeriodDay model
         result.add(PeriodDay(
           date: DateTime.parse(dateStr),
-          note: day['note'] as String?,
-          symptomList: SymptomList.fromString(day['symptomList'] as String?),
-          moodList: MoodList.fromString(day['moodList'] as String?),
+          note: day['note'] ?? '' as String?,
+          symptomList: SymptomList.fromString(day['symptomList'] ?? ''),
+          moodList: MoodList.fromString(day['moodList'] ?? ''),
           flowWeight: periodDay['flowWeight'] != null
               ? FlowWeight.values[periodDay['flowWeight'] as int]
               : FlowWeight.none,
@@ -110,9 +114,9 @@ class CycleRepository {
         result.add(Day(
           date: DateTime.parse(dateStr),
           isPeriodDay: day['isPeriodDay'] == true,
-          note: day['note'] as String?,
-          symptomList: SymptomList.fromString(day['symptomList'] as String?),
-          moodList: MoodList.fromString(day['moodList'] as String?),
+          note: day['note'] ?? '' as String?,
+          symptomList: SymptomList.fromString(day['symptomList'] ?? ''),
+          moodList: MoodList.fromString(day['moodList'] ?? ''),
         ));
       }
     }
@@ -139,7 +143,7 @@ class CycleRepository {
   Future<List<Cycle>> calculateCycleHistory(String userId) async {
     try {
       List<Cycle> cycles = [];
-      final days = await getCombinedDayAndPeriodDayRecords(userId);
+      var days = await getCombinedDayAndPeriodDayRecords(userId);
 
       // Sort days by date to ensure proper order
       days.sort((a, b) => a.date.compareTo(b.date));
@@ -148,7 +152,7 @@ class CycleRepository {
       int? currentPeriodLength;
 
       for (int i = 0; i < days.length; i++) {
-        final day = days[i];
+        var day = days[i];
         if (day is PeriodDay) {
           // If we find a start day, mark it
           if (day.isPeriodStartDay) {
@@ -194,7 +198,7 @@ class CycleRepository {
 
   Future<int> calculateAvgCycleLength(String userId) async {
     try {
-      final cycles = await calculateCycleHistory(userId);
+      var cycles = await calculateCycleHistory(userId);
       if (cycles.isEmpty || cycles.length < 2) return 0;
 
       int totalLength = 0;
@@ -212,7 +216,7 @@ class CycleRepository {
 
   Future<int> calculateAvgPeriodLength(String userId) async {
     try {
-      final cycles = await calculateCycleHistory(userId);
+      var cycles = await calculateCycleHistory(userId);
       if (cycles.isEmpty) return 0;
 
       int totalLength = 0;
@@ -238,13 +242,13 @@ class CycleRepository {
 
   Future<DateTime?> predictNextPeriod(String userId) async {
     try {
-      final cycles = await calculateCycleHistory(userId);
+      var cycles = await calculateCycleHistory(userId);
       if (cycles.isEmpty) return null;
 
-      final avgCycleLength = await calculateAvgCycleLength(userId);
+      var avgCycleLength = await calculateAvgCycleLength(userId);
       if (avgCycleLength == 0) return null;
 
-      final lastPeriod = cycles.last;
+      var lastPeriod = cycles.last;
       return lastPeriod.startDate!.add(Duration(days: avgCycleLength));
     } catch (e) {
       debugPrint('Error predicting next period: $e');
@@ -257,7 +261,7 @@ class CycleRepository {
   Future<void> insertCycle(Cycle cycle, String userId) async {
     try {
       //await _cyclesDao.insertCycle(cycle, userId);
-      await Supabase.instance.client.from('Cycles').insert({
+      await Supabase.instance.client.from('Cycles').upsert({
         'user_id': userId,
         'startDate':
             cycle.startDate != null ? cycle.startDate?.toIso8601String() : '',
@@ -276,7 +280,7 @@ class CycleRepository {
   Future<List<Cycle>> getCycles(String userId) async {
     try {
       //final appCycles = await _cyclesDao.getAllCycles(userId);
-      final cycles = await Supabase.instance.client
+      var cycles = await Supabase.instance.client
           .from('Cycles')
           .select()
           .eq('user_id', userId)
@@ -299,7 +303,7 @@ class CycleRepository {
   Future<void> updateCycle(int id, Cycle cycle, String userId) async {
     try {
       //await _cyclesDao.updateCycle(id, cycle, userId);
-      await Supabase.instance.client.from('Cycles').update({
+      await Supabase.instance.client.from('Cycles').upsert({
         'startDate': cycle.startDate?.toIso8601String(),
         'endDate': cycle.endDate?.toIso8601String(),
         'periodEndDate': cycle.periodEndDate?.toIso8601String(),
@@ -324,10 +328,10 @@ class CycleRepository {
 
   Future<Cycle?> getCycle(DateTime date, String userId) async {
     // Normalize the date for comparison
-    final normalizedDate = Utils().normalizedDate(date);
+    var normalizedDate = Utils().normalizedDate(date);
 
     // Query Supabase for a cycle containing the given date
-    final response = await Supabase.instance.client
+    var response = await Supabase.instance.client
         .from('Cycles')
         .select()
         .eq('user_id', userId)

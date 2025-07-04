@@ -19,11 +19,11 @@ class Cycle extends Equatable {
 
   Map<String, dynamic> toMap() {
     return {
-      'userId': userId,
+      'user_id': userId,
       'startDate': startDate!.toIso8601String(),
-      'endDate': endDate != null ? endDate!.toIso8601String() : "",
+      'endDate': endDate != null ? endDate!.toIso8601String() : null,
       'periodEndDate':
-          periodEndDate != null ? periodEndDate!.toIso8601String() : "",
+          periodEndDate != null ? periodEndDate!.toIso8601String() : null,
     };
   }
 
@@ -31,8 +31,8 @@ class Cycle extends Equatable {
     return Cycle(
       userId: map['userId'],
       startDate: DateTime.parse(map['startDate']),
-      endDate: map['endDate'] != "" ? DateTime.parse(map['endDate']) : null,
-      periodEndDate: map['periodEndDate'] != ""
+      endDate: map['endDate'] ? DateTime.parse(map['endDate']) : null,
+      periodEndDate: map['periodEndDate'] != null
           ? DateTime.parse(map['periodEndDate'])
           : null,
     );
