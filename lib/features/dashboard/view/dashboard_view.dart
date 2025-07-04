@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mina_app/common/utils.dart';
 import 'package:mina_app/data/model/period_day.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
@@ -55,185 +56,202 @@ class _DashboardViewState extends State<DashboardView> {
         return SafeArea(
           child: Scaffold(
             backgroundColor: Color.fromARGB(255, 255, 255, 255),
-            body: CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  title: const Text('Mina'),
+            body: Container(
+              padding: Utils().responsiveHorizontalPadding(context),
+              height: MediaQuery.of(context).size.height,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color.fromARGB(55, 227, 183, 235),
+                    Color.fromARGB(55, 233, 30, 98)
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
-                SliverToBoxAdapter(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    // Hero Section
-                    Container(
-                      height: 150,
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 24, horizontal: 16),
-                      decoration: const BoxDecoration(
-                        color: Color.fromARGB(178, 132, 77, 151),
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(16.0),
-                          bottomRight: Radius.circular(16.0),
+              ),
+              child: CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    pinned: true,
+                    title: const Text('Mina'),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      // Hero Section
+                      Container(
+                        height: 150,
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 24, horizontal: 16),
+                        decoration: const BoxDecoration(
+                          color: Color.fromARGB(178, 132, 77, 151),
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(16.0),
+                            bottomRight: Radius.circular(16.0),
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 1,
+                              child: Text(
+                                "Welcome to My Mina $userName!",
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Expanded(
+                              flex: 1,
+                              child: Text(
+                                softWrap: true,
+                                overflow: TextOverflow.visible,
+                                "Track your days and stay organized.",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: 1,
-                            child: Text(
-                              "Welcome to My Mina $userName!",
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                      const SizedBox(height: 20),
+                      // Calendar Section
+                      BlocBuilder<DashboardBloc, DashboardState>(
+                        builder: (context, state) {
+                          if (state is DashboardLoadInProgress) {
+                            return Center(
+                                heightFactor:
+                                    MediaQuery.of(context).size.height * 0.3,
+                                child: CircularProgressIndicator());
+                          }
+                          if (state is DashboardLoadSuccess) {
+                            final periodDays = state.days;
+                            return MultiBlocProvider(
+                              providers: [
+                                BlocProvider.value(
+                                    value: context.read<DashboardBloc>()),
+                                //Start up the CycleTracker
+                                BlocProvider.value(
+                                    value: context.read<CycleTrackerBloc>()),
+
+                                //Start up the DayEntry
+                              ],
+                              child: SizedBox(
+                                child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 8.0),
+                                    child: myCalendar(periodDays)),
                               ),
-                            ),
-                          ),
-                          Expanded(flex: 1, child: SizedBox(height: 8)),
-                          Expanded(
-                            flex: 1,
-                            child: Text(
-                              "Track your days and stay organized.",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Calendar Section
-                    BlocBuilder<DashboardBloc, DashboardState>(
-                      builder: (context, state) {
-                        if (state is DashboardLoadInProgress) {
+                            );
+                          } else if (state is DashboardLoadFailure) {
+                            return const Center(
+                                heightFactor: 2,
+                                child: Text('Failed to load events'));
+                          }
                           return Center(
                               heightFactor:
-                                  MediaQuery.of(context).size.height * 0.3,
+                                  MediaQuery.of(context).size.height * 0.5,
                               child: CircularProgressIndicator());
-                        }
-                        if (state is DashboardLoadSuccess) {
-                          final periodDays = state.days;
-                          return MultiBlocProvider(
-                            providers: [
-                              BlocProvider.value(
-                                  value: context.read<DashboardBloc>()),
-                              //Start up the CycleTracker
-                              BlocProvider.value(
-                                  value: context.read<CycleTrackerBloc>()),
-
-                              //Start up the DayEntry
-                            ],
-                            child: SizedBox(
-                              child: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 8.0),
-                                  child: myCalendar(periodDays)),
-                            ),
-                          );
-                        } else if (state is DashboardLoadFailure) {
-                          return const Center(
-                              heightFactor: 2,
-                              child: Text('Failed to load events'));
-                        }
-                        return Center(
-                            heightFactor:
-                                MediaQuery.of(context).size.height * 0.5,
-                            child: CircularProgressIndicator());
-                      },
-                    ),
-                  ]),
-                ),
-                SliverToBoxAdapter(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildInfoSection(
-                        context,
-                        title: "Understanding Your Cycle",
-                        description:
-                            "Learn about the phases of your menstrual cycle.",
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text("Understanding Your Cycle"),
-                                content: const Text(
-                                  "The menstrual cycle has four phases: menstrual, follicular, ovulation, and luteal. "
-                                  "Each phase plays a vital role in your reproductive health.",
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(),
-                                    child: const Text("Close"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
                         },
                       ),
-                      _buildInfoSection(
-                        context,
-                        title: "Healthy Habits",
-                        description: "Tips for maintaining menstrual health.",
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text("Healthy Habits"),
-                                content: const Text(
-                                  "Maintain a balanced diet, stay hydrated, exercise regularly, and get enough sleep "
-                                  "to support your menstrual health.",
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(),
-                                    child: const Text("Close"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      _buildInfoSection(
-                        context,
-                        title: "Common Symptoms",
-                        description: "Explore common symptoms and remedies.",
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text("Common Symptoms"),
-                                content: const Text(
-                                  "Common menstrual symptoms include cramps, bloating, mood swings, and fatigue. "
-                                  "Remedies include pain relievers, heat therapy, and relaxation techniques.",
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(),
-                                    child: const Text("Close"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ],
+                    ]),
                   ),
-                ),
-              ],
+                  SliverToBoxAdapter(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildInfoSection(
+                          context,
+                          title: "Understanding Your Cycle",
+                          description:
+                              "Learn about the phases of your menstrual cycle.",
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text("Understanding Your Cycle"),
+                                  content: const Text(
+                                    "The menstrual cycle has four phases: menstrual, follicular, ovulation, and luteal. "
+                                    "Each phase plays a vital role in your reproductive health.",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: const Text("Close"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        _buildInfoSection(
+                          context,
+                          title: "Healthy Habits",
+                          description: "Tips for maintaining menstrual health.",
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text("Healthy Habits"),
+                                  content: const Text(
+                                    "Maintain a balanced diet, stay hydrated, exercise regularly, and get enough sleep "
+                                    "to support your menstrual health.",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: const Text("Close"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        _buildInfoSection(
+                          context,
+                          title: "Common Symptoms",
+                          description: "Explore common symptoms and remedies.",
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text("Common Symptoms"),
+                                  content: const Text(
+                                    "Common menstrual symptoms include cramps, bloating, mood swings, and fatigue. "
+                                    "Remedies include pain relievers, heat therapy, and relaxation techniques.",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: const Text("Close"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
             drawer: const MenuDrawer(),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mina_app/common/utils.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:mina_app/data/database/connection/shared.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
@@ -24,7 +25,7 @@ class DayEntryRepository {
           .eq('user_id', userId);
 
 //If no Day entry exists, insert a new Day entry
-      if (dayResponse == [] || dayResponse.isEmpty) {
+      if (dayResponse.isEmpty) {
         await Supabase.instance.client.from('Days').insert({
           'user_id': userId,
           'date': day.date.toIso8601String(),
@@ -252,7 +253,7 @@ class DayEntryRepository {
           .select()
           .eq('date', date.toIso8601String())
           .eq('user_id', userId)
-          .single()
+          .maybeSingle()
           .then((response) {
         if (response == null) {
           return null;
@@ -344,7 +345,7 @@ class DayEntryRepository {
           .eq('date', date.toIso8601String())
           .eq('user_id', userId)
           .then((response) {
-        if (response.error != null) {
+        if (response == null) {
           throw Exception(
               'Failed to delete Day entry: ${response.error!.message}');
         }
@@ -451,9 +452,9 @@ class DayEntryRepository {
       var response = await Supabase.instance.client
           .from('Days')
           .select('*, PeriodDays(*)')
-          .eq('date', 'PeriodDays.day')
+          .eq('date', Utils().normalizedDate(date).toIso8601String())
           .eq('user_id', userId)
-          .limit(1);
+          .maybeSingle();
       return response;
     } catch (e) {
       // Handle or log the error as needed

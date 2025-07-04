@@ -87,24 +87,28 @@ class PeriodPickerLogic {
     var affectedMonthsStart =
         affectedMonths.map((month) => month.toIso8601String()).toList();
     var affectedMonthsEnd = affectedMonths
-        .map((date) => DateTime(date.year, date.month + 1, 1)
+        .map((date) => Utils()
+            .normalizedDate(DateTime(date.year, date.month + 1, 1))
             .subtract(Duration(days: 1))
             .toIso8601String())
         .toList();
 
     // Delete existing Cycle records for the affected months using Supabase
-
-    for (int i = 0; i < affectedMonthsStart.length; i++) {
-      await Supabase.instance.client
-          .from('Cycles')
-          .delete()
-          .or('and(startDate.gte.${affectedMonthsStart[i]},startDate.lte.${affectedMonthsEnd[i]})'
-              ',and(endDate.gte.${affectedMonthsStart[i]},endDate.lte.${affectedMonthsEnd[i]} )')
-          .eq('user_id', userId);
-    }
-    // Insert new Cycle records
-    for (var cycle in newCycleRecords) {
-      await Supabase.instance.client.from('Cycles').insert(cycle.toMap());
+    try {
+      for (int i = 0; i < affectedMonthsStart.length; i++) {
+        await Supabase.instance.client
+            .from('Cycles')
+            .delete()
+            .or('and(startDate.gte.${affectedMonthsStart[i]},startDate.lte.${affectedMonthsEnd[i]}),and(endDate.gte.${affectedMonthsStart[i]},endDate.lte.${affectedMonthsEnd[i]})')
+            .eq('user_id', userId);
+      }
+      // Insert new Cycle records
+      for (var cycle in newCycleRecords) {
+        await Supabase.instance.client.from('Cycles').insert(cycle.toMap());
+      }
+    } catch (e) {
+      print("Cycle data operation exception: $e");
+      throw Exception("Cycle data operation exception: $e");
     }
     return savePeriodDays(newCycleRecords, cycles);
   }

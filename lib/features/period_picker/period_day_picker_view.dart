@@ -386,6 +386,8 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                   children: [
                     Center(
                       child: Container(
+                        width: _getCircleWidth(context),
+                        height: _getCircleWidth(context),
                         child: Column(
                           children: [
                             Text('$day',
@@ -449,6 +451,17 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
         ? DateTime(month.year + 1, 1, 1)
         : DateTime(month.year, month.month + 1, 1);
     return beginningNextMonth.subtract(Duration(days: 1)).day;
+  }
+
+  double _getCircleWidth(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth < 400) {
+      return 32; // Small phones
+    } else if (screenWidth < 800) {
+      return 40; // Tablets or large phones
+    } else {
+      return 48; // Desktop or large tablets
+    }
   }
 }
 
