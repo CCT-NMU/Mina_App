@@ -10,7 +10,7 @@ import 'package:mina_app/local_libraries/table_calendar/lib/table_calendar.dart'
 import 'package:mina_app/local_libraries/table_calendar/lib/src/shared/utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/period/period_picker_logic.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'bloc/period_day_picker_bloc.dart';
@@ -55,6 +55,7 @@ class PeriodDayPickerView extends StatelessWidget {
         Provider.of<DayEntryRepository>(context, listen: false);
     return BlocProvider(
       create: (context) => PeriodDayPickerBloc(
+        dayEntryRepository: dayEntryRepository,
         userId: userId,
       )..add(PeriodDaysFetched(focusedDay ?? DateTime.now(), userId)),
       child: _PeriodDayPickerBody(focusedDay: focusedDay),
@@ -183,8 +184,11 @@ class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
                         child: TextButton(
                             onPressed: () {
                               final bloc = context.read<PeriodDayPickerBloc>();
-                              PeriodPicker periodPicker =
-                                  PeriodPicker(userId: bloc.userId);
+                              PeriodPicker periodPicker = PeriodPicker(
+                                  userId: bloc.userId,
+                                  dayEntryRepository:
+                                      Provider.of<DayEntryRepository>(context,
+                                          listen: false));
                               periodPicker.saveEditedDays(
                                 bloc.state.selectedDays,
                                 bloc.state.oldDays,

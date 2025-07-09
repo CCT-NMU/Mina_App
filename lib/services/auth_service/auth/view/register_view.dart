@@ -66,10 +66,13 @@ class _RegisterViewState extends State<RegisterView> {
                       BlocProvider.value(value: onboardingBloc),
                       BlocProvider(
                         create: (context) {
-                          final bloc =
-                              PeriodDayPickerBloc(userId: state.user.id)
-                                ..add(PeriodDaysFetched(
-                                    DateTime.now(), state.user.id));
+                          final bloc = PeriodDayPickerBloc(
+                              userId: state.user.id,
+                              dayEntryRepository:
+                                  Provider.of<DayEntryRepository>(context,
+                                      listen: false))
+                            ..add(PeriodDaysFetched(
+                                DateTime.now(), state.user.id));
 
                           return bloc;
                         },

@@ -10,7 +10,9 @@ import 'package:flutter/foundation.dart';
 
 class PeriodPicker {
   final String userId;
-  PeriodPicker({required this.userId});
+  final DayEntryRepository dayEntryRepository;
+  PeriodPicker({required this.userId, required this.dayEntryRepository});
+
   List<DateTime> deselectedPeriodDates = [];
 
   //selectedDates are a list of all the dates that have been selected.
@@ -172,8 +174,8 @@ class PeriodPicker {
 
           //Process PeriodDays
 
-          if (curDate.isAfter(curCycle.startDate) &&
-              curDate.isBefore(curCycle.periodEndDate)) {
+          if (curDate.isAfter(curCycle.startDate!) &&
+              curDate.isBefore(curCycle.periodEndDate!)) {
             if (existing != null) {
               if (curDate == existing.date) {
                 //Existing record is a periodDay that is not a start or end day; update flags as necessary
@@ -227,8 +229,7 @@ class PeriodPicker {
 //If a Day is not a PeriodDay anymore, it should be deleted from the PeriodDay table
             if (deselectedPeriodDates.isNotEmpty) {
               if (deselectedPeriodDates.contains(curDate)) {
-                await DayEntryRepository()
-                    .insertDayEntry(curDate, userId, txn: txn);
+                await dayEntryRepository.deletePeriodDayEntry(curDate, userId);
               }
             }
 //The database helper class helps on deletion of a PeriodDay entry by marking the

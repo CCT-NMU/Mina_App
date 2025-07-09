@@ -16,7 +16,7 @@ import 'package:mina_app/features/onboarding/view/welcome.dart';
 import 'package:mina_app/features/period_picker/last_period_start_date_view.dart';
 import 'package:mina_app/features/period_picker/bloc/period_day_picker_bloc.dart';
 import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
@@ -25,7 +25,6 @@ import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/auth/view/login_view.dart';
 import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
-import 'package:mina_app/services/fake_auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

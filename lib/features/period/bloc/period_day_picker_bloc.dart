@@ -13,9 +13,12 @@ part 'period_day_picker_state.dart';
 class PeriodDayPickerBloc
     extends Bloc<PeriodDayPickerEvent, PeriodDayPickerState> {
   final String userId;
+  final DayEntryRepository dayEntryRepository;
 
-  PeriodDayPickerBloc({required this.userId})
-      : super(const PeriodDayPickerState()) {
+  PeriodDayPickerBloc({
+    required this.userId,
+    required this.dayEntryRepository,
+  }) : super(const PeriodDayPickerState()) {
     on<PeriodDaysFetched>(_onFetched);
     on<PeriodDayToggled>(_onToggled);
   }
@@ -35,7 +38,7 @@ class PeriodDayPickerBloc
 
       final now = DateTime.now();
       // Use DayEntryRepository instead of DatabaseHelper directly
-      List<Day> periodDays = await DayEntryRepository().getPeriodDaysInRange(
+      List<Day> periodDays = await dayEntryRepository.getPeriodDaysInRange(
         DateTime(1960, 1, 1),
         DateTime(now.year + 1, now.month + 2, 0),
         userId,
