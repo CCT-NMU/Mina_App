@@ -382,19 +382,47 @@ class DayEntryRepository {
   }
 
 //update Day to a PeriodDay
+  /// Updates a Day entry to a PeriodDay entry in the database.
+  ///
+  /// Takes a [PeriodDay] object and the [userId] of the user, updates the corresponding
+  /// Day entry to mark it as a period day, and inserts a new PeriodDay entry.
   Future<void> updateDayToPeriodDay(PeriodDay periodDay, String userId) async {
     try {
       await Supabase.instance.client
-          .from('PeriodDays')
-          .update({
-            'date': periodDay.date.toIso8601String(),
-            'flowWeight': periodDay.flowWeight.index,
-            'isPeriodStartDay': periodDay.isPeriodStartDay,
-            'isPeriodEndDay': periodDay.isPeriodEndDay,
+          .from('Days')
+          .upsert({
+            'isPeriodDay': true,
+            'note': periodDay.note,
+            'symptomList': periodDay.symptomList != null
+                ? periodDay.symptomList.toString()
+                : '',
+            'moodList':
+                periodDay.moodList != null ? periodDay.moodList.toString() : '',
           })
           .eq('date', periodDay.date.toIso8601String())
           .eq('user_id', userId);
-      //  await _daysDao.updateDayToPeriodDay(periodDay, txn: txn);
+
+      var result = await Supabase.instance.client
+          .from('Days')
+          .select()
+          .eq('date', periodDay.date.toIso8601String())
+          .eq('user_id', userId);
+
+      if (result != null && result.isNotEmpty) {
+        await Supabase.instance.client
+            .from('PeriodDays')
+            .upsert({
+              'date': periodDay.date.toIso8601String(),
+              'flowWeight': periodDay.flowWeight.index,
+              'isPeriodStartDay': periodDay.isPeriodStartDay,
+              'isPeriodEndDay': periodDay.isPeriodEndDay,
+              'day_id': result[0]['id'],
+            })
+            .eq('date', periodDay.date.toIso8601String())
+            .eq('user_id', userId);
+      } else {
+        throw Exception('No Day entry found for the given date and user.');
+      }
     } catch (e) {
       // Log the error and rethrow a custom exception
       print('Error updating Day to PeriodDay: $e');

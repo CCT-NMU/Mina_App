@@ -48,8 +48,7 @@ class _LoginViewState extends State<LoginView> {
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-              'Functionality pending for testing'), // Text('Please enter your email first'),
+          content: Text('Please enter your email first'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -138,7 +137,7 @@ class _LoginViewState extends State<LoginView> {
           ),
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(16.0),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -152,11 +151,10 @@ class _LoginViewState extends State<LoginView> {
                         color: Color.fromARGB(178, 132, 77, 151),
                         shape: BoxShape.circle,
                       ),
-                      child: Image.network(
-                        'web/icons/Icon-512.png', // Path relative to web/
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.contain,
+                      child: const Icon(
+                        Icons.calendar_month,
+                        size: 60,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -181,7 +179,7 @@ class _LoginViewState extends State<LoginView> {
                     const SizedBox(height: 40),
 
                     Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 50),
+                        padding: const EdgeInsets.symmetric(horizontal: 200),
                         child: Column(
                           children: [
                             // Email Field

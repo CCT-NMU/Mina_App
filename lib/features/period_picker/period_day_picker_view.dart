@@ -24,7 +24,7 @@ import 'package:mina_app/local_libraries/table_calendar/lib/table_calendar.dart'
 import 'package:mina_app/local_libraries/table_calendar/lib/src/shared/utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/period_picker/period_picker_logic.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 import 'package:mina_app/services/prediction_service.dart';
 import 'package:provider/provider.dart';
 
@@ -58,7 +58,7 @@ It will only appear for :
 
 class PeriodDayPickerView extends StatefulWidget {
   final DateTime? focusedDay;
-  final String userId = AuthService().currentUserId!;
+  final String userId = SupabaseAuthService().currentUserId!;
   PeriodDayPickerView({Key? key, this.focusedDay}) : super(key: key);
 
   @override
@@ -456,7 +456,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
   double _getCircleWidth(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     if (screenWidth < 400) {
-      return 32; // Small phones
+      return 20; // Small phones
     } else if (screenWidth < 800) {
       return 40; // Tablets or large phones
     } else {

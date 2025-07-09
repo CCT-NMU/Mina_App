@@ -17,8 +17,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/data/model/day.dart';
-import 'package:mina_app/services/auth_service.dart';
-import 'package:mina_app/services/fake_auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -32,7 +31,7 @@ class _DashboardViewState extends State<DashboardView> {
   DateTime? _selectedDay;
 
   // Get current user ID from AuthService
-  String get currentUserId => AuthService().currentUserId!;
+  String get currentUserId => SupabaseAuthService().currentUserId!;
 
   @override
   void initState() {
@@ -48,7 +47,7 @@ class _DashboardViewState extends State<DashboardView> {
   Widget build(BuildContext context) {
     // Get user info for display
 //    final userName = AuthService.instance.currentUserName ?? 'User';
-    var userName = AuthService().currentUserName ?? 'User';
+    var userName = SupabaseAuthService().currentUserName ?? 'User';
 
     return BlocBuilder<DashboardBloc, DashboardState>(
       builder: (context, state) {
@@ -79,8 +78,9 @@ class _DashboardViewState extends State<DashboardView> {
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
                       // Hero Section
                       Container(
-                        height: 150,
+                        height: MediaQuery.sizeOf(context).height * 0.28,
                         width: double.infinity,
+                        /*  */
                         padding: const EdgeInsets.symmetric(
                             vertical: 24, horizontal: 16),
                         decoration: const BoxDecoration(
@@ -94,15 +94,15 @@ class _DashboardViewState extends State<DashboardView> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              flex: 1,
-                              child: Text(
-                                "Welcome to My Mina $userName!",
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                            Text(
+                              softWrap: true,
+                              overflow: TextOverflow.visible,
+                              "Welcome to My Mina $userName!",
+                              style: TextStyle(
+                                fontSize:
+                                    MediaQuery.sizeOf(context).height * 0.025,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                             SizedBox(height: 8),
@@ -113,7 +113,8 @@ class _DashboardViewState extends State<DashboardView> {
                                 overflow: TextOverflow.visible,
                                 "Track your days and stay organized.",
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize:
+                                      MediaQuery.sizeOf(context).height * 0.02,
                                   color: Colors.white70,
                                 ),
                               ),
@@ -146,7 +147,7 @@ class _DashboardViewState extends State<DashboardView> {
                               child: SizedBox(
                                 child: Padding(
                                     padding: const EdgeInsets.symmetric(
-                                        vertical: 8.0),
+                                        vertical: 8.0, horizontal: 0.0),
                                     child: myCalendar(periodDays)),
                               ),
                             );

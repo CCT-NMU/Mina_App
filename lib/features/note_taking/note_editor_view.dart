@@ -3,7 +3,7 @@ import 'package:mina_app/data/database/connection/shared.dart';
 import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/repositories/note_repository.dart';
 import 'package:mina_app/data/database/notes_dao.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 import 'package:provider/provider.dart';
 import '/data/model/note.dart';
 
@@ -35,7 +35,7 @@ class _NoteEditorViewState extends State<NoteEditorView> {
     final now = DateTime.now();
     final note = (widget.note ??
             Note(
-              userId: AuthService().currentUser?.id,
+              userId: SupabaseAuthService().currentUser?.id,
               title: title,
               content: content,
               createdAt: now,

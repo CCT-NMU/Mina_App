@@ -2,7 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:mina_app/data/model/cycle.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart ';
 
 part 'cycle_tracker_event.dart';
 part 'cycle_tracker_state.dart';
@@ -10,7 +10,7 @@ part 'cycle_tracker_state.dart';
 class CycleTrackerBloc extends Bloc<CycleTrackerEvent, CycleTrackerState> {
   final CycleRepository cycleRepository;
   CycleTrackerBloc(this.cycleRepository) : super(CycleTrackerInitial()) {
-    var auth = AuthService();
+    var auth = SupabaseAuthService();
     var userId = auth.currentUserId!;
     //On dashboard startup
     on<CycleTrackerStarted>((event, emit) async {

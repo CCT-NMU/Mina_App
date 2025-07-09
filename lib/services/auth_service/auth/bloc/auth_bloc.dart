@@ -1,4 +1,5 @@
 import 'dart:async';
+//import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
@@ -66,10 +67,11 @@ class AuthUserChanged extends AuthEvent {
 
 // States
 abstract class AuthState extends Equatable {
-  const AuthState();
+  User? user;
 
+  AuthState({this.user});
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [user];
 }
 
 class AuthInitial extends AuthState {}
@@ -78,16 +80,15 @@ class AuthLoading extends AuthState {}
 
 class AuthAuthenticated extends AuthState {
   final User user;
-  //final Map<String, dynamic>? profile;
+  final Map<String, dynamic>? profile;
 
-  const AuthAuthenticated({
+  AuthAuthenticated({
     required this.user,
-    // this.profile,
-  });
+    this.profile,
+  }) : super(user: user);
 
   @override
-  List<Object?> get props => [user]; //, profile];
-  // List<Object?> get props => [user, profile];
+  List<Object?> get props => [user, profile];
 }
 
 class AuthUnauthenticated extends AuthState {}
@@ -95,7 +96,7 @@ class AuthUnauthenticated extends AuthState {}
 class AuthError extends AuthState {
   final String message;
 
-  const AuthError(this.message);
+  AuthError(this.message);
 
   @override
   List<Object?> get props => [message];
@@ -104,18 +105,19 @@ class AuthError extends AuthState {
 class AuthPasswordResetSent extends AuthState {
   final String email;
 
-  const AuthPasswordResetSent(this.email);
+  AuthPasswordResetSent(this.email);
 
   @override
   List<Object?> get props => [email];
 }
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final SupabaseAuthService _authService;
+  final SupabaseAuthService _supabaseAuthService;
   late StreamSubscription<supabase.AuthState> _authStateSubscription;
+  // Connectivity connectivity = Connectivity();
 
-  AuthBloc()
-      : _authService = SupabaseAuthService(),
+  AuthBloc({SupabaseAuthService? authService})
+      : _supabaseAuthService = authService ?? SupabaseAuthService(),
         super(AuthInitial()) {
     on<AuthStarted>(_onAuthStarted);
     on<AuthSignInRequested>(_onSignInRequested);
@@ -125,7 +127,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthUserChanged>(_onUserChanged);
 
     // Listen to auth state changes
-    _authStateSubscription = _authService.authStateChanges.listen(
+    _authStateSubscription = _supabaseAuthService.authStateChanges.listen(
       (authState) {
         add(AuthUserChanged(authState.session?.user));
       },
@@ -138,12 +140,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
 
-    final user = _authService.currentUser;
+    final user = _supabaseAuthService.currentUser;
     if (user != null) {
       try {
-        // final profile = await _authService.getUserProfile();
-        emit(AuthAuthenticated(user: user));
-        //emit(AuthAuthenticated(user: user, profile: profile));
+        final profile = await _supabaseAuthService.getUserProfile();
+        emit(AuthAuthenticated(user: user, profile: profile));
       } catch (e) {
         emit(AuthAuthenticated(user: user));
       }
@@ -156,26 +157,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignInRequested event,
     Emitter<AuthState> emit,
   ) async {
+    //final connection = await connectivity.checkConnectivity();
+
     emit(AuthLoading());
 
     try {
-      final response = await _authService.signIn(
+      //  if (connection != ConnectivityResult.none) {
+      final response = await _supabaseAuthService.signIn(
         email: event.email,
         password: event.password,
       );
 
       if (response.user != null) {
-        print('User signed in: ${response.user!.email}');
-        //final profile = await _authService.getUserProfile();
-        if (state is! AuthAuthenticated) {
-          emit(AuthAuthenticated(
-            user: response.user!,
-            // profile: profile,
-          ));
-        }
+        final profile = await _supabaseAuthService.getUserProfile();
+        emit(AuthAuthenticated(
+          user: response.user!,
+          profile: profile,
+        ));
       } else {
-        emit(const AuthError('Sign in failed'));
+        emit(AuthError('Sign in failed'));
       }
+      /*   } else {
+        //Offline Sign in
+        //Check local database if user exists
+      } */
     } catch (e) {
       emit(AuthError(e.toString()));
     }
@@ -188,22 +193,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
-      final response = await _authService.signUp(
+      final response = await _supabaseAuthService.signUp(
         name: event.name,
         email: event.email,
         password: event.password,
       );
 
       if (response.user != null) {
-        //   final profile = await _authService.getUserProfile();
+        final profile = await _supabaseAuthService.getUserProfile();
         emit(AuthAuthenticated(
           user: response.user!,
-          //  profile: profile,
+          profile: profile,
         ));
       } else {
-        emit(const AuthError('Sign up failed'));
+        emit(AuthError('Sign up failed'));
       }
-    } catch (e) {
+    } catch (e, stack) {
+      print("Sign up error: $e");
+      print(stack);
       emit(AuthError(e.toString()));
     }
   }
@@ -215,7 +222,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
-      await _authService.signOut();
+      await _supabaseAuthService.signOut();
       emit(AuthUnauthenticated());
     } catch (e) {
       emit(AuthError(e.toString()));
@@ -229,7 +236,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
-      await _authService.resetPassword(email: event.email);
+      await _supabaseAuthService.resetPassword(email: event.email);
       emit(AuthPasswordResetSent(event.email));
     } catch (e) {
       emit(AuthError(e.toString()));
@@ -242,10 +249,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     if (event.user != null) {
       try {
-        //  final profile = await _authService.getUserProfile();
+        final profile = await _supabaseAuthService.getUserProfile();
         emit(AuthAuthenticated(
           user: event.user!,
-          //    profile: profile,
+          profile: profile,
         ));
       } catch (e) {
         emit(AuthAuthenticated(user: event.user!));
@@ -253,13 +260,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } else {
       emit(AuthUnauthenticated());
     }
-  }
-
-  @override
-  void onTransition(Transition<AuthEvent, AuthState> transition) {
-    super.onTransition(transition);
-    print('AuthEvent: ${transition.event}');
-    print('Transition: ${transition.currentState} -> ${transition.nextState}');
   }
 
   @override

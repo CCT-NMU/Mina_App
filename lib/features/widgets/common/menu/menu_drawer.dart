@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/settings/view/settings_view.dart';
 import 'package:mina_app/features/statistics/view/statistics_view.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 import 'package:provider/provider.dart';
 
 class MenuDrawer extends StatelessWidget {
@@ -19,7 +19,7 @@ class MenuDrawer extends StatelessWidget {
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           // Extract user info from the authentication state
-          String displayName = AuthService().currentUserName ?? 'User';
+          String displayName = SupabaseAuthService().currentUserName ?? 'User';
           String email = '';
           String initials = 'U';
 

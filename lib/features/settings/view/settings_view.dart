@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 import 'package:mina_app/services/notification_service.dart';
 import 'package:mina_app/services/backup_service.dart';
 import 'package:mina_app/services/export_service.dart';
@@ -20,7 +20,7 @@ class _SettingsViewState extends State<SettingsView> {
   final NotificationService _notificationService = NotificationService();
   final BackupService _backupService = BackupService();
   late final ExportService _exportService;
-  final String userId = AuthService().requireUserId;
+  final String userId = SupabaseAuthService().requireUserId;
 
   bool _enableReminders = true;
   int _reminderDays = 2;

@@ -5,14 +5,13 @@ import 'package:mina_app/data/model/user.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/data/repositories/user_repository.dart';
-import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
-import 'package:mina_app/features/auth/view/login_view.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
+import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/onboarding/bloc/onboarding_bloc.dart';
 import 'package:mina_app/features/onboarding/view/name_capture.dart';
-import 'package:mina_app/features/period_picker/bloc/period_day_picker_bloc.dart';
-import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
-import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
+import 'package:mina_app/features/period/bloc/period_day_picker_bloc.dart';
+import 'package:mina_app/features/period/period_day_picker_view.dart';
+import 'package:mina_app/services/auth_service/auth/bloc/auth_bloc.dart';
 import 'package:provider/provider.dart';
 
 class RegisterView extends StatefulWidget {
@@ -57,62 +56,46 @@ class _RegisterViewState extends State<RegisterView> {
     return Scaffold(
       body: SafeArea(
         child: BlocListener<AuthBloc, AuthState>(
-          listener: (context, state) async {
+          listener: (context, state) {
             if (state is AuthAuthenticated) {
-              // Only now is the user guaranteed to be authenticated
-              final currentUser = SupabaseAuthService().currentUser;
-              if (currentUser != null) {
-                await Provider.of<UserRepository>(context, listen: false)
-                    .insertUser(
-                  User(
-                    id: currentUser.id,
-                    name: _nameController.text.trim(),
-                    email: _emailController.text.trim(),
-                  ),
-                );
-                final db = Provider.of<AppDatabase>(context, listen: false);
-                final allUsers = db.select(db.appUsers).get();
+              final onboardingBloc = context.read<OnboardingBloc>();
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => MultiBlocProvider(
+                    providers: [
+                      BlocProvider.value(value: onboardingBloc),
+                      BlocProvider(
+                        create: (context) {
+                          final bloc =
+                              PeriodDayPickerBloc(userId: state.user.id)
+                                ..add(PeriodDaysFetched(
+                                    DateTime.now(), state.user.id));
 
-                allUsers.then((users) {
-                  print("All users are: $users");
-                }).catchError((error) {
-                  print("Error fetching users: $error");
-                });
-              }
-              Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => MultiBlocProvider(
-                  providers: [
-                    BlocProvider<DashboardBloc>(
+                          return bloc;
+                        },
+                      ),
+                      BlocProvider(
                         create: (context) => DashboardBloc(
-                              userRepository: Provider.of<UserRepository>(
-                                  context,
-                                  listen: false),
-                              cycleRepository: Provider.of<CycleRepository>(
-                                  context,
-                                  listen: false),
-                              dayEntryRepository:
-                                  Provider.of<DayEntryRepository>(context,
-                                      listen: false),
-                              dbHelper: Provider.of<AppDatabase>(context,
-                                  listen: false),
-                            )),
-                    BlocProvider(
-                        create: (context) =>
-                            OnboardingBloc()..add(OnboardingNameSubmitted())),
-                    BlocProvider(
-                        create: (context) => PeriodDayPickerBloc(
-                            Provider.of<DayEntryRepository>(context,
-                                listen: false))
-                          ..add(PeriodDayPickerUptake(
-                              DateTime.now(), currentUser?.id ?? ''))),
-                  ],
-                  child: PeriodDayPickerView(focusedDay: DateTime.now()),
+                          userRepository: Provider.of<UserRepository>(context,
+                              listen: false),
+                          cycleRepository: Provider.of<CycleRepository>(context,
+                              listen: false),
+                          dayEntryRepository: Provider.of<DayEntryRepository>(
+                              context,
+                              listen: false),
+                          dbHelper:
+                              Provider.of<AppDatabase>(context, listen: false),
+                        )..add(LoadDashboard(DateTime.now())),
+                      ),
+                    ],
+                    child: PeriodDayPickerView(focusedDay: DateTime.now()),
+                  ),
                 ),
-              ));
+              );
+
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content:
-                      Text('Registration successful! You are now logged in.'),
+                const SnackBar(
+                  content: Text('Registration successful!'),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -126,8 +109,6 @@ class _RegisterViewState extends State<RegisterView> {
             }
           },
           child: Container(
-            height: MediaQuery.of(context).size.height,
-            padding: EdgeInsets.symmetric(horizontal: 50),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -154,11 +135,10 @@ class _RegisterViewState extends State<RegisterView> {
                         color: Color.fromARGB(178, 132, 77, 151),
                         shape: BoxShape.circle,
                       ),
-                      child: Image.network(
-                        'web/icons/Icon-512.png', // Path relative to web/
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.contain,
+                      child: const Icon(
+                        Icons.calendar_month,
+                        size: 60,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -366,15 +346,7 @@ class _RegisterViewState extends State<RegisterView> {
 
                     // Back to Login Link
                     TextButton(
-                      onPressed: () => Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => BlocProvider(
-                            create: (context) => AuthBloc(),
-                            child: LoginView(),
-                          ),
-                        ),
-                      ),
+                      onPressed: () => Navigator.of(context).pop(),
                       child: const Text(
                         'Already have an account? Sign In',
                         style: TextStyle(

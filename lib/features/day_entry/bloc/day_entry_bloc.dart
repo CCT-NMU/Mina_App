@@ -11,7 +11,7 @@ import 'package:mina_app/features/day_entry/bloc/day_entry_state.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/day_entry/view/day_entry_form.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 
 class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
   DayEntryRepository dayEntryRepository;
@@ -19,7 +19,7 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
   DayEntryBloc(
       {required this.dayEntryRepository, required this.cycleRepository})
       : super(const DayEntryInitialState()) {
-    String userId = AuthService().currentUserId!;
+    String userId = SupabaseAuthService().currentUserId!;
 
     on<DayEntryFetch>((event, emit) async {
       emit(const DayEntryLoadingState());

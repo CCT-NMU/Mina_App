@@ -59,9 +59,7 @@ class PeriodPickerLogic {
     cycles.add(currentCycle);
 
     // Prepare the new cycle records
-    //TODO: Make exception for initial cycle entry for new users: periodEndDate may not be reached yet.
-    //...Perhaps if last day in period selection is DateTime.now() we must set periodEndDate to null
-    //--
+    
     List<Cycle> newCycleRecords = [];
     for (int i = 0; i < cycles.length; i++) {
       var startDate = cycles[i].first;
@@ -94,6 +92,8 @@ class PeriodPickerLogic {
         .toList();
 
     // Delete existing Cycle records for the affected months using Supabase
+    print('try deleting cycles for affected months: $affectedMonthsStart');
+    print('try deleting cycles for affected months: $affectedMonthsEnd');
     try {
       for (int i = 0; i < affectedMonthsStart.length; i++) {
         await Supabase.instance.client
@@ -118,7 +118,7 @@ class PeriodPickerLogic {
   Future<bool> savePeriodDays(List<Cycle> cycleRecords,
       List<List<DateTime>> daysInCycleRangeList) async {
     List<List<DateTime>> cycles = daysInCycleRangeList;
-
+  print('attempt to save period days');
     for (int i = 0; i < cycles.length; i++) {
       Cycle curCycle = cycleRecords[i];
       bool isOngoing = curCycle.periodEndDate == null;

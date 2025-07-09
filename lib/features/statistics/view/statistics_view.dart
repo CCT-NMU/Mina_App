@@ -3,7 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/model/cycle.dart';
 import 'package:intl/intl.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 
 class StatisticsView extends StatefulWidget {
   final CycleRepository cycleRepository;
@@ -16,7 +16,7 @@ class StatisticsView extends StatefulWidget {
 class _StatisticsViewState extends State<StatisticsView> {
   List<Cycle> _cycles = [];
   bool _isLoading = true;
-  final String userId = AuthService().requireUserId;
+  final String userId = SupabaseAuthService().requireUserId;
 
   @override
   void initState() {

@@ -4,7 +4,7 @@ import 'package:mina_app/data/model/day.dart';
 import 'package:mina_app/data/model/mood_list.dart';
 import 'package:mina_app/data/model/period_day.dart';
 import 'package:mina_app/data/model/symptom_list.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart%20';
 import 'package:sqflite_common/sqlite_api.dart';
 part 'days_dao.g.dart';
 
@@ -64,7 +64,7 @@ class AppDaysDao extends DatabaseAccessor<AppDatabase> with _$AppDaysDaoMixin {
   }
 
   updateDayToPeriodDay(PeriodDay periodDay, {Transaction? txn}) {
-    final userId = AuthService().currentUser!.id;
+    final userId = SupabaseAuthService().currentUser!.id;
     final companion = AppDaysCompanion(
       date: Value(periodDay.date),
       isPeriodDay: Value(true),

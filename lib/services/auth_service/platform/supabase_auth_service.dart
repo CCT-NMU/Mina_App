@@ -1,7 +1,8 @@
+import 'package:mina_app/services/auth_service/platform/auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AuthService {
-  final SupabaseClient _supabase = Supabase.instance.client;
+class SupabaseAuthService implements AuthService {
+  final _supabase = Supabase.instance.client;
 
   // Get current user
   User? get currentUser => _supabase.auth.currentUser;
@@ -28,6 +29,7 @@ class AuthService {
   String? get currentUserName => currentUser?.userMetadata?['name'];
 
   // Sign up with email, password, and name
+  @override
   Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -40,6 +42,11 @@ class AuthService {
         data: {'name': name}, // Store name in user metadata
       );
 
+      if (response.user != null && response.session == null) {
+        // Show a message to the user to check their email
+
+        print('Sign up successful, but email confirmation required.');
+      }
       if (response.user != null) {
         // Update user profile with name
         await _supabase.auth.updateUser(
@@ -51,11 +58,13 @@ class AuthService {
 
       return response;
     } catch (e) {
+      print('Supabase sign up failed: $e');
       throw Exception('Sign up failed: ${e.toString()}');
     }
   }
 
   // Sign in with email and password
+  @override
   Future<AuthResponse> signIn({
     required String email,
     required String password,
@@ -72,6 +81,7 @@ class AuthService {
   }
 
   // Sign out
+  @override
   Future<void> signOut() async {
     try {
       await _supabase.auth.signOut();
@@ -81,7 +91,8 @@ class AuthService {
   }
 
   // Reset password
-  Future<void> resetPassword(String email) async {
+  @override
+  Future<void> resetPassword({required String email}) async {
     try {
       await _supabase.auth.resetPasswordForEmail(email);
     } catch (e) {
@@ -90,6 +101,7 @@ class AuthService {
   }
 
   // Get user profile data
+  @override
   Future<Map<String, dynamic>?> getUserProfile() async {
     try {
       final user = currentUser;
@@ -107,6 +119,7 @@ class AuthService {
   }
 
   // Update user profile
+  @override
   Future<void> updateProfile({
     String? name,
     String? email,
@@ -133,10 +146,15 @@ class AuthService {
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 
   // Singleton instance for easy access
-  static final AuthService _instance = AuthService._internal();
-  factory AuthService() => _instance;
-  AuthService._internal();
+  static final SupabaseAuthService _instance = SupabaseAuthService._internal();
+  factory SupabaseAuthService() {
+    //ToDo to review if placing async method in factory is best practice?
+    //How to make Auth session availiable to app?
+
+    return _instance;
+  }
+  SupabaseAuthService._internal();
 
   // Add a named constructor for fake usage
-  AuthService.fake();
+  SupabaseAuthService.fake();
 }

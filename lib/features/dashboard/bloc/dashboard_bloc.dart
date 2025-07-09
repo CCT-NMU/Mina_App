@@ -9,7 +9,7 @@ import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/data/repositories/user_repository.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_states.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 import 'package:mina_app/services/prediction_service.dart';
 import 'package:mina_app/services/notification_service.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
@@ -20,7 +20,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   final DayEntryRepository dayEntryRepository;
   final CycleRepository cycleRepository;
   final UserRepository userRepository;
-  final String userId = AuthService().currentUserId!;
+  final String userId = SupabaseAuthService().currentUserId!;
   final AppDatabase dbHelper;
 
   DashboardBloc({

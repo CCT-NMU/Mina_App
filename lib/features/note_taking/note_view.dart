@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/repositories/note_repository.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 import '/data/model/note.dart';
 import 'note_editor_view.dart';
 
@@ -25,7 +25,8 @@ class _NotesViewState extends State<NotesView> {
     // Get the database from Provider
     final db = Provider.of<AppDatabase>(context, listen: false);
     noteRepository = NoteRepository(db);
-    userId = AuthService().currentUserId!;
+    final authService = SupabaseAuthService();
+    userId = authService.currentUserId!;
     _reload();
   }
 

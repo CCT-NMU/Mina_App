@@ -9,7 +9,7 @@ import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/onboarding/bloc/onboarding_bloc.dart';
-import 'package:mina_app/services/auth_service.dart';
+import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 import 'package:provider/provider.dart';
 
 class NameCapture extends StatefulWidget {
