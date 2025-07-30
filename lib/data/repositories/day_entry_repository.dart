@@ -16,32 +16,72 @@ class DayEntryRepository {
   DayEntryRepository(this.db) {
     _daysDao = db.appDaysDao;
   }
-  Future<void> insertDayEntry(Day day, String userId) async {
+
+  Future<void> insertOrUpdatePeriodDayEntry(
+      PeriodDay periodDay, String userUuid) async {
+    try {
+      // 1. Upsert Day entry (ensures day exists)
+      await Supabase.instance.client.from('day').upsert({
+        'user_id': userUuid,
+        'date': periodDay.date.toIso8601String(),
+        'is_period_day': true,
+        'mood_list': periodDay.moodList?.toString() ?? '',
+        'symptom_list': periodDay.symptomList?.toString() ?? '',
+        'note': periodDay.note ?? "",
+      }, onConflict: 'user_id,date');
+
+      // 2. Get the day.id for this date/user
+      final dayRows = await Supabase.instance.client
+          .from('day')
+          .select('id')
+          .eq('user_id', userUuid)
+          .eq('date', periodDay.date.toIso8601String());
+
+      if (dayRows == null || dayRows.isEmpty) {
+        throw Exception('Failed to find or create Day entry');
+      }
+      final dayId = dayRows[0]['id'];
+
+      // 3. Upsert PeriodDay entry (use onConflict for (day_id) or (user_id,date) if you have a unique constraint)
+      await Supabase.instance.client.from('period_day').upsert({
+        'date': periodDay.date.toIso8601String(),
+        'flow_weight': periodDay.flowWeight.index,
+        'is_period_start_day': periodDay.isPeriodStartDay,
+        'is_period_end_day': periodDay.isPeriodEndDay,
+        'day_id': dayId,
+        'user_id': userUuid,
+      }, onConflict: 'day_id');
+    } catch (e) {
+      print('Error inserting/updating PeriodDay entry: $e');
+      throw Exception('Failed to insert or update PeriodDay entry');
+    }
+  }
+
+  Future<void> insertDayEntry(Day day, String userUuid) async {
     try {
       var dayResponse = await Supabase.instance.client
-          .from('Days')
+          .from('day')
           .select()
           .eq('date', day.date.toIso8601String())
-          .eq('user_id', userId);
+          .eq('user_id', userUuid);
 
-//If no Day entry exists, insert a new Day entry
       if (dayResponse.isEmpty) {
-        await Supabase.instance.client.from('Days').insert({
-          'user_id': userId,
+        await Supabase.instance.client.from('day').insert({
+          'user_id': userUuid,
           'date': day.date.toIso8601String(),
-          'isPeriodDay': day.isPeriodDay,
-          'moodList': day.moodList != null ? day.moodList.toString() : '',
-          'symptomList':
+          'is_period_day': day.isPeriodDay ? 1 : 0,
+          'mood_list': day.moodList != null ? day.moodList.toString() : '',
+          'symptom_list':
               day.symptomList != null ? day.symptomList.toString() : '',
           'note': day.note,
         });
       } else {
-        await Supabase.instance.client.from('Days').update({
-          'user_id': userId,
+        await Supabase.instance.client.from('day').update({
+          'user_id': userUuid,
           'date': day.date.toIso8601String(),
-          'isPeriodDay': day.isPeriodDay,
-          'moodList': day.moodList != null ? day.moodList.toString() : '',
-          'symptomList':
+          'is_period_day': day.isPeriodDay ? 1 : 0,
+          'mood_list': day.moodList != null ? day.moodList.toString() : '',
+          'symptom_list':
               day.symptomList != null ? day.symptomList.toString() : '',
           'note': day.note,
         }).eq('id', dayResponse[0]['id']);
@@ -52,101 +92,81 @@ class DayEntryRepository {
     }
   }
 
-  Future<void> insertPeriodDayEntry(PeriodDay periodDay, String userId) async {
+//must insert a period day
+//A] if a period day entry exists already update the period day entry
+
+//1] if a day entry already exists reference the day_id
+//2] if a day entry does not exist create a new day entry
+  Future<void> insertPeriodDayEntry(
+      PeriodDay periodDay, String userUuid) async {
     try {
       // Check if a PeriodDay entry exists for the given date and user
       var periodDayResponse = await Supabase.instance.client
-          .from('PeriodDays')
+          .from('period_day')
           .select()
           .eq('date', periodDay.date.toIso8601String())
-          .eq('user_id', userId);
+          .eq('user_id', userUuid);
 
-      // If a PeriodDay entry exists, delete it
+      // If a PeriodDay entry exists, update it
       if (periodDayResponse.isNotEmpty) {
-        var periodDayId = periodDayResponse[0]['id'];
+        updatePeriodDayEntry(periodDay, userUuid);
+        /*      var periodDayId = periodDayResponse[0]['id'];
         await Supabase.instance.client
-            .from('PeriodDays')
+            .from('period_day')
             .delete()
-            .eq('id', periodDayId);
-
-        await Supabase.instance.client
-            .from('Days')
-            .delete()
-            .eq('date', periodDay.date.toIso8601String())
-            .eq('user_id', userId);
-      }
-
-      // Find corresponding Day entry
-      var dayResponse = await Supabase.instance.client
-          .from('Days')
-          .select()
-          .eq('date', periodDay.date.toIso8601String())
-          .eq('user_id', userId);
-
-      if (dayResponse.isEmpty) {
-        // Insert new Day entry if it doesn't exist
-        await Supabase.instance.client.from('Days').insert({
-          'user_id': userId,
-          'date': periodDay.date.toIso8601String(),
-          'isPeriodDay': true,
-          'moodList':
-              periodDay.moodList != null ? periodDay.moodList.toString() : '',
-          'symptomList': periodDay.symptomList != null
-              ? periodDay.symptomList.toString()
-              : '',
-          'note': periodDay.note,
-        });
-        // Fetch the newly created Day entry to get its id
-        var newDayResponse = await Supabase.instance.client
-            .from('Days')
-            .select()
-            .eq('date', periodDay.date.toIso8601String())
-            .eq('user_id', userId);
-        print('inserting PeriodDay entry: ${periodDay.toString()}');
-        // Insert new PeriodDay entry
-        await Supabase.instance.client.from('PeriodDays').insert({
-          'user_id': userId,
-          'date': periodDay.date.toIso8601String(),
-          'flowWeight': periodDay.flowWeight.index,
-          'isPeriodStartDay': periodDay.isPeriodStartDay,
-          'isPeriodEndDay': periodDay.isPeriodEndDay,
-          'day_id': newDayResponse[0]['id']
-        });
+            .eq('id', periodDayId); */
       } else {
-        //delete the Day entry if it exists
-        await Supabase.instance.client
-            .from('Days')
-            .delete()
-            .eq('date', periodDay.date.toIso8601String())
-            .eq('user_id', userId);
-        // Insert new Day entry to ensure isPeriodDay is true and update fields
-        await Supabase.instance.client.from('Days').insert({
-          'user_id': userId,
-          'date': periodDay.date.toIso8601String(),
-          'isPeriodDay': true,
-          'moodList':
-              periodDay.moodList != null ? periodDay.moodList.toString() : '',
-          'symptomList': periodDay.symptomList != null
-              ? periodDay.symptomList.toString()
-              : '',
-          'note': periodDay.note,
-        });
-        // Fetch the newly created Day entry to get its idz
-        var newDayResponse = await Supabase.instance.client
-            .from('Days')
+        // Find corresponding Day entry
+        var dayResponse = await Supabase.instance.client
+            .from('day')
             .select()
             .eq('date', periodDay.date.toIso8601String())
-            .eq('user_id', userId);
-        print('inserting PeriodDay entry: ${periodDay.toString()}');
-        // Insert new PeriodDay entry
-        await Supabase.instance.client.from('PeriodDays').insert({
-          'user_id': userId,
-          'date': periodDay.date.toIso8601String(),
-          'flowWeight': periodDay.flowWeight.index,
-          'isPeriodStartDay': periodDay.isPeriodStartDay,
-          'isPeriodEndDay': periodDay.isPeriodEndDay,
-          'day_id': newDayResponse[0]['id']
-        });
+            .eq('user_id', userUuid);
+
+        if (dayResponse.isEmpty) {
+          // Insert new Day entry if it doesn't exist
+          await Supabase.instance.client.from('day').insert({
+            'user_id': userUuid,
+            'date': periodDay.date.toIso8601String(),
+            'is_period_day': true,
+            'mood_list':
+                periodDay.moodList != null ? periodDay.moodList.toString() : '',
+            'symptom_list': periodDay.symptomList != null
+                ? periodDay.symptomList.toString()
+                : '',
+            'note': periodDay.note ?? "",
+          });
+          // Fetch the newly created Day entry to get its id
+          var newDayResponse = await Supabase.instance.client
+              .from('day')
+              .select()
+              .eq('date', periodDay.date.toIso8601String())
+              .eq('user_id', userUuid);
+          print('inserting PeriodDay entry: ${periodDay.toString()}');
+
+          // Insert new PeriodDay entry
+          await Supabase.instance.client.from('period_day').insert({
+            'date': periodDay.date.toIso8601String(),
+            'flow_weight': periodDay.flowWeight.index,
+            'is_period_start_day': periodDay.isPeriodStartDay ? 1 : 0,
+            'is_period_end_day': periodDay.isPeriodEndDay ? 1 : 0,
+            'day_id': newDayResponse[0]['id']
+          });
+        } else {
+          // Insert new PeriodDay entry
+          await Supabase.instance.client.from('period_day').insert({
+            'date': periodDay.date.toIso8601String(),
+            'flow_weight': periodDay.flowWeight.index,
+            'is_period_start_day': periodDay.isPeriodStartDay ? 1 : 0,
+            'is_period_end_day': periodDay.isPeriodEndDay ? 1 : 0,
+            'day_id': dayResponse[0]['id']
+          });
+
+          // Update the Day entry to mark it as a period day
+          await Supabase.instance.client.from('day').update({
+            'is_period_day': true,
+          });
+        }
       }
     } catch (e) {
       print('Error inserting PeriodDay entry: $e');
@@ -158,7 +178,7 @@ class DayEntryRepository {
       DateTime firstDayOfPrevMonth, DateTime lastDayOfNextMonth) async {
     try {
       return await Supabase.instance.client
-          .from('Days')
+          .from('day')
           .select()
           .gte('date', firstDayOfPrevMonth.toIso8601String())
           .lte('date', lastDayOfNextMonth.toIso8601String())
@@ -187,7 +207,7 @@ class DayEntryRepository {
       DateTime startDate, DateTime endDate, String userId) async {
     try {
       return await Supabase.instance.client
-          .from('PeriodDays')
+          .from('period_day')
           .select()
           .gte('date', startDate.toIso8601String())
           .lte('date', endDate.toIso8601String())
@@ -215,8 +235,8 @@ class DayEntryRepository {
     try {
       // Fetch Day entry with inner join on PeriodDays
       List<dynamic> response = await Supabase.instance.client
-          .from('Days')
-          .select('*, PeriodDays(*)')
+          .from('day')
+          .select('*, period_day(*)')
           .eq('date', date.toIso8601String())
           .eq('user_id', userId)
           .limit(1);
@@ -227,15 +247,21 @@ class DayEntryRepository {
       print('DayEntryRepository: getDayEntry response: $response');
       Map<String, dynamic> dayData = response[0] as Map<String, dynamic>;
 
-      // If isPeriodDay is true and PeriodDays data exists, map to PeriodDay
-      if (dayData['isPeriodDay'] == true && dayData['PeriodDays'] != null) {
-        var periodDaysList = dayData['PeriodDays'];
-        Map<String, dynamic> periodDayMap =
-            periodDaysList[0] as Map<String, dynamic>;
-        if (periodDaysList is List && periodDaysList.isNotEmpty) {
-          periodDayMap.addAll(Map<String, dynamic>.from(dayData));
-          print('PeriodDays data found: $periodDayMap');
+      // If is_period_day is true and period_days data exists, map to PeriodDay
+      if (dayData['is_period_day'] == true && dayData['period_days'] != null) {
+        var periodDaysData = dayData['period_days'];
+        Map<String, dynamic> periodDayMap;
+
+        if (periodDaysData is Map<String, dynamic>) {
+          periodDayMap = Map<String, dynamic>.from(periodDaysData);
+        } else {
+          // Unexpected structure, fallback to Day
+          return Day.fromMap(dayData);
         }
+
+        // Optionally merge dayData fields if needed
+        periodDayMap.addAll(Map<String, dynamic>.from(dayData));
+        print('PeriodDays data found: $periodDayMap');
         return PeriodDay.fromMap(periodDayMap);
       } else {
         return Day.fromMap(dayData);
@@ -249,7 +275,7 @@ class DayEntryRepository {
   Future<PeriodDay?> getPeriodDayEntry(DateTime date, String userId) async {
     try {
       return Supabase.instance.client
-          .from('PeriodDays')
+          .from('period_day')
           .select()
           .eq('date', date.toIso8601String())
           .eq('user_id', userId)
@@ -271,12 +297,12 @@ class DayEntryRepository {
   Future<List<Day>> getCombinedDayAndPeriodDayRecords(String userId) async {
     // Fetch Days and PeriodDays from Supabase
     var daysResponse = await Supabase.instance.client
-        .from('Days')
+        .from('day')
         .select()
         .eq('user_id', userId);
 
     var periodDaysResponse = await Supabase.instance.client
-        .from('PeriodDays')
+        .from('period_day')
         .select()
         .eq('user_id', userId);
 
@@ -289,34 +315,34 @@ class DayEntryRepository {
       var dateStr = day['date'] as String;
       var periodDay = periodDaysMap[dateStr];
 
-      if (day['isPeriodDay'] == true && periodDay != null) {
+      if (day['is_period_day'] == true && periodDay != null) {
         // Map to PeriodDay model
         result.add(PeriodDay(
           date: DateTime.parse(dateStr),
           note: day['note'] as String?,
-          symptomList: day['symptomList'] != null
-              ? SymptomList.fromString(day['symptomList'] as String?)
+          symptomList: day['symptom_list'] != null
+              ? SymptomList.fromString(day['symptom_list'] as String?)
               : null,
-          moodList: day['moodList'] != null
-              ? MoodList.fromString(day['moodList'] as String?)
+          moodList: day['mood_list'] != null
+              ? MoodList.fromString(day['mood_list'] as String?)
               : null,
-          flowWeight: periodDay['flowWeight'] != null
-              ? FlowWeight.values[periodDay['flowWeight'] as int]
+          flowWeight: periodDay['flow_weight'] != null
+              ? FlowWeight.values[periodDay['flow_weight'] as int]
               : FlowWeight.none,
-          isPeriodStartDay: periodDay['isPeriodStartDay'] == true,
-          isPeriodEndDay: periodDay['isPeriodEndDay'] == true,
+          isPeriodStartDay: periodDay['is_period_start_day'] == true,
+          isPeriodEndDay: periodDay['is_period_end_day'] == true,
         ));
       } else {
         // Map to Day model
         result.add(Day(
           date: DateTime.parse(dateStr),
-          isPeriodDay: day['isPeriodDay'] == true,
+          isPeriodDay: day['is_period_day'] == true,
           note: day['note'] as String?,
-          symptomList: day['symptomList'] != null
-              ? SymptomList.fromString(day['symptomList'] as String?)
+          symptomList: day['symptom_list'] != null
+              ? SymptomList.fromString(day['symptom_list'] as String?)
               : null,
-          moodList: day['moodList'] != null
-              ? MoodList.fromString(day['moodList'] as String?)
+          moodList: day['mood_list'] != null
+              ? MoodList.fromString(day['mood_list'] as String?)
               : null,
         ));
       }
@@ -340,7 +366,7 @@ class DayEntryRepository {
   Future<int> deleteDayEntry(DateTime date, String userId) async {
     try {
       return await Supabase.instance.client
-          .from('Days')
+          .from('day')
           .delete()
           .eq('date', date.toIso8601String())
           .eq('user_id', userId)
@@ -361,7 +387,7 @@ class DayEntryRepository {
   Future<void> deletePeriodDayEntry(DateTime date, String userId) async {
     try {
       await Supabase.instance.client
-          .from('PeriodDays')
+          .from('period_day')
           .delete()
           .eq('date', date.toIso8601String())
           .eq('user_id', userId)
@@ -371,8 +397,8 @@ class DayEntryRepository {
         }
       });
       await Supabase.instance.client
-          .from('Days')
-          .update({'isPeriodDay': false})
+          .from('day')
+          .update({'is_period_day': false})
           .eq('date', date.toIso8601String())
           .eq('user_id', userId);
     } catch (e) {
@@ -389,33 +415,33 @@ class DayEntryRepository {
   Future<void> updateDayToPeriodDay(PeriodDay periodDay, String userId) async {
     try {
       await Supabase.instance.client
-          .from('Days')
+          .from('day')
           .upsert({
-            'isPeriodDay': true,
+            'is_period_day': true,
             'note': periodDay.note,
-            'symptomList': periodDay.symptomList != null
+            'symptom_list': periodDay.symptomList != null
                 ? periodDay.symptomList.toString()
                 : '',
-            'moodList':
+            'mood_list':
                 periodDay.moodList != null ? periodDay.moodList.toString() : '',
           })
           .eq('date', periodDay.date.toIso8601String())
           .eq('user_id', userId);
 
       var result = await Supabase.instance.client
-          .from('Days')
+          .from('day')
           .select()
           .eq('date', periodDay.date.toIso8601String())
           .eq('user_id', userId);
 
       if (result != null && result.isNotEmpty) {
         await Supabase.instance.client
-            .from('PeriodDays')
+            .from('period_day')
             .upsert({
               'date': periodDay.date.toIso8601String(),
-              'flowWeight': periodDay.flowWeight.index,
-              'isPeriodStartDay': periodDay.isPeriodStartDay,
-              'isPeriodEndDay': periodDay.isPeriodEndDay,
+              'flow_weight': periodDay.flowWeight.index,
+              'is_period_start_day': periodDay.isPeriodStartDay,
+              'is_period_end_day': periodDay.isPeriodEndDay,
               'day_id': result[0]['id'],
             })
             .eq('date', periodDay.date.toIso8601String())
@@ -435,20 +461,20 @@ class DayEntryRepository {
     try {
       // Update the Day entry in Supabase
       await Supabase.instance.client
-          .from('Days')
+          .from('day')
           .upsert({
             'note': day.note,
-            'symptomList': day.symptomList.toString(),
-            'moodList': day.moodList.toString(),
-            'isPeriodDay': day.isPeriodDay,
+            'symptom_list': day.symptomList.toString(),
+            'mood_list': day.moodList.toString(),
+            'is_period_day': day.isPeriodDay,
           })
           .eq('date', day.date.toIso8601String())
           .eq('user_id', userId);
 
       if (!day.isPeriodDay) {
-        // If changed from PeriodDay to non-PeriodDay, delete from PeriodDays
+        // If changed from PeriodDay to non-PeriodDay, delete from period_day
         await Supabase.instance.client
-            .from('PeriodDays')
+            .from('period_day')
             .delete()
             .eq('date', day.date.toIso8601String())
             .eq('user_id', userId);
@@ -465,7 +491,7 @@ class DayEntryRepository {
       var periodDayMap = periodDay.toPeriodDayMap();
       periodDayMap['user_id'] = userId;
       await Supabase.instance.client
-          .from('PeriodDays')
+          .from('period_day')
           .update(periodDayMap)
           .eq('date', periodDay.date.toIso8601String())
           .eq('user_id', userId);
@@ -478,8 +504,8 @@ class DayEntryRepository {
   Future<dynamic> fetchDayEntry(DateTime date, String userId) async {
     try {
       var response = await Supabase.instance.client
-          .from('Days')
-          .select('*, PeriodDays(*)')
+          .from('day')
+          .select('*, period_day(*)')
           .eq('date', Utils().normalizedDate(date).toIso8601String())
           .eq('user_id', userId)
           .maybeSingle();

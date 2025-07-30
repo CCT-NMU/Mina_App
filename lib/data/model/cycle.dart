@@ -20,20 +20,20 @@ class Cycle extends Equatable {
   Map<String, dynamic> toMap() {
     return {
       'user_id': userId,
-      'startDate': startDate!.toIso8601String(),
-      'endDate': endDate != null ? endDate!.toIso8601String() : null,
-      'periodEndDate':
+      'start_date': startDate!.toIso8601String(),
+      'end_date': endDate != null ? endDate!.toIso8601String() : null,
+      'period_end_date':
           periodEndDate != null ? periodEndDate!.toIso8601String() : null,
     };
   }
 
   factory Cycle.fromMap(Map<String, dynamic> map) {
     return Cycle(
-      userId: map['userId'],
-      startDate: DateTime.parse(map['startDate']),
-      endDate: map['endDate'] ? DateTime.parse(map['endDate']) : null,
-      periodEndDate: map['periodEndDate'] != null
-          ? DateTime.parse(map['periodEndDate'])
+      userId: map['user_id'],
+      startDate: DateTime.parse(map['start_date']),
+      endDate: map['end_date'] != null ? DateTime.parse(map['end_date']) : null,
+      periodEndDate: map['period_end_date'] != null
+          ? DateTime.parse(map['period_end_date'])
           : null,
     );
   }

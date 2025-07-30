@@ -59,7 +59,7 @@ class PeriodPickerLogic {
     cycles.add(currentCycle);
 
     // Prepare the new cycle records
-    
+
     List<Cycle> newCycleRecords = [];
     for (int i = 0; i < cycles.length; i++) {
       var startDate = cycles[i].first;
@@ -97,14 +97,14 @@ class PeriodPickerLogic {
     try {
       for (int i = 0; i < affectedMonthsStart.length; i++) {
         await Supabase.instance.client
-            .from('Cycles')
+            .from('cycle')
             .delete()
-            .or('and(startDate.gte.${affectedMonthsStart[i]},startDate.lte.${affectedMonthsEnd[i]}),and(endDate.gte.${affectedMonthsStart[i]},endDate.lte.${affectedMonthsEnd[i]})')
+            .or('and(start_date.gte.${affectedMonthsStart[i]},start_date.lte.${affectedMonthsEnd[i]}),and(end_date.gte.${affectedMonthsStart[i]},end_date.lte.${affectedMonthsEnd[i]})')
             .eq('user_id', userId);
       }
       // Insert new Cycle records
       for (var cycle in newCycleRecords) {
-        await Supabase.instance.client.from('Cycles').insert(cycle.toMap());
+        await Supabase.instance.client.from('cycle').insert(cycle.toMap());
       }
     } catch (e) {
       print("Cycle data operation exception: $e");
@@ -118,172 +118,24 @@ class PeriodPickerLogic {
   Future<bool> savePeriodDays(List<Cycle> cycleRecords,
       List<List<DateTime>> daysInCycleRangeList) async {
     List<List<DateTime>> cycles = daysInCycleRangeList;
-  print('attempt to save period days');
+    print('attempt to save period days');
     for (int i = 0; i < cycles.length; i++) {
       Cycle curCycle = cycleRecords[i];
       bool isOngoing = curCycle.periodEndDate == null;
-//#### Process PeriodDays ####
       for (int j = 0; j < cycles[i].length; j++) {
-        // Normalize date to remove time
         DateTime curDate = Utils().normalizedDate(cycles[i][j]);
-        PeriodDay? existingPeriodDay;
-        Day? existingDay;
-        if (!isOnboarding) {
-          // 1. Try to get existing PeriodDay for this date
-          existingPeriodDay =
-              await dayEntryRepository.getPeriodDayEntry(curDate, userId);
-
-          //1.1 Check to see if the day exists in Day table
-          existingDay = await dayEntryRepository.getDayEntry(curDate, userId);
-        }
-        //If a DateTime matches an existing PeriodDay in the PeriodDay table
-        //it should only be updated if it is now a periodStartDay or periodEndDay.
-
-        //If a Day record exists in the database that needs to be changed from a periodStartDay
-        // [or periodEndDay]..
-        //to a normal PeriodDay, we should update the entry by changing the flags as necessary
-
-        //*****Process edge case where only one Period day exists in a Cycle*****
-        //*****This will be a periodStartDay and periodEndDay*****
-        if (curDate == curCycle.startDate &&
-            (curCycle.periodEndDate == null ||
-                curDate == curCycle.periodEndDate)) {
-          //if it the record does not exist in PeriodDay table
-          bool isEnd = !isOngoing;
-          if (existingPeriodDay == null) {
-            if (existingDay == null) {
-              await dayEntryRepository.insertPeriodDayEntry(
-                  PeriodDay(
-                    date: curDate,
-                    flowWeight:
-                        FlowWeight.none, // or your default/desired value
-                    isPeriodStartDay: true,
-                    isPeriodEndDay: isEnd,
-                  ),
-                  userId);
-              continue;
-            } else {
-              await dayEntryRepository.updateDayToPeriodDay(
-                PeriodDay(
-                  date: curDate,
-                  flowWeight: FlowWeight.none, // or your default/desired value
-                  isPeriodStartDay: true,
-                  isPeriodEndDay: isEnd,
-                ),
-                userId,
-              );
-              continue;
-            }
-          } else {
-            //record does exist, update it as a start and end day
-            PeriodDay updated = existingPeriodDay.copyWith(
-                isPeriodStartDay: true, isPeriodEndDay: isEnd);
-            await dayEntryRepository.updatePeriodDayEntry(updated, userId);
-            continue;
-          }
-        }
-
-        //*****Process Start Day Period*****
-        if (curDate == curCycle.startDate) {
-          if (existingPeriodDay != null) {
-            // 2. If it exists and is already a start day, do nothing
-            if (!existingPeriodDay.isPeriodStartDay) {
-              // 3. If not a start day, update it to be a start day, keep flowWeight
-              PeriodDay updated = existingPeriodDay.copyWith(
-                  isPeriodStartDay: true, isPeriodEndDay: false);
-              await dayEntryRepository.updatePeriodDayEntry(updated, userId);
-            }
-          } else {
-            // 4. If it does not exist, insert/update as start day
-            if (existingDay == null) {
-              PeriodDay newPeriodDay = PeriodDay(
-                date: curDate,
-                flowWeight: FlowWeight.none, // or your default/desired value
-                isPeriodStartDay: true,
-                isPeriodEndDay: false,
-              );
-              await dayEntryRepository.insertPeriodDayEntry(
-                  newPeriodDay, userId);
-            } else {
-              await dayEntryRepository.updateDayToPeriodDay(
-                PeriodDay(
-                  date: curDate,
-                  flowWeight: FlowWeight.none,
-                  isPeriodStartDay: true,
-                  isPeriodEndDay: false,
-                ),
-                userId,
-              );
-            }
-          }
-        }
-
-        // Process PeriodDays (middle days)
-        if (curDate.isAfter(curCycle.startDate!) &&
-            (isOngoing || curDate.isBefore(curCycle.periodEndDate!))) {
-          if (existingPeriodDay != null) {
-            if (curDate == existingPeriodDay.date) {
-              //Existing record is a periodDay that is not a start or end day; update flags as necessary
-              PeriodDay updated = existingPeriodDay.copyWith(
-                  isPeriodStartDay: false, isPeriodEndDay: false);
-              await dayEntryRepository.updatePeriodDayEntry(updated, userId);
-            }
-          } else {
-            if (existingDay == null) {
-              PeriodDay newPeriodDay = PeriodDay(
-                date: curDate,
-                flowWeight: FlowWeight.none, // default
-                isPeriodStartDay: false,
-                isPeriodEndDay: false,
-              );
-              await dayEntryRepository.insertPeriodDayEntry(
-                  newPeriodDay, userId);
-            } else {
-              await dayEntryRepository.updateDayToPeriodDay(
-                  PeriodDay(
-                    date: curDate,
-                    flowWeight: FlowWeight.none,
-                    isPeriodStartDay: false,
-                    isPeriodEndDay: false,
-                  ),
-                  userId);
-            }
-          }
-        }
-        // Process periodEndDays
-        if (!isOngoing && curDate == curCycle.periodEndDate) {
-          if (existingPeriodDay != null) {
-            if (!existingPeriodDay.isPeriodEndDay) {
-              //Existing record is not a periodEndDay
-              await dayEntryRepository.updatePeriodDayEntry(
-                  existingPeriodDay.copyWith(
-                      isPeriodEndDay: true, isPeriodStartDay: false),
-                  userId);
-            }
-            //Existing record is a periodEndDay; do nothing
-          } else {
-            if (existingDay == null) {
-              PeriodDay newPeriodDay = PeriodDay(
-                date: curDate,
-                flowWeight: FlowWeight.none, // default
-                isPeriodStartDay: false,
-                isPeriodEndDay: true,
-              );
-              await dayEntryRepository.insertPeriodDayEntry(
-                  newPeriodDay, userId);
-            } else {
-              await dayEntryRepository.updateDayToPeriodDay(
-                PeriodDay(
-                  date: curDate,
-                  flowWeight: FlowWeight.none,
-                  isPeriodStartDay: false,
-                  isPeriodEndDay: true,
-                ),
-                userId,
-              );
-            }
-          }
-        }
+        bool isStart = curDate == curCycle.startDate;
+        bool isEnd =
+            curCycle.periodEndDate == null || curDate == curCycle.periodEndDate;
+        await dayEntryRepository.insertOrUpdatePeriodDayEntry(
+          PeriodDay(
+            date: curDate,
+            flowWeight: FlowWeight.none, // or your default/desired value
+            isPeriodStartDay: isStart,
+            isPeriodEndDay: isEnd && !isOngoing,
+          ),
+          userId,
+        );
       }
     }
 

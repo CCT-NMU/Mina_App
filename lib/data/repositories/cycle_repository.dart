@@ -21,10 +21,10 @@ class CycleRepository {
   }
   Future<Cycle?> getPresentCycle(String userId) async {
     var globalCycle = await Supabase.instance.client
-        .from('Cycles')
+        .from('cycle')
         .select()
         .eq('user_id', userId)
-        .order('startDate', ascending: false)
+        .order('start_date', ascending: false)
         .limit(1)
         .single();
     if (globalCycle.isNotEmpty) {
@@ -33,12 +33,12 @@ class CycleRepository {
       var cycleData = globalCycle;
       return Cycle(
         userId: cycleData['user_id'] as String,
-        startDate: DateTime.parse(cycleData['startDate'] as String),
-        endDate: cycleData['endDate'] != null
-            ? DateTime.parse(cycleData['endDate'] as String)
+        startDate: DateTime.parse(cycleData['start_date'] as String),
+        endDate: cycleData['end_date'] != null
+            ? DateTime.parse(cycleData['end_date'] as String)
             : null,
-        periodEndDate: cycleData['periodEndDate'] != null
-            ? DateTime.parse(cycleData['periodEndDate'] as String)
+        periodEndDate: cycleData['period_end_date'] != null
+            ? DateTime.parse(cycleData['period_end_date'] as String)
             : null,
         // Add other fields as needed
       );
@@ -49,22 +49,22 @@ class CycleRepository {
 
   Future<Cycle?> getCycleByStartDate(DateTime startDate, String userId) async {
     var response = await Supabase.instance.client
-        .from('Cycles')
+        .from('cycle')
         .select()
         .eq('user_id', userId)
-        .eq('startDate', startDate.toIso8601String())
+        .eq('start_date', startDate.toIso8601String())
         .maybeSingle();
 
     if (response != null) {
       var cycleData = response;
       var cycle = Cycle(
         userId: cycleData['user_id'] as String,
-        startDate: DateTime.parse(cycleData['startDate'] as String),
-        endDate: cycleData['endDate'] != null
-            ? DateTime.parse(cycleData['endDate'] as String)
+        startDate: DateTime.parse(cycleData['start_date'] as String),
+        endDate: cycleData['end_date'] != null
+            ? DateTime.parse(cycleData['end_date'] as String)
             : null,
-        periodEndDate: cycleData['periodEndDate'] != null
-            ? DateTime.parse(cycleData['periodEndDate'] as String)
+        periodEndDate: cycleData['period_end_date'] != null
+            ? DateTime.parse(cycleData['period_end_date'] as String)
             : null,
         // Add other fields as needed
       );
@@ -77,12 +77,12 @@ class CycleRepository {
     print('Fetching combined day and period day records for user: $userId');
     // Fetch Days and PeriodDays from Supabase
     var daysResponse = await Supabase.instance.client
-        .from('Days')
+        .from('day')
         .select()
         .eq('user_id', userId);
 
     var periodDaysResponse = await Supabase.instance.client
-        .from('PeriodDays')
+        .from('period_day')
         .select()
         .eq('user_id', userId);
     print(
@@ -96,27 +96,27 @@ class CycleRepository {
       var dateStr = day['date'] as String;
       var periodDay = periodDaysMap[dateStr];
 
-      if (day['isPeriodDay'] == true && periodDay != null) {
+      if (day['is_period_day'] == true && periodDay != null) {
         // Map to PeriodDay model
         result.add(PeriodDay(
           date: DateTime.parse(dateStr),
           note: day['note'] ?? '' as String?,
-          symptomList: SymptomList.fromString(day['symptomList'] ?? ''),
-          moodList: MoodList.fromString(day['moodList'] ?? ''),
-          flowWeight: periodDay['flowWeight'] != null
-              ? FlowWeight.values[periodDay['flowWeight'] as int]
+          symptomList: SymptomList.fromString(day['symptom_list'] ?? ''),
+          moodList: MoodList.fromString(day['mood_list'] ?? ''),
+          flowWeight: periodDay['flow_weight'] != null
+              ? FlowWeight.values[periodDay['flow_weight'] as int]
               : FlowWeight.none,
-          isPeriodStartDay: periodDay['isPeriodStartDay'] == true,
-          isPeriodEndDay: periodDay['isPeriodEndDay'] == true,
+          isPeriodStartDay: periodDay['is_period_start_day'] == true,
+          isPeriodEndDay: periodDay['is_period_end_day'] == true,
         ));
       } else {
         // Map to Day model
         result.add(Day(
           date: DateTime.parse(dateStr),
-          isPeriodDay: day['isPeriodDay'] == true,
+          isPeriodDay: day['is_period_day'] == true,
           note: day['note'] ?? '' as String?,
-          symptomList: SymptomList.fromString(day['symptomList'] ?? ''),
-          moodList: MoodList.fromString(day['moodList'] ?? ''),
+          symptomList: SymptomList.fromString(day['symptom_list'] ?? ''),
+          moodList: MoodList.fromString(day['mood_list'] ?? ''),
         ));
       }
     }
@@ -261,13 +261,13 @@ class CycleRepository {
   Future<void> insertCycle(Cycle cycle, String userId) async {
     try {
       //await _cyclesDao.insertCycle(cycle, userId);
-      await Supabase.instance.client.from('Cycles').upsert({
+      await Supabase.instance.client.from('cycle').upsert({
         'user_id': userId,
-        'startDate':
+        'start_date':
             cycle.startDate != null ? cycle.startDate?.toIso8601String() : '',
-        'endDate':
+        'end_date':
             cycle.endDate != null ? cycle.endDate?.toIso8601String() : '',
-        'periodEndDate': cycle.periodEndDate != null
+        'period_end_date': cycle.periodEndDate != null
             ? cycle.periodEndDate?.toIso8601String()
             : '',
       });
@@ -281,17 +281,17 @@ class CycleRepository {
     try {
       //final appCycles = await _cyclesDao.getAllCycles(userId);
       var cycles = await Supabase.instance.client
-          .from('Cycles')
+          .from('cycle')
           .select()
           .eq('user_id', userId)
-          .order('startDate', ascending: false);
+          .order('start_date', ascending: false);
       // Map AppCycle to Cycle
       return cycles
           .map((cycle) => Cycle(
                 userId: cycle['user_id'],
-                startDate: DateTime.parse(cycle['startDate']),
-                endDate: DateTime.parse(cycle['endDate']),
-                periodEndDate: DateTime.parse(cycle['periodEndDate']),
+                startDate: DateTime.parse(cycle['start_date']),
+                endDate: DateTime.parse(cycle['end_date']),
+                periodEndDate: DateTime.parse(cycle['period_end_date']),
               ))
           .toList();
     } catch (e) {
@@ -303,10 +303,10 @@ class CycleRepository {
   Future<void> updateCycle(int id, Cycle cycle, String userId) async {
     try {
       //await _cyclesDao.updateCycle(id, cycle, userId);
-      await Supabase.instance.client.from('Cycles').upsert({
-        'startDate': cycle.startDate?.toIso8601String(),
-        'endDate': cycle.endDate?.toIso8601String(),
-        'periodEndDate': cycle.periodEndDate?.toIso8601String(),
+      await Supabase.instance.client.from('cycle').upsert({
+        'start_date': cycle.startDate?.toIso8601String(),
+        'end_date': cycle.endDate?.toIso8601String(),
+        'period_end_date': cycle.periodEndDate?.toIso8601String(),
       }).eq('id', id);
     } catch (e) {
       debugPrint('Error updating cycle: $e');
@@ -317,7 +317,7 @@ class CycleRepository {
   Future<void> deleteCycle(int id, String userId) async {
     try {
       await Supabase.instance.client
-          .from('Cycles')
+          .from('cycle')
           .delete()
           .eq('id', id); //_cyclesDao.deleteCycle(id, userId);
     } catch (e) {
@@ -332,22 +332,22 @@ class CycleRepository {
 
     // Query Supabase for a cycle containing the given date
     var response = await Supabase.instance.client
-        .from('Cycles')
+        .from('cycle')
         .select()
         .eq('user_id', userId)
-        .lte('startDate', normalizedDate.toIso8601String())
-        .gte('endDate', normalizedDate.toIso8601String())
+        .lte('start_date', normalizedDate.toIso8601String())
+        .gte('end_date', normalizedDate.toIso8601String())
         .maybeSingle();
 
     if (response != null) {
       return Cycle(
         userId: response['user_id'] as String,
-        startDate: DateTime.parse(response['startDate'] as String),
-        endDate: response['endDate'] != null
-            ? DateTime.parse(response['endDate'] as String)
+        startDate: DateTime.parse(response['start_date'] as String),
+        endDate: response['end_date'] != null
+            ? DateTime.parse(response['end_date'] as String)
             : null,
-        periodEndDate: response['periodEndDate'] != null
-            ? DateTime.parse(response['periodEndDate'] as String)
+        periodEndDate: response['period_end_date'] != null
+            ? DateTime.parse(response['period_end_date'] as String)
             : null,
         // Add other fields as needed
       );

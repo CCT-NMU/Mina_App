@@ -38,6 +38,7 @@ class PeriodDay extends Day {
   }
 
   static PeriodDay fromMap(Map<String, dynamic> map) {
+    print('PeriodDay fromMap: $map');
     return PeriodDay(
         date: DateTime.parse(map['date']),
         flowWeight: map['flowWeight'] == null

@@ -8,15 +8,13 @@ class User {
   int? avgPeriodLength; // average length of period
   DateTime? lastestCycleStart;
 
-  User(
-      {this.id,
-      this.name,
-      this.surname,
-      this.email,
-      this.birthday,
-      this.avgCycleLength = 0,
-      this.avgPeriodLength = 0,
-      this.lastestCycleStart});
+  User({
+    this.id,
+    this.name,
+    this.surname,
+    this.email,
+    this.birthday,
+  });
 
   void updateProfile({String? name, String? email, int? age}) {
     if (name != null) {
@@ -30,23 +28,13 @@ class User {
     }
   }
 
-  void setAvgCycleLength(int cycleLength) {
-    avgCycleLength = cycleLength;
-  }
-
-  void setAvgPeriodLength(int periodLength) {
-    avgPeriodLength = periodLength;
-  }
-
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      'user_id': id,
       'name': name,
       'surname': surname,
       'email': email,
       'birthday': birthday,
-      'avgCycleLength': avgCycleLength,
-      'avgPeriodLength': avgPeriodLength,
     };
   }
 
@@ -57,8 +45,6 @@ class User {
       surname: map['surname'],
       email: map['email'],
       birthday: map['birthday'],
-      avgCycleLength: map['cycleLength'],
-      avgPeriodLength: map['periodLength'],
     );
   }
 
@@ -68,9 +54,6 @@ class User {
     String? surname,
     String? email,
     DateTime? birthday,
-    int? avgCycleLength,
-    int? avgPeriodLength,
-    DateTime? lastestCycleStart,
   }) {
     return User(
       id: id ?? this.id,
@@ -78,9 +61,6 @@ class User {
       surname: surname ?? this.surname,
       email: email ?? this.email,
       birthday: birthday ?? this.birthday,
-      avgCycleLength: avgCycleLength ?? this.avgCycleLength,
-      avgPeriodLength: avgPeriodLength ?? this.avgPeriodLength,
-      lastestCycleStart: lastestCycleStart ?? this.lastestCycleStart,
     );
   }
 }

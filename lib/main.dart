@@ -33,9 +33,9 @@ void main() async {
   // TODO: (refactor to be more secure)
 
   await Supabase.initialize(
-      url: 'https://lljkykkolucqyudnicaq.supabase.co',
+      url: 'https://cduomqsrmiiplojuchsv.supabase.co',
       anonKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxsamt5a2tvbHVjcXl1ZG5pY2FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3NTU0MzYsImV4cCI6MjA2NjMzMTQzNn0.eRh0tgaAFJhxadh1clwaOVunGylz2uZUTrLgYiLKF0Q');
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkdW9tcXNybWlpcGxvanVjaHN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3MTMwNTYsImV4cCI6MjA2NjI4OTA1Nn0.vdrCoqm2onfdj04mcfV12Ovu7fPlwXuC4IB-qqCBeWQ');
 
   // Initialize notifications
   // await NotificationService().initialize();
@@ -102,8 +102,13 @@ class MinaApp extends StatelessWidget {
           ),
           BlocProvider<AuthBloc>(
             create: (context) => AuthBloc(),
-          )
-        ], child: LoginView()));
+          ),
+          //Todo: remove this when fixed UI for PeriodDayPickerView
+          BlocProvider(
+              create: (context) => PeriodDayPickerBloc(
+                  Provider.of<DayEntryRepository>(context, listen: false))
+                ..add(PeriodDayPickerUptake(DateTime.now(), ''))),
+        ], child: LoginView())); //change to LoginView()
   }
 }
 

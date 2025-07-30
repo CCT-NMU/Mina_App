@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'package:mina_app/common/utils.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/model/day.dart';
@@ -107,16 +108,21 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
       var positions = _itemPositionsListener.itemPositions.value;
       if (positions.isEmpty) return;
 
-      var first = positions
-          .where((p) => p.itemLeadingEdge >= 0 && p.itemLeadingEdge <= 1)
-          .reduce((min, p) => p.index < min.index ? p : min);
-      _firstVisible = first.index;
+      var visibleLeading = positions
+          .where((p) => p.itemLeadingEdge >= 0 && p.itemLeadingEdge <= 1);
+      if (visibleLeading.isNotEmpty) {
+        var first =
+            visibleLeading.reduce((min, p) => p.index < min.index ? p : min);
+        _firstVisible = first.index;
+      }
 
-      var last = positions
-          .where((p) => p.itemTrailingEdge <= 1 && p.itemTrailingEdge >= 0)
-          .reduce((max, p) => p.index > max.index ? p : max);
-
-      _lastVisible = last.index;
+      var visibleTrailing = positions
+          .where((p) => p.itemTrailingEdge <= 1 && p.itemTrailingEdge >= 0);
+      if (visibleTrailing.isNotEmpty) {
+        var last =
+            visibleTrailing.reduce((max, p) => p.index > max.index ? p : max);
+        _lastVisible = last.index;
+      }
 
       print('first: $_firstVisible, last: $_lastVisible');
       if (_debounce?.isActive ?? false) _debounce!.cancel();
@@ -125,8 +131,9 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                 context.read<PeriodDayPickerBloc>().state.months.length - 2 &&
             _firstVisible >=
                 context.read<PeriodDayPickerBloc>().state.months.length - 1) {
-          context.read<PeriodDayPickerBloc>().add(
-              LoadMoreMonthsBackward(_firstVisible, first.itemLeadingEdge));
+          context
+              .read<PeriodDayPickerBloc>()
+              .add(LoadMoreMonthsBackward(_firstVisible, 0));
         }
 
         if (_firstVisible == 0 && _lastVisible == 0) {
@@ -218,18 +225,31 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                           style: TextStyle(fontSize: 20)),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children:
-                            ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-                                .map((d) => Expanded(
-                                        child: Center(
-                                            child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      child: Text(
-                                        d,
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                    ))))
-                                .toList(),
+                        children: [
+                          'Sun',
+                          'Mon',
+                          'Tue',
+                          'Wed',
+                          'Thu',
+                          'Fri',
+                          'Sat'
+                        ]
+                            .map((d) => Expanded(
+                                    child: Center(
+                                        child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  child: Text(
+                                    d,
+                                    style: TextStyle(
+                                      fontSize:
+                                          MediaQuery.of(context).size.width <
+                                                  350
+                                              ? 12
+                                              : 16,
+                                    ),
+                                  ),
+                                ))))
+                            .toList(),
                       ),
                     ],
                   ),
@@ -257,83 +277,27 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 32.0, top: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 42.0, vertical: 16.0),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(5)),
-                                ),
-                                backgroundColor:
-                                    const Color.fromARGB(84, 33, 149, 243),
-                                foregroundColor: Colors.white,
-                              ),
-                              child: Text("Close",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.black,
-                                  ))),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: TextButton(
-                              onPressed: state.selectedDays.isEmpty
-                                  ? null
-                                  : () async {
-                                      if (context.read<OnboardingBloc>().state
-                                          is OnboardingComplete) {
-                                        context.read<PeriodDayPickerBloc>().add(
-                                            SavedPeriodDays(
-                                                context, widget.userId, false));
-                                        context.read<DayEntryBloc>().add(
-                                            DayEntryFetch(widget.focusedDay!,
-                                                widget.userId));
-                                      }
-                                      if (context.read<OnboardingBloc>().state
-                                          is OnboardingInProgress) {
-                                        context.read<PeriodDayPickerBloc>().add(
-                                            SavedPeriodDays(
-                                                context, widget.userId, true));
-                                      }
-
-                                      // Navigate to Day_Entry view with the current Day Entry
-                                    },
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 42.0, vertical: 16.0),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(5)),
-                                ),
-                                backgroundColor:
-                                    const Color.fromARGB(81, 243, 33, 180),
-                                foregroundColor:
-                                    const Color.fromARGB(255, 0, 0, 0),
-                              ),
-                              child: Text(
-                                "Save",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                ),
-                              )),
-                        ),
-                      ],
-                    ),
+                    child: buildButtonRow(context, state),
                   ),
                 ],
               ));
         },
       ),
     );
+  }
+
+  EdgeInsets responsiveHorizontalPadding(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    if (width < 600) {
+      // Mobile
+      return const EdgeInsets.symmetric(horizontal: 16);
+    } else if (width < 1200) {
+      // Tablet
+      return const EdgeInsets.symmetric(horizontal: 32);
+    } else {
+      // Desktop
+      return const EdgeInsets.symmetric(horizontal: 100);
+    }
   }
 
   Widget buildMonthCalendar(BuildContext context, DateTime month,
@@ -354,7 +318,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
             ),
           ),
           GridView.builder(
-            padding: EdgeInsets.all(12),
+            padding: responsiveHorizontalPadding(context),
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
             itemCount: totalGridCount,
@@ -386,8 +350,6 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                   children: [
                     Center(
                       child: Container(
-                        width: _getCircleWidth(context),
-                        height: _getCircleWidth(context),
                         child: Column(
                           children: [
                             Text('$day',
@@ -398,11 +360,16 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                                           ? const Color.fromARGB(
                                               255, 235, 43, 43)
                                           : Colors.black87,
+                                  fontSize: dynamicFontSize(context),
                                   fontWeight: FontWeight.w600,
                                 )),
                             AnimatedContainer(
+                              width: _getCircleWidth(context),
+                              height: _getCircleWidth(context),
                               duration: Duration(microseconds: 400),
-                              padding: const EdgeInsets.all(4),
+                              padding: EdgeInsets.symmetric(
+                                  vertical: _getCircleWidth(context) * 0.15,
+                                  horizontal: _getCircleWidth(context) * 0.15),
                               decoration: BoxDecoration(
                                 border: isFutureDay
                                     ? Border.all(color: Colors.grey, width: 2)
@@ -425,7 +392,8 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                                   isSelected ? Icons.check : null,
                                   color:
                                       isSelected ? Colors.white : Colors.black,
-                                  size: 15,
+                                  size: dynamicIconSize(context),
+                                  // Adjust size based on screen width
                                 ),
                               ),
                             ),
@@ -455,23 +423,130 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
 
   double _getCircleWidth(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth < 400) {
+    if (screenWidth < 350) {
+      return 16; // Extra small phones
+    } else if (screenWidth < 400) {
       return 20; // Small phones
     } else if (screenWidth < 800) {
-      return 40; // Tablets or large phones
+      return 30; // Tablets or large phones
     } else {
       return 48; // Desktop or large tablets
     }
   }
+
+  Widget buildButtonRow(BuildContext context, PeriodDayPickerState state) {
+    double width = MediaQuery.of(context).size.width;
+    bool isVerySmall = width < 350;
+
+    List<Widget> buttons = [
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: TextButton(
+          onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: buttonHorizontalPadding(context),
+              vertical: 16.0,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(5)),
+            ),
+            backgroundColor: const Color.fromARGB(84, 33, 149, 243),
+            foregroundColor: Colors.white,
+          ),
+          child: Text("Close",
+              style: TextStyle(fontSize: 16, color: Colors.black)),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: TextButton(
+          onPressed: state.selectedDays.isEmpty
+              ? null
+              : () async {
+                  if (context.read<OnboardingBloc>().state
+                      is OnboardingComplete) {
+                    context
+                        .read<PeriodDayPickerBloc>()
+                        .add(SavedPeriodDays(context, widget.userId, false));
+                    context
+                        .read<DayEntryBloc>()
+                        .add(DayEntryFetch(widget.focusedDay!, widget.userId));
+                  }
+                  if (context.read<OnboardingBloc>().state
+                      is OnboardingInProgress) {
+                    context
+                        .read<PeriodDayPickerBloc>()
+                        .add(SavedPeriodDays(context, widget.userId, true));
+                  }
+
+                  // Navigate to Day_Entry view with the current Day Entry
+                },
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: buttonHorizontalPadding(context),
+              vertical: 16.0,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(5)),
+            ),
+            backgroundColor: const Color.fromARGB(81, 243, 33, 180),
+            foregroundColor: const Color.fromARGB(255, 0, 0, 0),
+          ),
+          child: Text("Save", style: TextStyle(fontSize: 16)),
+        ),
+      ),
+    ];
+
+    return isVerySmall
+        ? Column(children: buttons)
+        : Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: buttons,
+          );
+  }
 }
 
+dynamicFontSize(BuildContext context) {
+  double screenWidth = MediaQuery.of(context).size.width;
+  if (screenWidth < 400) {
+    return 12.0; // Small phones
+  } else if (screenWidth < 800) {
+    return 14.0; // Tablets or large phones
+  } else {
+    return 16.0; // Desktop or large tablets
+  }
+}
+
+double dynamicIconSize(BuildContext context) {
+  double screenWidth = MediaQuery.of(context).size.width;
+  if (screenWidth < 350) {
+    return 10.0; // Extra small phones
+  } else if (screenWidth < 400) {
+    return 12.0;
+  } else if (screenWidth < 800) {
+    return 15.0;
+  } else {
+    return 18.0;
+  }
+}
+
+double buttonHorizontalPadding(BuildContext context) {
+  double width = MediaQuery.of(context).size.width;
+  if (width < 400) return 16.0;
+  if (width < 800) return 32.0;
+  return 42.0;
+}
+
+// Custom clippers (fixed syntax)
 class CustomRectClipper extends CustomClipper<Rect> {
   @override
   Rect getClip(Size size) {
     return Rect.fromCenter(
-        center: Offset(size.width / 2, size.height * 0.55),
-        width: size.width,
-        height: size.height * 0.4);
+      center: Offset(size.width / 2, size.height * 0.55),
+      width: size.width,
+      height: size.height * 0.4,
+    );
   }
 
   @override
@@ -482,9 +557,10 @@ class CustomRectLeftClipper extends CustomClipper<Rect> {
   @override
   Rect getClip(Size size) {
     return Rect.fromCenter(
-        center: Offset(size.width, size.height * 0.55),
-        width: size.width,
-        height: size.height * 0.4);
+      center: Offset(size.width, size.height * 0.55),
+      width: size.width,
+      height: size.height * 0.4,
+    );
   }
 
   @override
@@ -495,9 +571,10 @@ class CustomRectRightClipper extends CustomClipper<Rect> {
   @override
   Rect getClip(Size size) {
     return Rect.fromCenter(
-        center: Offset(-size.width, size.height * 0.55),
-        width: size.width,
-        height: size.height * 0.4);
+      center: Offset(-size.width, size.height * 0.55),
+      width: size.width,
+      height: size.height * 0.4,
+    );
   }
 
   @override

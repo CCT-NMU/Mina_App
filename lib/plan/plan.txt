@@ -1,314 +1,126 @@
-Designing a menstrual tracking app with a calendar and notepad involves creating a robust and user-friendly system.
-Below is a high-level design of the logic, including the necessary classes, relationships, and features.
+# Mina App - Current State and Future Plans
 
----
+## Current Implementation
 
-### **Core Features**
-1. **Menstrual Cycle Tracking**:
-   - Track menstrual cycles, including start and end dates.
-   - Predict future cycles based on historical data.
-   - Log symptoms, moods, and other health-related data.
-
-2. **Calendar Integration**:
-   - Display menstrual cycle data on a calendar.
-   - Allow users to add custom events or reminders.
-
-3. **Notepad**:
-   - Provide a space for users to jot down notes, thoughts, or observations.
-   - Link notes to specific dates or events.
-
----
-
-### **Class Design**
-Here’s a breakdown of the classes and their relationships:
-
-#### **1. User**
-- Represents the app user.
-- **Attributes**:
-  - `userId: String` (unique identifier)
-  - `name: String`
-  - `email: String`
-  - `age: Int`
-  - `cycleLength: Int` (average length of menstrual cycle)
-  - `periodLength: Int` (average length of period)
-- **Methods**:
-  - `updateProfile()`
-  - `setCycleLength()`
-  - `setPeriodLength()`
-
-#### **2. Cycle**
-- Represents a single menstrual cycle.
-- **Attributes**:
-  - `cycleId: String` (unique identifier)
-  - `startDate: Date`
-  - `endDate: Date`
-  - `userId: String` (links to the User class)
+### Data Layer
+1. Database Schema
+   - day Table: Stores basic day information
+     - id (INTEGER AutoIncrementing)
+     - date (DateTime)
+     - is_period_day (BOOLEAN)
+     - note (TEXT)
+     - symptom_list (TEXT)
+     - mood_list (TEXT)
+     - user_id (TEXT FOREIGN KEY referencing user.uuid)
+   
+   - period_day Table: Stores period-specific information
+     - id (INTEGER AutoIncrementing)
+     - date (DateTime)
+     - flow_weight (INTEGER)
+     - is_period_start_day (BOOLEAN)
+     - is_period_end_day (BOOLEAN)
+     - day_id (INTEGER FOREIGN KEY referencing day.id)
   
-- **Methods**:
-  - `calculateCycleLength()`
-  - `predictNextCycle()`
 
-#### 2.1 Period **
-- Represents a period within a cycle
-- periodId
-- cycleId
-- startDate
-- endDate
--List<PeriodDay>
+   -cycle Table: Stores cycle-start, period-end and cycle-end dates
+      - id (INTEGER AutoIncrementing)
+      - start_date (DateTime)
+      - period_end_date (DateTime)
+      - end_date (DateTime)
+      - user_id (STRING FOREIGN KEY referencing User.uuid) 
 
-####
+   -user Table: Stores user specfic information
+      - id (INTEGER Auto-Incrementing)
+      - created_at (DateTime)
+      - uuid (TEXT)
+      - name (TEXT)
+      - surname (TEXT)
+      - email (TEXT)
+      - age (INTEGER)
 
-### 2.2 PeriodDay
--Represents a PeriodDay
--Date
--periodId
--flow [1-4]
-**Methods
--logflow()
--updateflow()
+   -note Table: Stores user notes
+      - id (INTEGER Auto-Incrementing)
+      - created_at (DateTime)
+      - updated_at (DateTime),
+      - title (TEXT),
+      - content (TEXT),
+      - user_id (STRING FOREIGN KEY referencing user.uuid),
+   
 
+2. Model Classes
+   - Day: Base class for all day entries
+   - PeriodDay: Inherits from Day, adds period-specific fields
+   - MoodList: Manages mood tracking
+   - SymptomList: Manages symptom tracking
+   - Cycle: Represents a menstrual cycle
 
+3. Repositories
+   - DayEntryRepository: Handles Day and PeriodDay CRUD operations
+   - CycleRepository: Manages cycle calculations and history
+   - UserRepository: Manages the User settings.
+### UI Layer
+1. Views
+   - DayEntryView: Form for entering day information
+   - Dashboard: Main app interface (in progress)
 
-###
-#### **3. Symptom**
-- Represents symptoms logged by the user.
-- **Attributes**:
-  - `symptomId: String` (unique identifier)
-  - `name: String` (e.g., "cramps", "headache")
-  - `date: Date`
-  - `userId: String` (links to the User class)
-- **Methods**:
-  - `logSymptom()`
-  - `updateSymptom()`
+### Architecture
+- Using Bloc pattern for state management
+- Repository pattern for data access
+- Singleton pattern for database access
 
-#### **4. Mood**
-- Represents moods logged by the user.
-- **Attributes**:
-  - `moodId: String` (unique identifier)
-  - `name: String` (e.g., "happy", "sad")
-  - `date: Date`
-  - `userId: String` (links to the User class)
-- **Methods**:
-  - `logMood()`
-  - `updateMood()`
+## Planned Features
 
-#### **5. Calendar**
-- Manages the calendar view and events.
-- **Attributes**:
-  - `calendarId: String` (unique identifier)
-  - `userId: String` (links to the User class)
-  - `events: List<Event>`
-  - Map<moodId, mood> (grouped moods to select from )
-  - Map<symptomid, symptom> (grouped symptoms to select from )
-- **Methods**:
-  - `addEvent()`
-  - `removeEvent()`
-  - `displayCalendar()`
+1. Data Management
+   - [ ] Implement cycle prediction
+   - [ ] Add data export/import functionality
+   - [ ] Implement data backup
+   - [ ] Add data validation and sanitization
 
-#### **6. Event**
-- Represents a calendar event (e.g., period start, reminder).
-- **Attributes**:
-  - `eventId: String` (unique identifier)
-  - `title: String`
-  - `date: Date`
-  - `userId: String` (links to the User class)
-- **Methods**:
-  - `createEvent()`
-  - `editEvent()`
+2. UI Improvements
+   - [ ] Add calendar view for period tracking
+   - [ ] Implement mood tracking UI
+   - [ ] Add symptom tracking interface
+   - [ ] Create statistics view
+   - [ ] Add settings page
 
-#### **7. Notepad**
-- Manages user notes.
-- **Attributes**:
-  - `noteId: String` (unique identifier)
-  - `content: String`
-  - `date: Date`
-  - `userId: String` (links to the User class)
-- **Methods**:
-  - `addNote()`
-  - `editNote()`
-  - `deleteNote()`
+3. Testing
+   - [ ] Complete unit tests for repositories
+   - [ ] Add integration tests
+   - [ ] Implement UI tests
+   - [ ] Add performance tests
 
-### **8. Day**
+4. Features to Add
+   - [ ] User authentication
+   - [ ] Cloud sync
+   - [ ] Notifications/reminders
+   - [ ] Period predictions
+   - [ ] Cycle analysis
+   - [ ] PDF report generation
 
--Represents a day in a calendar
-  -**Attributes**:
-    -date: DateTime 
-    -symptomsList
-    -period day
-    -period end or period start
-    -noteId
-    -mood list
+## Technical Debt to Address
+1. Database
+   - [ ] Implement proper error handling
+   - [ ] Add database migrations
+   - [ ] Optimize queries
+   - [ ] Add indexing for better performance
 
+2. Code Quality
+   - [ ] Complete documentation
+   - [ ] Add logging
+   - [ ] Implement proper error boundaries
+   - [ ] Add input validation
 
+3. Testing
+   - [ ] Set up CI/CD pipeline
+   - [ ] Add code coverage requirements
+   - [ ] Implement smoke tests
+   - [ ] Add performance benchmarks
 
----
-
-### **Relationships**
-1. **User ↔ Cycle**:
-   - A `User` can have multiple `Cycle` instances.
-   - One-to-many relationship.
-
-2. **Cycle ↔ Symptom**:
-   - A `Cycle` can have multiple `Symptom` instances.
-   - One-to-many relationship.
-
-3. **Cycle ↔ Mood**:
-   - A `Cycle` can have multiple `Mood` instances.
-   - One-to-many relationship.
-
-4. **User ↔ Calendar**:
-   - A `User` has one `Calendar`.
-   - One-to-one relationship.
-
-5. **Calendar ↔ Event**:
-   - A `Calendar` can have multiple `Event` instances.
-   - One-to-many relationship.
-
-6. **User ↔ Notepad**:
-   - A `User` can have multiple `Notepad` entries.
-   - One-to-many relationship.
-
----
-
-### **Database Schema**
-Here’s a simplified database schema for the app:
-
-- **Users Table**:
-  - `userId (Primary Key)`
-  - `name`
-  - `email`
-  - `age`
-  - `cycleLength`
-  - `periodLength`
-
-- **Cycles Table**:
-  - `cycleId (Primary Key)`
-  - `startDate`
-  - `endDate`
-  - `userId (Foreign Key)`
-
-- **Symptoms Table**:
-  - `symptomId (Primary Key)`
-  - `name`
-  - `severity`
-  - `date`
-  - `userId (Foreign Key)`
-
-- **Moods Table**:
-  - `moodId (Primary Key)`
-  - `name`
-  - `date`
-  - `userId (Foreign Key)`
-
-- **Calendar Table**:
-  - `calendarId (Primary Key)`
-  - `userId (Foreign Key)`
-
-- **Events Table**:
-  - `eventId (Primary Key)`
-  - `title`
-  - `date`
-  - `userId (Foreign Key)`
-
-- **Notepad Table**:
-  - `noteId (Primary Key)`
-  - `content`
-  - `date`
-  - `userId (Foreign Key)`
-
----
-
-### **Workflow**
-1. **User Onboarding**:
-   - Collect user details (age, average cycle length, etc.).
-   - Initialize the user’s calendar and notepad.
-
-2. **Cycle Tracking**:
-   - User logs the start and end dates of their period.
-   - App predicts the next cycle and displays it on the calendar.
-
-3. **Symptom and Mood Tracking**:
-   - User logs symptoms and moods daily.
-   - Data is linked to the current cycle.
-
-4. **Calendar Integration**:
-   - Display cycle dates, predicted dates, and custom events.
-   - Allow users to add reminders (e.g., for medication or appointments).
-
-5. **Notepad**:
-   - Users can add notes linked to specific dates.
-   - Notes can be edited or deleted.
-
----
-
-### **Additional Features**
-- **Notifications**: Remind users of upcoming periods, ovulation windows, or logged symptoms.
-- **Data Visualization**: Provide charts or graphs for cycle trends, symptom frequency, and mood patterns.
-- **Export Data**: Allow users to export their data for sharing with healthcare providers.
-
-This design ensures a modular, scalable, and user-friendly app that meets the needs of its users while maintaining clean and maintainable code.
-
-
-SQL script
-
-CREATE TABLE User (
-    UserId INTEGER PRIMARY KEY AUTOINCREMENT,
-    Name TEXT,
-    Email TEXT,
-    Age INTEGER,
-    PeriodLength INTEGER,
-    CycleLength INTEGER
-);
-
-CREATE TABLE Cycle (
-    CycleId INTEGER PRIMARY KEY AUTOINCREMENT,
-    UserId INTEGER,
-    StartDate DATE,
-    EndDate DATE,
-    FOREIGN KEY (UserId) REFERENCES User(UserId)
-);
-
-CREATE TABLE Period (
-    PeriodId INTEGER PRIMARY KEY AUTOINCREMENT,
-    CycleId INTEGER,
-    PeriodStartDate DATE,
-    PeriodEndDate DATE,
-    FOREIGN KEY (CycleId) REFERENCES Cycle(CycleId)
-);
-
-CREATE TABLE Day (
-    Date TEXT PRIMARY KEY,
-    CycleId INTEGER,
-    isPeriodDay Boolean,
-    isPeriodStart Boolean,
-    isPeriodEnd Boolean,
-    NoteId INTEGER,
-    FOREIGN KEY (CycleId) REFERENCES Cycle(CycleId),
-    FOREIGN KEY (PeriodId) REFERENCES Period(PeriodId)
-);
-
-Alter TABLE Day(
-    ADD FOREIGN KEY (NoteId) REFERENCES Note(NoteId);
-);
-
-CREATE TABLE Note (
-    NoteId INTEGER PRIMARY KEY AUTOINCREMENT,
-    Date DATE,
-    Text TEXT,
-    FOREIGN KEY (Date) REFERENCES Day(Date)
-);
-
-CREATE TABLE Mood (
-    MoodId INTEGER PRIMARY KEY AUTOINCREMENT,
-    Date DATE,
-    Name TEXT,
-    FOREIGN KEY (Date) REFERENCES Day(Date)
-);
-
-CREATE TABLE Symptom (
-    SymptomId INTEGER PRIMARY KEY AUTOINCREMENT,
-    Date TEXT,
-    Name TEXT,
-    Severity INTEGER,
-    FOREIGN KEY (Date) REFERENCES Day(Date)
-);
+## Next Steps (Priority Order)
+1. [ ] Complete basic CRUD operations for Day and PeriodDay 
+2. [ ] Implement cycle calculation logic      
+3. [ ] Add comprehensive error handling
+4. [ ] Complete unit tests for existing functionality
+5. [ ] Implement calendar view ./
+6. [ ] Add statistics calculation
+7. [ ] Create data visualization components

@@ -36,10 +36,6 @@ class AppUsersDao extends DatabaseAccessor<AppDatabase>
       surname: result.surname,
       email: result.email,
       birthday: result.birthday,
-      avgCycleLength: result.avgCycleLength,
-      avgPeriodLength: result.avgPeriodLength,
-      lastestCycleStart:
-          result.lastestCycleStart != null ? result.lastestCycleStart! : null,
     );
   }
 

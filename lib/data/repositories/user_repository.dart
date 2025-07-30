@@ -3,8 +3,9 @@ import 'package:mina_app/data/database/connection/shared.dart';
 import 'package:mina_app/data/database/drift_database.dart';
 import 'package:mina_app/data/database/user_settings_dao.dart';
 import 'package:mina_app/data/database/users_dao.dart';
-import 'package:mina_app/data/model/user.dart';
+import 'package:mina_app/data/model/user.dart' as User;
 import 'package:mina_app/data/database/databaseHelper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UserRepository {
   late final AppDatabase database;
@@ -62,16 +63,18 @@ class UserRepository {
     }
   }
 
-  Future<int> insertUser(User user) async {
+  Future<void> insertUser(User.User user) async {
     try {
-      return await appUsersDao.insertUser(user);
+      await Supabase.instance.client
+          .from('user')
+          .upsert(user.toMap(), onConflict: 'user_id');
     } catch (e) {
       debugPrint('Error inserting user: $e');
       throw Exception('Failed to insert user');
     }
   }
 
-  Future<User?> getUserById(String id) async {
+  Future<User.User?> getUserById(String id) async {
     try {
       return await appUsersDao.getUserById(id);
     } catch (e) {
@@ -80,7 +83,7 @@ class UserRepository {
     }
   }
 
-  Future<void> updateUser(User user) async {
+  Future<void> updateUser(User.User user) async {
     try {
       await appUsersDao.updateUser(user);
     } catch (e) {

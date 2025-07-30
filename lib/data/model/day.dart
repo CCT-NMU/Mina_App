@@ -32,6 +32,7 @@ class Day {
   }
 
   factory Day.fromMap(Map<String, dynamic> map) {
+    print('Day fromMap: $map');
     return Day(
       date: DateTime.parse(map['date']),
       isPeriodDay: map['isPeriodDay'] ?? false,
