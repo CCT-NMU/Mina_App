@@ -66,7 +66,7 @@ class UserRepository {
   Future<void> insertUser(User.User user) async {
     try {
       await Supabase.instance.client
-          .from('user')
+          .from('profile')
           .upsert(user.toMap(), onConflict: 'user_id');
     } catch (e) {
       debugPrint('Error inserting user: $e');

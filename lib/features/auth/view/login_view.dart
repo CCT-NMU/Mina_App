@@ -10,6 +10,7 @@ import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
+import 'package:mina_app/features/widgets/common/adaptive_form_fields.dart';
 import 'package:provider/provider.dart';
 
 class LoginView extends StatefulWidget {
@@ -125,7 +126,8 @@ class _LoginViewState extends State<LoginView> {
       },
       child: Scaffold(
         body: Container(
-          height: MediaQuery.of(context).size.height,
+          height: MediaQuery.sizeOf(context).height,
+          width: MediaQuery.sizeOf(context).width,
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -137,131 +139,102 @@ class _LoginViewState extends State<LoginView> {
             ),
           ),
           child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Logo or App Name
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: const BoxDecoration(
-                        color: Color.fromARGB(178, 132, 77, 151),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Image.network(
-                        'web/icons/Icon-512.png', // Path relative to web/
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.contain,
-                      ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Logo or App Name
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: Color.fromARGB(178, 132, 77, 151),
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(height: 32),
-                    const Text(
-                      'Welcome to Mina',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(178, 132, 77, 151),
-                      ),
-                      textAlign: TextAlign.center,
+                    child: Image.network(
+                      'web/icons/Icon-512.png', // Path relative to web/
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Track your cycle with confidence',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
-                      textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  const Text(
+                    'Welcome to Mina',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(178, 132, 77, 151),
                     ),
-                    const SizedBox(height: 40),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Track your cycle with confidence',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 40),
 
-                    Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 50),
-                        child: Column(
-                          children: [
-                            // Email Field
-                            TextFormField(
-                              controller: _emailController,
-                              decoration: InputDecoration(
-                                labelText: 'Email',
-                                prefixIcon: const Icon(Icons.email_outlined),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color.fromARGB(178, 132, 77, 151),
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                              keyboardType: TextInputType.emailAddress,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
-                                }
-                                if (!value.contains('@')) {
-                                  return 'Please enter a valid email';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
+                  Container(
+                      child: Column(
+                    children: [
+                      // Email Field
+                      AdaptiveTextFormField(
+                        controller: _emailController,
+                        labelText: 'Email',
+                        prefixIcon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
 
-                            // Password Field
-                            TextFormField(
-                              controller: _passwordController,
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color.fromARGB(178, 132, 77, 151),
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                              obscureText: _obscurePassword,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your password';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                        )),
-                    // Login Button
+                      const SizedBox(height: 16),
 
-                    ElevatedButton(
+                      // Password Field
+                      AdaptiveTextFormField(
+                        controller: _passwordController,
+                        labelText: 'Password',
+                        prefixIcon: Icons.lock_outline,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 24),
+                    ],
+                  )),
+                  // Login Button
+                  AdaptiveElevatedButton(
                       onPressed: () {
                         if (!_formKey.currentState!.validate()) {
                           return;
                         }
-                        print('Login button pressed');
                         context.read<AuthBloc>().add(
                               AuthSignInRequested(
                                 email: _emailController.text.trim(),
@@ -269,51 +242,34 @@ class _LoginViewState extends State<LoginView> {
                               ),
                             );
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            const Color.fromARGB(178, 132, 77, 151),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      child: const Text('Login')),
+
+                  const SizedBox(height: 16),
+
+                  // Register Link
+                  TextButton(
+                    onPressed: () {
+                      _navigateToRegister(context);
+                    },
+                    child: const Text(
+                      'Don\'t have an account? Register',
+                      style: TextStyle(
+                        color: Color.fromARGB(178, 132, 77, 151),
                       ),
                     ),
+                  ),
 
-                    const SizedBox(height: 16),
-
-                    // Register Link
-                    TextButton(
-                      onPressed: () {
-                        _navigateToRegister(context);
-                      },
-                      child: const Text(
-                        'Don\'t have an account? Register',
-                        style: TextStyle(
-                          color: Color.fromARGB(178, 132, 77, 151),
-                        ),
+                  // Forgot Password Link
+                  TextButton(
+                    onPressed: _handleForgotPassword,
+                    child: const Text(
+                      'Forgot Password?',
+                      style: TextStyle(
+                        color: Color.fromARGB(178, 132, 77, 151),
                       ),
                     ),
-
-                    // Forgot Password Link
-                    TextButton(
-                      onPressed: _handleForgotPassword,
-                      child: const Text(
-                        'Forgot Password?',
-                        style: TextStyle(
-                          color: Color.fromARGB(178, 132, 77, 151),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

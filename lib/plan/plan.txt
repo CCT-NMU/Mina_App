@@ -4,6 +4,7 @@
 
 ### Data Layer
 1. Database Schema
+
    - day Table: Stores basic day information
      - id (INTEGER AutoIncrementing)
      - date (DateTime)
@@ -19,6 +20,7 @@
      - flow_weight (INTEGER)
      - is_period_start_day (BOOLEAN)
      - is_period_end_day (BOOLEAN)
+     - user_id (STRING)
      - day_id (INTEGER FOREIGN KEY referencing day.id)
   
 
@@ -32,7 +34,7 @@
    -user Table: Stores user specfic information
       - id (INTEGER Auto-Incrementing)
       - created_at (DateTime)
-      - uuid (TEXT)
+      - user_id (TEXT)
       - name (TEXT)
       - surname (TEXT)
       - email (TEXT)
@@ -53,11 +55,14 @@
    - MoodList: Manages mood tracking
    - SymptomList: Manages symptom tracking
    - Cycle: Represents a menstrual cycle
+   - User: User class representing user profile.
 
 3. Repositories
    - DayEntryRepository: Handles Day and PeriodDay CRUD operations
    - CycleRepository: Manages cycle calculations and history
    - UserRepository: Manages the User settings.
+
+   
 ### UI Layer
 1. Views
    - DayEntryView: Form for entering day information
