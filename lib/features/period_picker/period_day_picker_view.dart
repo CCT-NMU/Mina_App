@@ -223,33 +223,36 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                     children: [
                       Text('Select period days',
                           style: TextStyle(fontSize: 20)),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          'Sun',
-                          'Mon',
-                          'Tue',
-                          'Wed',
-                          'Thu',
-                          'Fri',
-                          'Sat'
-                        ]
-                            .map((d) => Expanded(
-                                    child: Center(
-                                        child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  child: Text(
-                                    d,
-                                    style: TextStyle(
-                                      fontSize:
-                                          MediaQuery.of(context).size.width <
-                                                  350
-                                              ? 12
-                                              : 16,
+                      Padding(
+                        padding: responsiveScreenPadding(context),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            'Sun',
+                            'Mon',
+                            'Tue',
+                            'Wed',
+                            'Thu',
+                            'Fri',
+                            'Sat'
+                          ]
+                              .map((d) => Expanded(
+                                      child: Center(
+                                          child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    child: Text(
+                                      d,
+                                      style: TextStyle(
+                                        fontSize:
+                                            MediaQuery.of(context).size.width <
+                                                    350
+                                                ? 12
+                                                : 16,
+                                      ),
                                     ),
-                                  ),
-                                ))))
-                            .toList(),
+                                  ))))
+                              .toList(),
+                        ),
                       ),
                     ],
                   ),
@@ -262,7 +265,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                         BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
                       builder: (context, state) {
                         return ScrollablePositionedList.builder(
-                          reverse: true,
+                          reverse: false,
                           itemScrollController: _itemScrollController,
                           itemPositionsListener: _itemPositionsListener,
                           itemCount: state.months.length,
@@ -286,6 +289,24 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
     );
   }
 
+  EdgeInsets responsiveScreenPadding(BuildContext context) {
+    double horizontalPadding = 0;
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    if (screenWidth > 1200) {
+      // Large desktop
+      horizontalPadding = (screenWidth - 800) / 2;
+    } else if (screenWidth > 700) {
+      // Tablet or small desktop
+      horizontalPadding = (screenWidth - 600) / 2;
+    } else {
+      // Mobile
+      horizontalPadding = 16;
+    }
+
+    return EdgeInsets.symmetric(horizontal: horizontalPadding);
+  }
+
   EdgeInsets responsiveHorizontalPadding(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
     if (width < 600) {
@@ -306,7 +327,8 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
     final startWeekday = DateTime(month.year, month.month, 1).weekday % 7;
     final totalGridCount = startWeekday + days;
 
-    return Container(
+    return Padding(
+      padding: responsiveScreenPadding(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -318,7 +340,6 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
             ),
           ),
           GridView.builder(
-            padding: responsiveHorizontalPadding(context),
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
             itemCount: totalGridCount,
@@ -436,7 +457,6 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
 
   Widget buildButtonRow(BuildContext context, PeriodDayPickerState state) {
     double width = MediaQuery.of(context).size.width;
-    bool isVerySmall = width < 350;
 
     List<Widget> buttons = [
       Padding(
@@ -498,19 +518,17 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
       ),
     ];
 
-    return isVerySmall
-        ? Column(children: buttons)
-        : Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: buttons,
-          );
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: buttons,
+    );
   }
 }
 
 dynamicFontSize(BuildContext context) {
   double screenWidth = MediaQuery.of(context).size.width;
   if (screenWidth < 400) {
-    return 12.0; // Small phones
+    return 8.0; // Small phones
   } else if (screenWidth < 800) {
     return 14.0; // Tablets or large phones
   } else {

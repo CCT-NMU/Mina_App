@@ -34,7 +34,7 @@ class PeriodDayPickerBloc
     List<DateTime> initialMonths = List.generate(
       24,
       (i) {
-        int month = event.focusedDay.month - i + 1;
+        int month = event.focusedDay.month - i;
         int year = event.focusedDay.year;
         while (month < 1) {
           month += 12;

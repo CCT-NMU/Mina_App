@@ -197,7 +197,7 @@ class _RegisterViewState extends State<RegisterView> {
 
                   // Email Field
                   AdaptiveTextFormField(
-                    controller: _passwordController,
+                    controller: _emailController,
                     labelText: 'Email',
                     prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
