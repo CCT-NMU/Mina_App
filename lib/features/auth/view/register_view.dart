@@ -142,7 +142,7 @@ class _RegisterViewState extends State<RegisterView> {
                 children: [
                   const SizedBox(height: 40),
 
-                  // Logo or App Name
+                  // Logo
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: const BoxDecoration(

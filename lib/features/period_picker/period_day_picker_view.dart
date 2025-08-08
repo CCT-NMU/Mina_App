@@ -59,7 +59,7 @@ It will only appear for :
 
 class PeriodDayPickerView extends StatefulWidget {
   final DateTime? focusedDay;
-  final String userId = SupabaseAuthService().currentUserId!;
+  final String userId = '1'; //SupabaseAuthService().currentUserId!;
   PeriodDayPickerView({Key? key, this.focusedDay}) : super(key: key);
 
   @override
@@ -215,75 +215,77 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
             return const Center(child: CircularProgressIndicator());
           }
           return Scaffold(
-              appBar: AppBar(
-                automaticallyImplyLeading: false,
-                toolbarHeight: 120,
-                title: Container(
-                  child: Column(
-                    children: [
-                      Text('Select period days',
-                          style: TextStyle(fontSize: 20)),
-                      Padding(
-                        padding: responsiveScreenPadding(context),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            'Sun',
-                            'Mon',
-                            'Tue',
-                            'Wed',
-                            'Thu',
-                            'Fri',
-                            'Sat'
-                          ]
-                              .map((d) => Expanded(
-                                      child: Center(
-                                          child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    child: Text(
-                                      d,
-                                      style: TextStyle(
-                                        fontSize:
-                                            MediaQuery.of(context).size.width <
-                                                    350
-                                                ? 12
-                                                : 16,
-                                      ),
-                                    ),
-                                  ))))
-                              .toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              body: Column(
+            appBar: AppBar(
+              automaticallyImplyLeading: false,
+              toolbarHeight: 120,
+              titleSpacing: 0,
+              title: Column(
                 children: [
-                  Expanded(
-                    child:
-                        BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
-                      builder: (context, state) {
-                        return ScrollablePositionedList.builder(
-                          reverse: false,
-                          itemScrollController: _itemScrollController,
-                          itemPositionsListener: _itemPositionsListener,
-                          itemCount: state.months.length,
-                          itemBuilder: (context, index) {
-                            final month = state.months[index];
-                            return buildMonthCalendar(
-                                context, month, state.selectedDays, index);
-                          },
-                        );
-                      },
-                    ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Text('Select period days',
+                        style: TextStyle(fontSize: 20)),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 32.0, top: 8.0),
-                    child: buildButtonRow(context, state),
+                    padding: responsiveScreenPadding(context),
+                    child: Row(
+                      //week day
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        'Sun',
+                        'Mon',
+                        'Tue',
+                        'Wed',
+                        'Thu',
+                        'Fri',
+                        'Sat'
+                      ]
+                          .map((d) => Expanded(
+                                child: Center(
+                                  child: Text(
+                                    d,
+                                    style: TextStyle(
+                                      fontSize:
+                                          MediaQuery.of(context).size.width <
+                                                  350
+                                              ? 12
+                                              : 16,
+                                    ),
+                                  ),
+                                ),
+                              ))
+                          .toList(),
+                    ),
                   ),
                 ],
-              ));
+              ),
+            ),
+            body: Column(
+              children: [
+                Expanded(
+                  child: BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
+                    builder: (context, state) {
+                      return ScrollablePositionedList.builder(
+                        reverse: false,
+                        itemScrollController: _itemScrollController,
+                        itemPositionsListener: _itemPositionsListener,
+                        itemCount: state.months.length,
+                        itemBuilder: (context, index) {
+                          final month = state.months[index];
+                          return buildMonthCalendar(
+                              context, month, state.selectedDays, index);
+                        },
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 32.0, top: 8.0),
+                  child: buildButtonRow(context, state),
+                ),
+              ],
+            ),
+          );
         },
       ),
     );
@@ -295,13 +297,15 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
 
     if (screenWidth > 1200) {
       // Large desktop
-      horizontalPadding = (screenWidth - 800) / 2;
+      horizontalPadding = (screenWidth - 600) / 2;
     } else if (screenWidth > 700) {
       // Tablet or small desktop
-      horizontalPadding = (screenWidth - 600) / 2;
-    } else {
+      horizontalPadding = (screenWidth - 400) / 2;
+    } else if (screenWidth > 300) {
       // Mobile
-      horizontalPadding = 16;
+      horizontalPadding = (screenWidth - 350) / 2;
+    } else {
+      horizontalPadding = 0;
     }
 
     return EdgeInsets.symmetric(horizontal: horizontalPadding);
@@ -445,13 +449,13 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
   double _getCircleWidth(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     if (screenWidth < 350) {
-      return 16; // Extra small phones
+      return 18; // Extra small phones
     } else if (screenWidth < 400) {
-      return 20; // Small phones
+      return 24; // Small phones
     } else if (screenWidth < 800) {
-      return 30; // Tablets or large phones
+      return 28; // Tablets or large phones
     } else {
-      return 48; // Desktop or large tablets
+      return 30; // Desktop or large tablets
     }
   }
 
@@ -539,7 +543,7 @@ dynamicFontSize(BuildContext context) {
 double dynamicIconSize(BuildContext context) {
   double screenWidth = MediaQuery.of(context).size.width;
   if (screenWidth < 350) {
-    return 10.0; // Extra small phones
+    return 8.0; // Extra small phones
   } else if (screenWidth < 400) {
     return 12.0;
   } else if (screenWidth < 800) {

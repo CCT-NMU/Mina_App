@@ -97,9 +97,10 @@ class MinaApp extends StatelessWidget {
               dbHelper: Provider.of<AppDatabase>(context, listen: false),
             ),
           ),
+          /* uncomment when done testing period day picker
           BlocProvider<OnboardingBloc>(
             create: (context) => OnboardingBloc()..add(OnboardingCompleted()),
-          ),
+          ), */
           BlocProvider<AuthBloc>(
             create: (context) => AuthBloc(),
           ),
@@ -107,8 +108,11 @@ class MinaApp extends StatelessWidget {
           BlocProvider(
               create: (context) => PeriodDayPickerBloc(
                   Provider.of<DayEntryRepository>(context, listen: false))
-                ..add(PeriodDayPickerUptake(DateTime.now(), ''))),
-        ], child: LoginView())); //change to LoginView()
+                ..add(PeriodDayPickerUptake(DateTime.now(), '1'))),
+          BlocProvider(
+              create: (context) =>
+                  OnboardingBloc()..add(OnboardingNameSubmitted()))
+        ], child: PeriodDayPickerView(focusedDay: DateTime.now())));
   }
 }
 
