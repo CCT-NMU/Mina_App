@@ -44,11 +44,13 @@ class PeriodDayPickerBloc
       },
     ).toList();
     // Initialize the state with the focused day and userId
+    const initialIndex = 1;
     emit(state.copyWith(
       selectedDays: const {},
       oldDays: const {},
       months: initialMonths,
       status: PeriodDayPickerStatus.initial,
+      preservedScrollIndex: initialIndex,
     ));
   }
 
@@ -77,14 +79,21 @@ class PeriodDayPickerBloc
           return DateTime(year, month, 1);
         },
       ).toList();
+
+      //Find the inital index of the month that matches the focusedDay's month
+      // and year
+      final initialIndex = initialMonths.indexWhere((month) =>
+          month.year == event.focusedDay.year &&
+          month.month == event.focusedDay.month);
+
       final Set<DateTime> processed =
           await compute(_processPeriodDaySetIsolate, periodDays);
       emit(state.copyWith(
-        status: PeriodDayPickerStatus.success,
-        oldDays: processed,
-        selectedDays: processed,
-        months: initialMonths,
-      ));
+          status: PeriodDayPickerStatus.success,
+          oldDays: processed,
+          selectedDays: processed,
+          months: initialMonths,
+          preservedScrollIndex: initialIndex > -1 ? initialIndex : 0));
     } catch (_) {
       emit(state.copyWith(status: PeriodDayPickerStatus.failure));
     }

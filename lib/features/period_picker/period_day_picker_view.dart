@@ -144,6 +144,14 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
     }
 
     _itemPositionsListener.itemPositions.addListener(onScroll);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = bloc.state;
+      if (state.preservedScrollIndex != null &&
+          _itemScrollController.isAttached) {
+        _itemScrollController.jumpTo(index: state.preservedScrollIndex!);
+      }
+    });
   }
 
   @override
@@ -266,9 +274,10 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                   child: BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
                     builder: (context, state) {
                       return ScrollablePositionedList.builder(
-                        reverse: false,
+                        reverse: true,
                         itemScrollController: _itemScrollController,
                         itemPositionsListener: _itemPositionsListener,
+                        initialScrollIndex: state.preservedScrollIndex ?? 0,
                         itemCount: state.months.length,
                         itemBuilder: (context, index) {
                           final month = state.months[index];
