@@ -125,33 +125,29 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
       }
 
       print('first: $_firstVisible, last: $_lastVisible');
-      if (_debounce?.isActive ?? false) _debounce!.cancel();
-      _debounce = Timer(const Duration(milliseconds: 100), () {
-        if (_lastVisible >=
-                context.read<PeriodDayPickerBloc>().state.months.length - 2 &&
-            _firstVisible >=
-                context.read<PeriodDayPickerBloc>().state.months.length - 1) {
-          context
-              .read<PeriodDayPickerBloc>()
-              .add(LoadMoreMonthsBackward(_firstVisible, 0));
-        }
+      var listLength = context.read<PeriodDayPickerBloc>().state.months.length;
+      if (_lastVisible >= listLength - 2 && _firstVisible >= listLength - 1) {
+        context
+            .read<PeriodDayPickerBloc>()
+            .add(LoadMoreMonthsForward(_firstVisible, 0));
+      }
 
-        if (_firstVisible == 0 && _lastVisible == 0) {
-          context.read<PeriodDayPickerBloc>().add(LoadMoreMonthsForward(
-              _firstVisible, 0)); //TODO remove first.itemLeadingEdge.
-        }
-      });
+      if (_firstVisible == 0 && _lastVisible == 0) {
+        context
+            .read<PeriodDayPickerBloc>()
+            .add(LoadMoreMonthsBackward(_firstVisible, 0));
+      }
     }
 
     _itemPositionsListener.itemPositions.addListener(onScroll);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    /*   WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = bloc.state;
       if (state.preservedScrollIndex != null &&
           _itemScrollController.isAttached) {
         _itemScrollController.jumpTo(index: state.preservedScrollIndex!);
       }
-    });
+    }); */
   }
 
   @override
@@ -274,13 +270,15 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                   child: BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
                     builder: (context, state) {
                       return ScrollablePositionedList.builder(
-                        reverse: true,
+                        reverse: false,
                         itemScrollController: _itemScrollController,
                         itemPositionsListener: _itemPositionsListener,
-                        initialScrollIndex: state.preservedScrollIndex ?? 0,
+                        initialScrollIndex: state.preservedScrollIndex ?? 23,
                         itemCount: state.months.length,
+                        physics: const BouncingScrollPhysics(),
                         itemBuilder: (context, index) {
                           final month = state.months[index];
+
                           return buildMonthCalendar(
                               context, month, state.selectedDays, index);
                         },

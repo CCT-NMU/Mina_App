@@ -9,8 +9,8 @@ import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/onboarding/bloc/onboarding_bloc.dart';
 import 'package:mina_app/features/onboarding/view/name_capture.dart';
-import 'package:mina_app/features/period/bloc/period_day_picker_bloc.dart';
-import 'package:mina_app/features/period/period_day_picker_view.dart';
+import 'package:mina_app/features/period_picker/bloc/period_day_picker_bloc.dart';
+import 'package:mina_app/features/period_picker/period_day_picker_view.dart';
 import 'package:mina_app/services/auth_service/auth/bloc/auth_bloc.dart';
 import 'package:provider/provider.dart';
 
@@ -67,10 +67,8 @@ class _RegisterViewState extends State<RegisterView> {
                       BlocProvider(
                         create: (context) {
                           final bloc = PeriodDayPickerBloc(
-                              userId: state.user.id,
-                              dayEntryRepository:
-                                  Provider.of<DayEntryRepository>(context,
-                                      listen: false))
+                              Provider.of<DayEntryRepository>(context,
+                                  listen: false))
                             ..add(PeriodDaysFetched(
                                 DateTime.now(), state.user.id));
 

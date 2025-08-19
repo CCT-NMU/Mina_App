@@ -104,36 +104,6 @@ class MinaApp extends StatelessWidget {
           BlocProvider<AuthBloc>(
             create: (context) => AuthBloc(),
           ),
-          //Todo: remove this when fixed UI for PeriodDayPickerView
-          BlocProvider(
-              create: (context) => PeriodDayPickerBloc(
-                  Provider.of<DayEntryRepository>(context, listen: false))
-                ..add(PeriodDayPickerUptake(DateTime.now(), '1'))),
-          BlocProvider(
-              create: (context) =>
-                  OnboardingBloc()..add(OnboardingNameSubmitted()))
-        ], child: PeriodDayPickerView(focusedDay: DateTime.now())));
-  }
-}
-
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        if (state is AuthLoading || state is AuthInitial) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        } else {
-          return BlocProvider.value(
-            value: context.read<AuthBloc>(),
-            child: LoginView(),
-          );
-        }
-      },
-    );
+        ], child: LoginView()));
   }
 }

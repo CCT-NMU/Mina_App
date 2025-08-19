@@ -69,14 +69,14 @@ class _RegisterViewState extends State<RegisterView> {
                 email: _emailController.text.trim(),
               ),
             );
-            final db = Provider.of<AppDatabase>(context, listen: false);
+            /*    final db = Provider.of<AppDatabase>(context, listen: false);
             final allUsers = db.select(db.appUsers).get();
 
             allUsers.then((users) {
               print("All users are: $users");
             }).catchError((error) {
               print("Error fetching users: $error");
-            });
+            }); */
           }
           Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => MultiBlocProvider(

@@ -34,17 +34,21 @@ class PeriodDayPickerBloc
     List<DateTime> initialMonths = List.generate(
       24,
       (i) {
-        int month = event.focusedDay.month - i;
+        int month = i < 12
+            ? event.focusedDay.month - i
+            : event.focusedDay.month + i - 12;
         int year = event.focusedDay.year;
         while (month < 1) {
           month += 12;
           year -= 1;
         }
+
         return DateTime(year, month, 1);
       },
-    ).toList();
+    ).reversed.toList();
+
     // Initialize the state with the focused day and userId
-    const initialIndex = 1;
+    const initialIndex = 12;
     emit(state.copyWith(
       selectedDays: const {},
       oldDays: const {},
@@ -78,7 +82,7 @@ class PeriodDayPickerBloc
           }
           return DateTime(year, month, 1);
         },
-      ).toList();
+      ).reversed.toList();
 
       //Find the inital index of the month that matches the focusedDay's month
       // and year
@@ -140,25 +144,32 @@ class PeriodDayPickerBloc
 
   static const int windowSize = 24;
 
+  /// Handles the event to load more months into the future.
+  /// Scroll direction is downward to go into the future.
+  /// This method is typically triggered when the user requests to see additional
+  /// months beyond the currently loaded range, such as scrolling forward in a calendar view.
+  /// It is responsible for updating the state with the newly loaded months.
   void _onLoadMoreMonthsForward(
     LoadMoreMonthsForward event,
     Emitter<PeriodDayPickerState> emit,
   ) {
-    final firstMonth = state.months.first;
-    if (firstMonth.isAfter(DateTime.now())) return;
+    final lastMonth = state.months.last;
+    // Stop loading if we are too far in the future
+
     final newMonths = List<DateTime>.generate(
       12, // or any number of months to add
-      (i) => DateTime(firstMonth.year + ((firstMonth.month + i) ~/ 12),
-          ((firstMonth.month + i) % 12) + 1, 1),
-    ).reversed.toList();
+      (i) => DateTime(lastMonth.year + ((lastMonth.month + i) ~/ 12),
+          ((lastMonth.month + i) % 12) + 1, 1),
+    ).toList();
     var updatedMonths = [
-      ...newMonths,
       ...state.months,
+      ...newMonths,
     ];
     if (updatedMonths.length > windowSize) {
-      updatedMonths = updatedMonths.sublist(0, windowSize);
+      updatedMonths = updatedMonths.sublist(
+          updatedMonths.length - windowSize, updatedMonths.length);
     }
-    final preservedIndex = event.preservedIndex + newMonths.length;
+    final preservedIndex = event.preservedIndex - 12;
     emit(state.copyWith(
       months: updatedMonths,
       monthsAdded: newMonths.length,
@@ -171,30 +182,29 @@ class PeriodDayPickerBloc
     LoadMoreMonthsBackward event,
     Emitter<PeriodDayPickerState> emit,
   ) {
-    final lastMonth = state.months.last;
+    final firstMonth = state.months.first;
 
     final newMonths = List<DateTime>.generate(
       12,
       (i) {
-        int month = lastMonth.month - (i + 1);
-        int year = lastMonth.year;
+        int month = firstMonth.month - (i + 1);
+        int year = firstMonth.year;
         while (month < 1) {
           month += 12;
           year -= 1;
         }
         return DateTime(year, month, 1);
       },
-    ).toList();
+    ).reversed.toList();
     var updatedMonths = [
-      ...state.months,
       ...newMonths,
+      ...state.months,
     ];
     final preservedIndex =
-        event.preservedIndex - updatedMonths.length + windowSize;
+        event.preservedIndex + updatedMonths.length - windowSize;
 
     if (updatedMonths.length > windowSize) {
-      updatedMonths = updatedMonths.sublist(
-          updatedMonths.length - windowSize, updatedMonths.length);
+      updatedMonths = updatedMonths.sublist(0, windowSize);
     }
 
     emit(state.copyWith(

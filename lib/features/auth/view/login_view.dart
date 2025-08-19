@@ -145,8 +145,10 @@ class _LoginViewState extends State<LoginView> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  const SizedBox(height: 40),
                   // Logo or App Name
                   Container(
+                    padding: const EdgeInsets.all(20),
                     decoration: const BoxDecoration(
                       color: Color.fromARGB(178, 132, 77, 151),
                       shape: BoxShape.circle,
@@ -206,6 +208,7 @@ class _LoginViewState extends State<LoginView> {
                         controller: _passwordController,
                         labelText: 'Password',
                         prefixIcon: Icons.lock_outline,
+                        obscureText: _obscurePassword,
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
