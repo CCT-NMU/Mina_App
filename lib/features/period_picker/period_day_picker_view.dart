@@ -94,7 +94,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
         if (state.leadingEdge != null) {
           alignment = state.leadingEdge!;
         }
-        print("alignment: $alignment" "targetIndex: $targetIndex");
+        print("alignment: $alignment" " targetIndex: $targetIndex");
         if (_itemScrollController.isAttached) {
           _itemScrollController.jumpTo(
             index: targetIndex,
@@ -132,7 +132,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
             .add(LoadMoreMonthsForward(_firstVisible, 0));
       }
 
-      if (_firstVisible == 0 && _lastVisible == 0) {
+      if (_firstVisible <= 1 && _lastVisible <= 1) {
         context
             .read<PeriodDayPickerBloc>()
             .add(LoadMoreMonthsBackward(_firstVisible, 0));
@@ -221,7 +221,11 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
           return Scaffold(
             appBar: AppBar(
               automaticallyImplyLeading: false,
-              toolbarHeight: 120,
+              toolbarHeight: MediaQuery.sizeOf(context).width < 400
+                  ? 70
+                  : MediaQuery.sizeOf(context).width < 800
+                      ? 90
+                      : 120,
               titleSpacing: 0,
               title: Column(
                 children: [
@@ -235,30 +239,44 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                     child: Row(
                       //week day
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        'Sun',
-                        'Mon',
-                        'Tue',
-                        'Wed',
-                        'Thu',
-                        'Fri',
-                        'Sat'
-                      ]
-                          .map((d) => Expanded(
-                                child: Center(
-                                  child: Text(
-                                    d,
-                                    style: TextStyle(
-                                      fontSize:
-                                          MediaQuery.of(context).size.width <
+                      children: MediaQuery.sizeOf(context).width < 800
+                          ? ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+                              .map((d) => Expanded(
+                                    child: Center(
+                                      child: Text(
+                                        d,
+                                        style: TextStyle(
+                                          fontSize:
+                                              MediaQuery.sizeOf(context).width <
+                                                      400
+                                                  ? 10
+                                                  : MediaQuery.sizeOf(context)
+                                                              .width <
+                                                          800
+                                                      ? 12
+                                                      : 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ))
+                              .toList()
+                          : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                              .map((d) => Expanded(
+                                    child: Center(
+                                      child: Text(
+                                        d,
+                                        style: TextStyle(
+                                          fontSize: MediaQuery.of(context)
+                                                      .size
+                                                      .width <
                                                   350
                                               ? 12
                                               : 16,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              ))
-                          .toList(),
+                                  ))
+                              .toList(),
                     ),
                   ),
                 ],
@@ -273,7 +291,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                         reverse: false,
                         itemScrollController: _itemScrollController,
                         itemPositionsListener: _itemPositionsListener,
-                        initialScrollIndex: state.preservedScrollIndex ?? 23,
+                        initialScrollIndex: state.preservedScrollIndex ?? 11,
                         itemCount: state.months.length,
                         physics: const BouncingScrollPhysics(),
                         itemBuilder: (context, index) {
@@ -287,7 +305,10 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 32.0, top: 8.0),
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).size.height < 600 ? 0 : 32.0,
+                    top: MediaQuery.of(context).size.height < 600 ? 0 : 8.0,
+                  ),
                   child: buildButtonRow(context, state),
                 ),
               ],
@@ -304,32 +325,27 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
 
     if (screenWidth > 1200) {
       // Large desktop
-      horizontalPadding = (screenWidth - 600) / 2;
-    } else if (screenWidth > 700) {
-      // Tablet or small desktop
       horizontalPadding = (screenWidth - 400) / 2;
-    } else if (screenWidth > 300) {
-      // Mobile
+    } else if (screenWidth > 800) {
+      // Tablet or small desktop
       horizontalPadding = (screenWidth - 350) / 2;
+    } else if (screenWidth > 600) {
+      // Small tablets
+      horizontalPadding = (screenWidth - 300) / 2;
+    } else if (screenWidth > 400) {
+      // Mobile
+      horizontalPadding = (screenWidth - 250) / 2;
+    } else if (screenWidth > 250) {
+      // Mobile
+      horizontalPadding = (screenWidth - 230) / 2;
+    } else if (screenWidth > 200) {
+      // Mobile
+      horizontalPadding = (screenWidth - 190) / 2;
     } else {
       horizontalPadding = 0;
     }
 
     return EdgeInsets.symmetric(horizontal: horizontalPadding);
-  }
-
-  EdgeInsets responsiveHorizontalPadding(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
-    if (width < 600) {
-      // Mobile
-      return const EdgeInsets.symmetric(horizontal: 16);
-    } else if (width < 1200) {
-      // Tablet
-      return const EdgeInsets.symmetric(horizontal: 32);
-    } else {
-      // Desktop
-      return const EdgeInsets.symmetric(horizontal: 100);
-    }
   }
 
   Widget buildMonthCalendar(BuildContext context, DateTime month,
@@ -438,9 +454,9 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
               );
             },
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: MediaQuery.sizeOf(context).width * 0.01),
           const Divider(),
-          const SizedBox(height: 10),
+          SizedBox(height: MediaQuery.sizeOf(context).width * 0.01),
         ],
       ),
     );
@@ -455,20 +471,20 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
 
   double _getCircleWidth(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth < 350) {
-      return 18; // Extra small phones
+    if (screenWidth < 250) {
+      return 14; // Extra small phones
     } else if (screenWidth < 400) {
-      return 24; // Small phones
+      return 18; // Small phones
+    } else if (screenWidth < 600) {
+      return 20; // large phones
     } else if (screenWidth < 800) {
-      return 28; // Tablets or large phones
+      return 23; // Tablets or large phones
     } else {
-      return 30; // Desktop or large tablets
+      return 26; // Desktop or large tablets
     }
   }
 
   Widget buildButtonRow(BuildContext context, PeriodDayPickerState state) {
-    double width = MediaQuery.of(context).size.width;
-
     List<Widget> buttons = [
       Padding(
         padding: const EdgeInsets.all(8.0),
@@ -477,7 +493,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
           style: TextButton.styleFrom(
             padding: EdgeInsets.symmetric(
               horizontal: buttonHorizontalPadding(context),
-              vertical: 16.0,
+              vertical: buttonVerticalPadding(context),
             ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(5)),
@@ -516,7 +532,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
           style: TextButton.styleFrom(
             padding: EdgeInsets.symmetric(
               horizontal: buttonHorizontalPadding(context),
-              vertical: 16.0,
+              vertical: buttonVerticalPadding(context),
             ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(5)),
@@ -540,8 +556,10 @@ dynamicFontSize(BuildContext context) {
   double screenWidth = MediaQuery.of(context).size.width;
   if (screenWidth < 400) {
     return 8.0; // Small phones
+  } else if (screenWidth < 600) {
+    return 10.0; // Medium phones
   } else if (screenWidth < 800) {
-    return 14.0; // Tablets or large phones
+    return 12.0; // Tablets or large phones
   } else {
     return 16.0; // Desktop or large tablets
   }
@@ -549,10 +567,10 @@ dynamicFontSize(BuildContext context) {
 
 double dynamicIconSize(BuildContext context) {
   double screenWidth = MediaQuery.of(context).size.width;
-  if (screenWidth < 350) {
-    return 8.0; // Extra small phones
-  } else if (screenWidth < 400) {
-    return 12.0;
+  if (screenWidth < 400) {
+    return 6.0; // Extra small phones
+  } else if (screenWidth < 600) {
+    return 10.0;
   } else if (screenWidth < 800) {
     return 15.0;
   } else {
@@ -565,6 +583,13 @@ double buttonHorizontalPadding(BuildContext context) {
   if (width < 400) return 16.0;
   if (width < 800) return 32.0;
   return 42.0;
+}
+
+double buttonVerticalPadding(BuildContext context) {
+  double width = MediaQuery.of(context).size.width;
+  if (width < 400) return 2.0;
+  if (width < 800) return 16.0;
+  return 16.0;
 }
 
 // Custom clippers (fixed syntax)

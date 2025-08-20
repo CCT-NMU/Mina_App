@@ -32,11 +32,10 @@ class PeriodDayPickerBloc
       status: PeriodDayPickerStatus.loading,
     ));
     List<DateTime> initialMonths = List.generate(
-      24,
+      12,
       (i) {
-        int month = i < 12
-            ? event.focusedDay.month - i
-            : event.focusedDay.month + i - 12;
+        int month = event.focusedDay.month - i;
+
         int year = event.focusedDay.year;
         while (month < 1) {
           month += 12;
@@ -47,12 +46,26 @@ class PeriodDayPickerBloc
       },
     ).reversed.toList();
 
+    List<DateTime> futureMonths = List.generate(12, (i) {
+      int month = event.focusedDay.month + i + 1;
+
+      int year = event.focusedDay.year;
+      while (month > 12) {
+        month -= 12;
+        year += 1;
+      }
+
+      return DateTime(year, month, 1);
+    });
+
+    List<DateTime> allMonths = [...initialMonths, ...futureMonths];
+
     // Initialize the state with the focused day and userId
     const initialIndex = 12;
     emit(state.copyWith(
       selectedDays: const {},
       oldDays: const {},
-      months: initialMonths,
+      months: allMonths,
       status: PeriodDayPickerStatus.initial,
       preservedScrollIndex: initialIndex,
     ));

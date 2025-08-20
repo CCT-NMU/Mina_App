@@ -97,10 +97,6 @@ class MinaApp extends StatelessWidget {
               dbHelper: Provider.of<AppDatabase>(context, listen: false),
             ),
           ),
-          /* uncomment when done testing period day picker
-          BlocProvider<OnboardingBloc>(
-            create: (context) => OnboardingBloc()..add(OnboardingCompleted()),
-          ), */
           BlocProvider<AuthBloc>(
             create: (context) => AuthBloc(),
           ),
