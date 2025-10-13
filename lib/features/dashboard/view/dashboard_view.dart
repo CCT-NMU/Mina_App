@@ -3,10 +3,10 @@ import 'package:mina_app/common/utils.dart';
 import 'package:mina_app/data/model/period_day.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
-import 'package:mina_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_states.dart';
+import 'package:mina_app/features/dashboard/calendar/cubit/calendar_cubit.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_event.dart';
 import 'package:mina_app/features/widgets/common/menu/menu_drawer.dart';
@@ -15,7 +15,6 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:mina_app/features/day_entry/view/day_entry_view.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
-import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/data/model/day.dart';
 import 'package:mina_app/services/auth_service/platform/supabase_auth_service.dart';
 
@@ -27,7 +26,7 @@ class DashboardView extends StatefulWidget {
 }
 
 class _DashboardViewState extends State<DashboardView> {
-  late DateTime _focusedDay;
+  late DateTime currentFocusedDay;
   DateTime? _selectedDay;
 
   // Get current user ID from AuthService
@@ -36,11 +35,11 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   void initState() {
     super.initState();
-    _focusedDay = DateTime.now();
+    currentFocusedDay = DateTime.now();
     Provider.of<CycleTrackerBloc>(context, listen: false)
         .add(const CycleTrackerStarted());
     Provider.of<DashboardBloc>(context, listen: false)
-        .add(LoadDashboard(_focusedDay));
+        .add(LoadDashboard(currentFocusedDay));
   }
 
   @override
@@ -49,215 +48,227 @@ class _DashboardViewState extends State<DashboardView> {
 //    final userName = AuthService.instance.currentUserName ?? 'User';
     var userName = SupabaseAuthService().currentUserName ?? 'User';
 
-    return BlocBuilder<DashboardBloc, DashboardState>(
-      builder: (context, state) {
-        print('DashboardView: Building with state: $state');
-        return SafeArea(
-          child: Scaffold(
-            backgroundColor: Color.fromARGB(255, 255, 255, 255),
-            body: Container(
-              padding: Utils().responsiveHorizontalPadding(context),
-              height: MediaQuery.of(context).size.height,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color.fromARGB(55, 227, 183, 235),
-                    Color.fromARGB(55, 233, 30, 98)
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-              child: CustomScrollView(
-                slivers: [
-                  SliverAppBar(
-                    pinned: true,
-                    title: const Text('Mina'),
+    return BlocProvider(
+      create: (context) => CalendarCubit(
+        dayEntryRepository: context.read<DayEntryRepository>(),
+      )..loadInitialCalendar(currentFocusedDay),
+      child: BlocBuilder<DashboardBloc, DashboardState>(
+        builder: (context, state) {
+          print('DashboardView: Building with state: $state');
+          return SafeArea(
+            child: Scaffold(
+              backgroundColor: Color.fromARGB(255, 255, 255, 255),
+              body: Container(
+                padding: Utils().responsiveHorizontalPadding(context),
+                height: MediaQuery.of(context).size.height,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color.fromARGB(55, 227, 183, 235),
+                      Color.fromARGB(55, 233, 30, 98)
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
-                  SliverToBoxAdapter(
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      // Hero Section
-                      Container(
-                        height: MediaQuery.sizeOf(context).height * 0.28,
-                        width: double.infinity,
-                        /*  */
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 24, horizontal: 16),
-                        decoration: const BoxDecoration(
-                          color: Color.fromARGB(178, 132, 77, 151),
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(16.0),
-                            bottomRight: Radius.circular(16.0),
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              softWrap: true,
-                              overflow: TextOverflow.visible,
-                              "Welcome to My Mina $userName!",
-                              style: TextStyle(
-                                fontSize:
-                                    MediaQuery.sizeOf(context).height * 0.025,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
+                ),
+                child: CustomScrollView(
+                  slivers: [
+                    SliverAppBar(
+                      pinned: true,
+                      title: const Text('Mina'),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        // Hero Section
+                        Container(
+                          height: MediaQuery.sizeOf(context).height * 0.28,
+                          width: double.infinity,
+                          /*  */
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 24, horizontal: 16),
+                          decoration: const BoxDecoration(
+                            color: Color.fromARGB(178, 132, 77, 151),
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(16.0),
+                              bottomRight: Radius.circular(16.0),
                             ),
-                            SizedBox(height: 8),
-                            Expanded(
-                              flex: 1,
-                              child: Text(
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
                                 softWrap: true,
                                 overflow: TextOverflow.visible,
-                                "Track your days and stay organized.",
+                                "Welcome to My Mina $userName!",
                                 style: TextStyle(
                                   fontSize:
-                                      MediaQuery.sizeOf(context).height * 0.02,
-                                  color: Colors.white70,
+                                      MediaQuery.sizeOf(context).height * 0.025,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
                               ),
-                            ),
-                          ],
+                              SizedBox(height: 8),
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  softWrap: true,
+                                  overflow: TextOverflow.visible,
+                                  "Track your days and stay organized.",
+                                  style: TextStyle(
+                                    fontSize:
+                                        MediaQuery.sizeOf(context).height *
+                                            0.02,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      // Calendar Section
-                      BlocBuilder<DashboardBloc, DashboardState>(
-                        builder: (context, state) {
-                          if (state is DashboardLoadInProgress) {
+                        const SizedBox(height: 20),
+                        // Calendar Section
+                        BlocBuilder<DashboardBloc, DashboardState>(
+                          builder: (context, state) {
+                            if (state is DashboardLoadInProgress) {
+                              return Center(
+                                  heightFactor:
+                                      MediaQuery.of(context).size.height * 0.3,
+                                  child: CircularProgressIndicator());
+                            }
+                            if (state is DashboardLoadSuccess) {
+                              var periodDays =
+                                  <Day>[]; //state.days; ToDo: Pull in Calendar Cubit
+                              var nextPeriod = state.nextPeriodDate;
+                              return MultiBlocProvider(
+                                providers: [
+                                  BlocProvider.value(
+                                      value: context.read<DashboardBloc>()),
+                                  //Start up the CycleTracker
+                                  BlocProvider.value(
+                                      value: context.read<CycleTrackerBloc>()),
+
+                                  //Start up the DayEntry
+                                ],
+                                child: SizedBox(
+                                  child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 8.0, horizontal: 0.0),
+                                      child:
+                                          myCalendar(periodDays, nextPeriod)),
+                                ),
+                              );
+                            } else if (state is DashboardLoadFailure) {
+                              return const Center(
+                                  heightFactor: 2,
+                                  child: Text('Failed to load events'));
+                            }
                             return Center(
                                 heightFactor:
-                                    MediaQuery.of(context).size.height * 0.3,
+                                    MediaQuery.of(context).size.height * 0.5,
                                 child: CircularProgressIndicator());
-                          }
-                          if (state is DashboardLoadSuccess) {
-                            final periodDays = state.days;
-                            return MultiBlocProvider(
-                              providers: [
-                                BlocProvider.value(
-                                    value: context.read<DashboardBloc>()),
-                                //Start up the CycleTracker
-                                BlocProvider.value(
-                                    value: context.read<CycleTrackerBloc>()),
-
-                                //Start up the DayEntry
-                              ],
-                              child: SizedBox(
-                                child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 8.0, horizontal: 0.0),
-                                    child: myCalendar(periodDays)),
-                              ),
-                            );
-                          } else if (state is DashboardLoadFailure) {
-                            return const Center(
-                                heightFactor: 2,
-                                child: Text('Failed to load events'));
-                          }
-                          return Center(
-                              heightFactor:
-                                  MediaQuery.of(context).size.height * 0.5,
-                              child: CircularProgressIndicator());
-                        },
-                      ),
-                    ]),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const SizedBox(height: 20),
-                        _buildInfoSection(
-                          context,
-                          title: "Understanding Your Cycle",
-                          description:
-                              "Learn about the phases of your menstrual cycle.",
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: const Text("Understanding Your Cycle"),
-                                  content: const Text(
-                                    "The menstrual cycle has four phases: menstrual, follicular, ovulation, and luteal. "
-                                    "Each phase plays a vital role in your reproductive health.",
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(),
-                                      child: const Text("Close"),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
                           },
                         ),
-                        _buildInfoSection(
-                          context,
-                          title: "Healthy Habits",
-                          description: "Tips for maintaining menstrual health.",
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: const Text("Healthy Habits"),
-                                  content: const Text(
-                                    "Maintain a balanced diet, stay hydrated, exercise regularly, and get enough sleep "
-                                    "to support your menstrual health.",
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(),
-                                      child: const Text("Close"),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        _buildInfoSection(
-                          context,
-                          title: "Common Symptoms",
-                          description: "Explore common symptoms and remedies.",
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: const Text("Common Symptoms"),
-                                  content: const Text(
-                                    "Common menstrual symptoms include cramps, bloating, mood swings, and fatigue. "
-                                    "Remedies include pain relievers, heat therapy, and relaxation techniques.",
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(),
-                                      child: const Text("Close"),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ],
+                      ]),
                     ),
-                  ),
-                ],
+                    SliverToBoxAdapter(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 20),
+                          _buildInfoSection(
+                            context,
+                            title: "Understanding Your Cycle",
+                            description:
+                                "Learn about the phases of your menstrual cycle.",
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title:
+                                        const Text("Understanding Your Cycle"),
+                                    content: const Text(
+                                      "The menstrual cycle has four phases: menstrual, follicular, ovulation, and luteal. "
+                                      "Each phase plays a vital role in your reproductive health.",
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(),
+                                        child: const Text("Close"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                          _buildInfoSection(
+                            context,
+                            title: "Healthy Habits",
+                            description:
+                                "Tips for maintaining menstrual health.",
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text("Healthy Habits"),
+                                    content: const Text(
+                                      "Maintain a balanced diet, stay hydrated, exercise regularly, and get enough sleep "
+                                      "to support your menstrual health.",
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(),
+                                        child: const Text("Close"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                          _buildInfoSection(
+                            context,
+                            title: "Common Symptoms",
+                            description:
+                                "Explore common symptoms and remedies.",
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text("Common Symptoms"),
+                                    content: const Text(
+                                      "Common menstrual symptoms include cramps, bloating, mood swings, and fatigue. "
+                                      "Remedies include pain relievers, heat therapy, and relaxation techniques.",
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(),
+                                        child: const Text("Close"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              drawer: const MenuDrawer(),
             ),
-            drawer: const MenuDrawer(),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -379,114 +390,136 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  Widget myCalendar(List<Day> periodDays) {
-    return TableCalendar(
-      firstDay: DateTime.utc(1670, 1, 1),
-      lastDay: DateTime.utc(DateTime.now().year + 10, 12, 31),
-      focusedDay: _focusedDay,
-      selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-      calendarFormat: CalendarFormat.month,
-      headerStyle: const HeaderStyle(
-        formatButtonVisible: false,
-        titleCentered: true,
-      ),
-      onDaySelected: (selectedDay, focusedDay) async {
-        setState(() {
-          _selectedDay = selectedDay;
-          _focusedDay = focusedDay;
-          print('This is the focused day $_focusedDay');
-          print('This is the selected day $_selectedDay');
-        });
-        final dashboardBloc = context.read<DashboardBloc>();
-        final cycleTrackerBloc = context.read<CycleTrackerBloc>();
-        var result = await Navigator.of(context).push(_createRoute(
-            normalizeDate(_selectedDay!), dashboardBloc, cycleTrackerBloc));
-        if (result == true) {
-          dashboardBloc.add(LoadDashboard(_focusedDay));
-        }
-      },
-      onPageChanged: (focusedDay) {
-        context.read<DashboardBloc>().add(CalendarChanged(focusedDay));
-        setState(() {
-          print('onPageChange(): This is the focused day $focusedDay');
-          _focusedDay = focusedDay;
-        });
-      },
-      calendarBuilders: CalendarBuilders(
-        prioritizedBuilder: (context, day, focusedDay) {
-          final Day dayEntry = periodDays.firstWhere(
-            (d) => normalizeDate(d.date) == normalizeDate(day),
-            orElse: () => Day(date: DateTime(0, 0, 0), isPeriodDay: false),
-          );
+  Widget myCalendar(List<Day> periodDays, DateTime? nextPeriodDay) {
+    List<PeriodDay> predictedPeriodDays = []; // Placeholder for predicted days
+    return BlocBuilder<CalendarCubit, CalendarState>(
+      builder: (context, state) {
+        if (state is CalendarLoaded) {
+          final periodDays = state.cachedmonths[
+                  '${currentFocusedDay.year}-${currentFocusedDay.month}'] ??
+              [];
+          return TableCalendar(
+            firstDay: DateTime.utc(1670, 1, 1),
+            lastDay: DateTime.utc(DateTime.now().year + 10, 12, 31),
+            focusedDay: currentFocusedDay,
+            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+            calendarFormat: CalendarFormat.month,
+            headerStyle: const HeaderStyle(
+              formatButtonVisible: false,
+              titleCentered: true,
+            ),
+            onDaySelected: (selectedDay, focusedDay) async {
+              setState(() {
+                _selectedDay = selectedDay;
+                currentFocusedDay = focusedDay;
+                print('This is the focused day $currentFocusedDay');
+                print('This is the selected day $_selectedDay');
+              });
+              final dashboardBloc = context.read<DashboardBloc>();
+              final cycleTrackerBloc = context.read<CycleTrackerBloc>();
+              var result = await Navigator.of(context).push(_createRoute(
+                  normalizeDate(_selectedDay!),
+                  dashboardBloc,
+                  cycleTrackerBloc));
+              if (result == true) {
+                dashboardBloc.add(LoadDashboard(currentFocusedDay));
+              }
+            },
+            onPageChanged: (focusedDay) {
+              context.read<CalendarCubit>().handleScroll(focusedDay);
+              setState(() {
+                currentFocusedDay = focusedDay;
+              });
+            },
+            calendarBuilders: CalendarBuilders(
+              prioritizedBuilder: (context, day, focusedDay) {
+                final Day dayEntry = periodDays.firstWhere(
+                  (d) => normalizeDate(d.date) == normalizeDate(day),
+                  orElse: () =>
+                      Day(date: DateTime(0, 0, 0), isPeriodDay: false),
+                );
 
-          bool isPeriodDay = false;
-          bool isToday = normalizeDate(day) == normalizeDate(DateTime.now());
-          bool hasNote = false;
-          bool hasMood_or_Symptoms = false;
+                bool isPeriodDay = false;
+                bool isToday =
+                    normalizeDate(day) == normalizeDate(DateTime.now());
+                bool hasNote = false;
+                bool hasMood_or_Symptoms = false;
+                bool isPredictedPeriodDay = false;
 
-          if (dayEntry.date != DateTime(0, 0, 0)) {
-            isPeriodDay = dayEntry.isPeriodDay == true;
-            hasNote = dayEntry.note != null && dayEntry.note != "";
-            hasMood_or_Symptoms =
-                (dayEntry.moodList?.moods.isNotEmpty ?? false) ||
-                    (dayEntry.symptomList?.symptoms.isNotEmpty ?? false);
-          }
-          return Container(
-            width: 50,
-            decoration: BoxDecoration(
-                color: isPeriodDay ? Color.fromARGB(120, 244, 67, 54) : null,
-                shape: BoxShape.circle,
-                border: isToday
-                    ? Border.all(
-                        color: const Color.fromARGB(255, 54, 111, 244),
-                        width: 2,
+                if (dayEntry.date != DateTime(0, 0, 0)) {
+                  isPeriodDay = dayEntry.isPeriodDay == true;
+                  hasNote = dayEntry.note != null && dayEntry.note != "";
+                  isPredictedPeriodDay = dayEntry.date == nextPeriodDay;
+                  hasMood_or_Symptoms =
+                      (dayEntry.moodList?.moods.isNotEmpty ?? false) ||
+                          (dayEntry.symptomList?.symptoms.isNotEmpty ?? false);
+                }
+                return Container(
+                  width: 50,
+                  decoration: BoxDecoration(
+                      color: isPeriodDay
+                          ? Color.fromARGB(120, 244, 67, 54)
+                          : isPredictedPeriodDay
+                              ? Color.fromARGB(245, 0, 255, 157)
+                              : null,
+                      shape: BoxShape.circle,
+                      border: isToday
+                          ? Border.all(
+                              color: const Color.fromARGB(255, 54, 111, 244),
+                              width: 2,
+                            )
+                          : null),
+                  child: Stack(alignment: Alignment.center, children: [
+                    Center(
+                      child: Text(
+                        '${day.day}',
+                        style: TextStyle(
+                          color: isPeriodDay ? Colors.white : Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    if (hasNote)
+                      const Positioned(
+                        bottom: 4,
+                        right: 4,
+                        child: Icon(Icons.edit, size: 14, color: Colors.purple),
+                      ),
+                    if (hasMood_or_Symptoms)
+                      const Positioned(
+                        bottom: 4,
+                        left: 4,
+                        child: Icon(Icons.favorite,
+                            size: 14, color: Colors.purple),
                       )
-                    : null),
-            child: Stack(alignment: Alignment.center, children: [
-              Center(
-                child: Text(
-                  '${day.day}',
-                  style: TextStyle(
-                    color: isPeriodDay ? Colors.white : Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                  ]),
+                );
+              },
+            ),
+            calendarStyle: const CalendarStyle(
+              withinRangeDecoration: BoxDecoration(
+                color: Color.fromARGB(116, 255, 102, 199),
+                shape: BoxShape.circle,
               ),
-              if (hasNote)
-                const Positioned(
-                  bottom: 4,
-                  right: 4,
-                  child: Icon(Icons.edit, size: 14, color: Colors.purple),
-                ),
-              if (hasMood_or_Symptoms)
-                const Positioned(
-                  bottom: 4,
-                  left: 4,
-                  child: Icon(Icons.favorite, size: 14, color: Colors.purple),
-                )
-            ]),
+              selectedTextStyle: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+              rangeHighlightColor: Color.fromARGB(124, 255, 102, 224),
+              markerDecoration: BoxDecoration(
+                color: null,
+                shape: BoxShape.circle,
+              ),
+              selectedDecoration: BoxDecoration(
+                color: Color.fromARGB(0, 76, 175, 79),
+                shape: BoxShape.circle,
+              ),
+            ),
           );
-        },
-      ),
-      calendarStyle: const CalendarStyle(
-        withinRangeDecoration: BoxDecoration(
-          color: Color.fromARGB(116, 255, 102, 199),
-          shape: BoxShape.circle,
-        ),
-        selectedTextStyle: TextStyle(
-          color: Colors.black,
-          fontWeight: FontWeight.bold,
-        ),
-        rangeHighlightColor: Color.fromARGB(124, 255, 102, 224),
-        markerDecoration: BoxDecoration(
-          color: null,
-          shape: BoxShape.circle,
-        ),
-        selectedDecoration: BoxDecoration(
-          color: Color.fromARGB(0, 76, 175, 79),
-          shape: BoxShape.circle,
-        ),
-      ),
+        }
+
+        return const Center(child: CircularProgressIndicator());
+      },
     );
   }
 }

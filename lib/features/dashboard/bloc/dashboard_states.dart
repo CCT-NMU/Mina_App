@@ -13,25 +13,18 @@ class DashboardInitial extends DashboardState {}
 
 class DashboardLoadInProgress extends DashboardState {}
 
-class DashboardFocusedDayChanged extends DashboardState {
-  final DateTime day;
-  DashboardFocusedDayChanged(this.day);
-  @override
-  List<Object?> get props => [day];
-}
-
 class DashboardLoadSuccess extends DashboardState {
-  final List<Day> days;
-  DashboardLoadSuccess(
-      {DateTime? nextPeriodDate,
-      required int averageCycleLength,
-      required int averagePeriodLength,
-      required double cycleRegularity,
-      required List<Cycle> recentCycles,
-      required this.days});
+  final DateTime? nextPeriodDate;
+  DashboardLoadSuccess({
+    this.nextPeriodDate,
+    required int averageCycleLength,
+    required int averagePeriodLength,
+    required double cycleRegularity,
+    required List<Cycle> recentCycles,
+  });
 
   @override
-  List<Object?> get props => [days];
+  List<Object?> get props => [nextPeriodDate];
 }
 
 class DashboardLoadFailure extends DashboardState {

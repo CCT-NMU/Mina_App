@@ -59,7 +59,7 @@ It will only appear for :
 
 class PeriodDayPickerView extends StatefulWidget {
   final DateTime? focusedDay;
-  final String userId = '1'; //SupabaseAuthService().currentUserId!;
+  final String userId = SupabaseAuthService().currentUserId!;
   PeriodDayPickerView({Key? key, this.focusedDay}) : super(key: key);
 
   @override

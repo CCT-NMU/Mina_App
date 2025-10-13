@@ -56,6 +56,7 @@
    - SymptomList: Manages symptom tracking
    - Cycle: Represents a menstrual cycle
    - User: User class representing user profile.
+   - PredictedDay: A day that inherits from PeriodDay class for days in the future. 
 
 3. Repositories
    - DayEntryRepository: Handles Day and PeriodDay CRUD operations

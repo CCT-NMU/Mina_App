@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mina_app/data/database/connection/shared.dart' as db_connection;
 import 'package:mina_app/data/database/drift_database.dart';
+import 'package:mina_app/data/model/cycle.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/data/repositories/note_repository.dart';
@@ -10,6 +11,7 @@ import 'package:mina_app/features/cycle_tracker/bloc/cycle_tracker_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_events.dart';
 import 'package:mina_app/features/dashboard/bloc/dashboard_states.dart';
+import 'package:mina_app/features/dashboard/calendar/cubit/calendar_cubit.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
 import 'package:mina_app/features/onboarding/bloc/onboarding_bloc.dart';
 import 'package:mina_app/features/onboarding/view/welcome.dart';
@@ -72,11 +74,6 @@ void main() async {
 class MinaApp extends StatelessWidget {
   const MinaApp({super.key});
 
-/*   Future<bool> userHasName() async {
-    final name = await UserRepository.instance.getUserSetting('name',);
-    return name != null && name.isNotEmpty;
-  } */
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -97,9 +94,7 @@ class MinaApp extends StatelessWidget {
               dbHelper: Provider.of<AppDatabase>(context, listen: false),
             ),
           ),
-          BlocProvider<AuthBloc>(
-            create: (context) => AuthBloc(),
-          ),
+          BlocProvider<AuthBloc>(create: (context) => AuthBloc()),
         ], child: LoginView()));
   }
 }

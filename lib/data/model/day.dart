@@ -23,11 +23,11 @@ class Day {
     String dateString = date.toIso8601String();
 
     return {
-      'Date': dateString,
-      'IsPeriodDay': isPeriodDay,
-      'Note': note,
-      'symptomList': symptomList?.toString(),
-      'moodList': moodList?.toString(),
+      'date': dateString,
+      'is_period_day': isPeriodDay,
+      'note': note,
+      'symptom_list': symptomList?.toString(),
+      'mood_list': moodList?.toString(),
     };
   }
 
@@ -35,10 +35,10 @@ class Day {
     print('Day fromMap: $map');
     return Day(
       date: DateTime.parse(map['date']),
-      isPeriodDay: map['isPeriodDay'] ?? false,
+      isPeriodDay: map['is_period_day'] ?? false,
       note: map['note'] ?? '',
-      symptomList: SymptomList.fromString(map['symptomList'] ?? ''),
-      moodList: MoodList.fromString(map['moodList'] ?? ''),
+      symptomList: SymptomList.fromString(map['symptom_list'] ?? ''),
+      moodList: MoodList.fromString(map['mood_list'] ?? ''),
     );
   }
 }
