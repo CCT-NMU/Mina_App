@@ -7,6 +7,12 @@ import 'package:mina_app/services/auth_service/platform/supabase_auth_service.da
 part 'cycle_tracker_event.dart';
 part 'cycle_tracker_state.dart';
 
+/*
+ * Bloc to manage cycle tracking state and data loading
+ * Fetches global cycle on startup
+ * Fetches cycle for specific date on request
+ * Adds predicted cycles in future (not implemented yet)
+*/
 class CycleTrackerBloc extends Bloc<CycleTrackerEvent, CycleTrackerState> {
   final CycleRepository cycleRepository;
   CycleTrackerBloc(this.cycleRepository) : super(CycleTrackerInitial()) {
@@ -16,7 +22,7 @@ class CycleTrackerBloc extends Bloc<CycleTrackerEvent, CycleTrackerState> {
     on<CycleTrackerStarted>((event, emit) async {
       //fetch the global cycle
       print('CycleTrackerBloc $event Fetching global cycle for user: $userId');
-      var cycle = await cycleRepository.getPresentCycle(userId);
+      var cycle = await cycleRepository.findLatestRecordedCycle(userId);
 
       //global cycle can be null
       if (cycle != null) {
@@ -26,7 +32,7 @@ class CycleTrackerBloc extends Bloc<CycleTrackerEvent, CycleTrackerState> {
       }
     });
 
-    //Fetch the cycle for the current date
+    //Fetch the cycle for the event date
     //Emit no Cycle exists state for
     on<FetchCycle>((event, emit) async {
       print("fetching cycle for ${event.date}");

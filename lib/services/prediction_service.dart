@@ -6,9 +6,9 @@ class PredictionService {
 
   PredictionService({required this.cycleRepository});
 
-  Future<DateTime?> predictNextPeriod(String userId) async {
+  Future<int?> averageCycleLength(String userId) async {
     try {
-      var cycles = await cycleRepository.calculateCycleHistory(userId);
+      var cycles = await cycleRepository.getCycles(userId);
       if (cycles.isEmpty) return null;
 
       // Calculate average cycle length from the last 6 cycles or all available cycles
@@ -25,11 +25,25 @@ class PredictionService {
 
       if (cyclesForAverage.length <= 1) return null;
 
-      var averageCycleLength = totalDays ~/ (cyclesForAverage.length - 1);
-      var lastCycle = cycles.first; // Most recent cycle
+      return totalDays ~/ (cyclesForAverage.length - 1);
+    } catch (e) {
+      return 0;
+    }
+  }
+
+//ToDo: Create methods that calc Average Cycle length and Average Period Length to be used
+// in the calendar cubit for predictions
+  Future<DateTime?> predictNextPeriod(String userId) async {
+    try {
+      var avgCycleLength = await averageCycleLength(userId);
+      var lastCycle = await cycleRepository
+          .findLatestRecordedCycle(userId); // Most recent cycle
 
       // Predict next period start date
-      return lastCycle.startDate!.add(Duration(days: averageCycleLength));
+      if (avgCycleLength != null) {
+        return lastCycle!.startDate!.add(Duration(days: avgCycleLength));
+      }
+      return null;
     } catch (e) {
       return null;
     }
@@ -37,7 +51,7 @@ class PredictionService {
 
   Future<Map<String, dynamic>> getPredictionStats(String userId) async {
     try {
-      var cycles = await cycleRepository.calculateCycleHistory(userId);
+      var cycles = await cycleRepository.getCycles(userId);
       if (cycles.isEmpty) {
         return {
           'averageCycleLength': 0,
@@ -95,4 +109,6 @@ class PredictionService {
       };
     }
   }
+
+//Add method that calculates predicted cycles for a given month
 }

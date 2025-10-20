@@ -23,8 +23,7 @@ class _NotesViewState extends State<NotesView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Get the database from Provider
-    final db = Provider.of<AppDatabase>(context, listen: false);
-    noteRepository = NoteRepository(db);
+    noteRepository = NoteRepository();
     final authService = SupabaseAuthService();
     userId = authService.currentUserId!;
     _reload();

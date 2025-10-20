@@ -58,12 +58,10 @@ void main() async {
               UserRepository(Provider.of<AppDatabase>(context, listen: false)),
         ),
         Provider<CycleRepository>(
-          create: (context) =>
-              CycleRepository(Provider.of<AppDatabase>(context, listen: false)),
+          create: (context) => CycleRepository(),
         ),
         Provider<NoteRepository>(
-          create: (context) =>
-              NoteRepository(Provider.of<AppDatabase>(context, listen: false)),
+          create: (context) => NoteRepository(),
         ),
       ],
       child: MinaApp(),

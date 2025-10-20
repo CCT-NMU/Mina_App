@@ -27,7 +27,7 @@ class _StatisticsViewState extends State<StatisticsView> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final cycles = await widget.cycleRepository.calculateCycleHistory(userId);
+      final cycles = await widget.cycleRepository.getCycles(userId);
       setState(() {
         _cycles = cycles;
         _isLoading = false;

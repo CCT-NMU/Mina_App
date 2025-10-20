@@ -13,24 +13,46 @@ import 'package:mina_app/data/model/symptom_list.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CycleRepository {
-  late AppDatabase database;
-  late AppCyclesDao _cyclesDao;
+  static List<Cycle> cycles = [];
 
-  CycleRepository(this.database) {
-    _cyclesDao = AppCyclesDao(database);
-  }
-  Future<Cycle?> getPresentCycle(String userId) async {
-    var globalCycle = await Supabase.instance.client
+  /// Retrieves the most recently recorded Cycle for the specified user.
+  ///
+  /// Looks up stored cycle records for `userId` and returns the most recent
+  /// Cycle (by its recorded start date). If the user has no recorded cycles,
+  /// this method completes with `null`.
+  ///
+  /// Parameters:
+  /// - `userId`: the identifier of the user whose last recorded cycle is requested.
+  ///   This must be a non-empty string.
+  ///
+  /// Returns:
+  /// A `Future` that completes with the latest `Cycle` for the user, or `null`
+  /// if no cycles exist for that user.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if `userId` is empty.
+  /// - Repository/datastore exceptions (e.g. I/O or network errors) may be
+  ///   propagated if retrieval fails.
+  ///
+  /// Example:
+  /// ```dart
+  /// final lastCycle = await cycleRepository.getLastRecordedCycle('user-123');
+  /// if (lastCycle != null) {
+  ///   print('Last cycle started on ${lastCycle.startDate}');
+  /// }
+  /// ```
+  Future<Cycle?> findLatestRecordedCycle(String userId) async {
+    var latestRecordedCycle = await Supabase.instance.client
         .from('cycle')
         .select()
         .eq('user_id', userId)
         .order('start_date', ascending: false)
         .limit(1)
         .single();
-    if (globalCycle.isNotEmpty) {
+    if (latestRecordedCycle.isNotEmpty) {
       print(
-          'CycleRepository: Present cycle for userId: $userId found: ${globalCycle != null}');
-      var cycleData = globalCycle;
+          'CycleRepository: Present cycle for userId: $userId found: ${latestRecordedCycle != null}');
+      var cycleData = latestRecordedCycle;
       return Cycle(
         userId: cycleData['user_id'] as String,
         startDate: DateTime.parse(cycleData['start_date'] as String),
@@ -140,9 +162,9 @@ class CycleRepository {
   /// Returns a list of `Cycle` objects representing each identified cycle.
   /// If an error occurs during processing, an empty list is returned.
 
-  Future<List<Cycle>> calculateCycleHistory(String userId) async {
+  Future<List<Cycle>> calculateCycleHistory(
+      String userId, bool onlyLastSixCycles) async {
     try {
-      List<Cycle> cycles = [];
       var days = await getCombinedDayAndPeriodDayRecords(userId);
 
       // Sort days by date to ensure proper order
@@ -198,7 +220,6 @@ class CycleRepository {
 
   Future<int> calculateAvgCycleLength(String userId) async {
     try {
-      var cycles = await calculateCycleHistory(userId);
       if (cycles.isEmpty || cycles.length < 2) return 0;
 
       int totalLength = 0;
@@ -216,7 +237,6 @@ class CycleRepository {
 
   Future<int> calculateAvgPeriodLength(String userId) async {
     try {
-      var cycles = await calculateCycleHistory(userId);
       if (cycles.isEmpty) return 0;
 
       int totalLength = 0;
@@ -242,7 +262,6 @@ class CycleRepository {
 
   Future<DateTime?> predictNextPeriod(String userId) async {
     try {
-      var cycles = await calculateCycleHistory(userId);
       if (cycles.isEmpty) return null;
 
       var avgCycleLength = await calculateAvgCycleLength(userId);
@@ -274,6 +293,31 @@ class CycleRepository {
     } catch (e) {
       debugPrint('Error inserting cycle: $e');
       throw Exception('Failed to insert cycle');
+    }
+  }
+
+  Future<List<Cycle>> getLastNumberOfCycles(
+      String userId, int numberOfCycles) async {
+    try {
+      //final appCycles = await _cyclesDao.getAllCycles(userId);
+      var cycles = await Supabase.instance.client
+          .from('cycle')
+          .select()
+          .eq('user_id', userId)
+          .order('start_date', ascending: false)
+          .range(1, numberOfCycles);
+      // Map AppCycle to Cycle
+      return cycles
+          .map((cycle) => Cycle(
+                userId: cycle['user_id'],
+                startDate: DateTime.parse(cycle['start_date']),
+                endDate: DateTime.parse(cycle['end_date']),
+                periodEndDate: DateTime.parse(cycle['period_end_date']),
+              ))
+          .toList();
+    } catch (e) {
+      debugPrint('Error retrieving cycles: $e');
+      throw Exception('Failed to retrieve cycles');
     }
   }
 

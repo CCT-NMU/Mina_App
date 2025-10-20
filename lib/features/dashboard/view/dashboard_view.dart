@@ -10,6 +10,7 @@ import 'package:mina_app/features/dashboard/calendar/cubit/calendar_cubit.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_event.dart';
 import 'package:mina_app/features/widgets/common/menu/menu_drawer.dart';
+import 'package:mina_app/services/prediction_service.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:mina_app/features/day_entry/view/day_entry_view.dart';

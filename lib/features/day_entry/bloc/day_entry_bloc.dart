@@ -32,7 +32,8 @@ class DayEntryBloc extends Bloc<DayEntryBlocEvent, DayEntryBlocState> {
         //find if day is in present cycle
         print(
             'DayEntryBloc: Day entry for date: ${event.date} and userId: $userId found: ${day != null}');
-        var presentCycle = await cycleRepository.getPresentCycle(userId);
+        var presentCycle =
+            await cycleRepository.findLatestRecordedCycle(userId);
         print(
             'DayEntryBloc: Present cycle for userId: $userId found: ${presentCycle != null}');
         bool isInPresentCycle = false;
