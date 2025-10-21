@@ -52,11 +52,12 @@ class PredictionService {
   Future<Map<String, dynamic>> getPredictionStats(String userId) async {
     try {
       var cycles = await cycleRepository.getCycles(userId);
+      //save avg CycleLength, avg Period Length, regularity in database
       if (cycles.isEmpty) {
         return {
-          'averageCycleLength': 0,
-          'averagePeriodLength': 0,
-          'cycleRegularity': 0.0,
+          'averageCycleLength': 28,
+          'averagePeriodLength': 5,
+          'cycleRegularity': 100.0,
         };
       }
 
@@ -66,8 +67,8 @@ class PredictionService {
       // Calculate average cycle length
       int totalCycleDays = 0;
       List<int> cycleLengths = [];
-      for (int i = 0; i < cyclesForStats.length - 1; i++) {
-        final difference = cyclesForStats[i + 1]
+      for (int i = cyclesForStats.length - 1; i > 0; i--) {
+        final difference = cyclesForStats[i - 1]
             .startDate!
             .difference(cyclesForStats[i].startDate!)
             .inDays;
@@ -76,8 +77,8 @@ class PredictionService {
       }
 
       // Calculate average period length
-      var totalPeriodDays = 6;
-      // cyclesForStats.fold(0, (sum, cycle) => sum + cycle.periodLength);
+      var totalPeriodDays = cyclesForStats.fold(
+          0, (sum, cycle) => sum + (cycle.getPeriodLength() ?? 0));
 
       // Calculate cycle regularity (as a percentage based on variance)
       double regularity = 100.0;
@@ -97,15 +98,15 @@ class PredictionService {
             ? totalCycleDays ~/ (cyclesForStats.length - 1)
             : 0,
         'averagePeriodLength': cyclesForStats.isNotEmpty
-            ? totalPeriodDays ~/ cyclesForStats.length
+            ? totalPeriodDays ~/ cyclesForStats.length - 1
             : 0,
         'cycleRegularity': regularity,
       };
     } catch (e) {
       return {
-        'averageCycleLength': 0,
-        'averagePeriodLength': 0,
-        'cycleRegularity': 0.0,
+        'averageCycleLength': 28,
+        'averagePeriodLength': 5,
+        'cycleRegularity': 100.0,
       };
     }
   }

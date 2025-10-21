@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mina_app/common/utils.dart';
+import 'package:mina_app/data/model/cycle.dart';
 import 'package:mina_app/data/model/period_day.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
@@ -12,6 +13,7 @@ import 'package:mina_app/features/day_entry/bloc/day_entry_event.dart';
 import 'package:mina_app/features/widgets/common/menu/menu_drawer.dart';
 import 'package:mina_app/services/prediction_service.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:mina_app/features/day_entry/view/day_entry_view.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,7 +31,8 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView> {
   late DateTime currentFocusedDay;
   DateTime? _selectedDay;
-
+  PredictionService predictionService =
+      PredictionService(cycleRepository: CycleRepository());
   // Get current user ID from AuthService
   String get currentUserId => SupabaseAuthService().currentUserId!;
 
@@ -48,10 +51,12 @@ class _DashboardViewState extends State<DashboardView> {
     // Get user info for display
 //    final userName = AuthService.instance.currentUserName ?? 'User';
     var userName = SupabaseAuthService().currentUserName ?? 'User';
-
+    var userId = SupabaseAuthService().currentUser!.id;
     return BlocProvider(
       create: (context) => CalendarCubit(
         dayEntryRepository: context.read<DayEntryRepository>(),
+        predictionService:
+            PredictionService(cycleRepository: CycleRepository()),
       )..loadInitialCalendar(currentFocusedDay),
       child: BlocBuilder<DashboardBloc, DashboardState>(
         builder: (context, state) {
@@ -116,6 +121,22 @@ class _DashboardViewState extends State<DashboardView> {
                                   softWrap: true,
                                   overflow: TextOverflow.visible,
                                   "Track your days and stay organized.",
+                                  style: TextStyle(
+                                    fontSize:
+                                        MediaQuery.sizeOf(context).height *
+                                            0.02,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  softWrap: true,
+                                  overflow: TextOverflow.visible,
+                                  "${() => predictionService.getPredictionStats(userId).then((value) {
+                                        return value['averageCycleLength'];
+                                      })} days until your next period.",
                                   style: TextStyle(
                                     fontSize:
                                         MediaQuery.sizeOf(context).height *
@@ -392,13 +413,14 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   Widget myCalendar(List<Day> periodDays, DateTime? nextPeriodDay) {
-    List<PeriodDay> predictedPeriodDays = []; // Placeholder for predicted days
+    Map<String, Cycle> predictedCycles = {}; // Placeholder for predicted days
     return BlocBuilder<CalendarCubit, CalendarState>(
       builder: (context, state) {
         if (state is CalendarLoaded) {
           final periodDays = state.cachedmonths[
                   '${currentFocusedDay.year}-${currentFocusedDay.month}'] ??
               [];
+          predictedCycles = state.predictedCycles;
           return TableCalendar(
             firstDay: DateTime.utc(1670, 1, 1),
             lastDay: DateTime.utc(DateTime.now().year + 10, 12, 31),
@@ -446,7 +468,7 @@ class _DashboardViewState extends State<DashboardView> {
                 bool hasNote = false;
                 bool hasMood_or_Symptoms = false;
                 bool isPredictedPeriodDay = false;
-
+                bool isPredictedCycleDay = false;
                 if (dayEntry.date != DateTime(0, 0, 0)) {
                   isPeriodDay = dayEntry.isPeriodDay == true;
                   hasNote = dayEntry.note != null && dayEntry.note != "";
@@ -455,12 +477,26 @@ class _DashboardViewState extends State<DashboardView> {
                       (dayEntry.moodList?.moods.isNotEmpty ?? false) ||
                           (dayEntry.symptomList?.symptoms.isNotEmpty ?? false);
                 }
+                if (predictedCycles.keys.toList().any((key) {
+                  DateTime startDate = DateTime.parse(key);
+                  Cycle cycle = predictedCycles[key]!;
+                  DateTime endDate = cycle.periodEndDate!;
+                  return normalizeDate(day)
+                          .isAtSameMomentAs(normalizeDate(startDate)) ||
+                      (normalizeDate(day).isAfter(normalizeDate(startDate)) &&
+                          normalizeDate(day)
+                              .isBefore(normalizeDate(endDate))) ||
+                      normalizeDate(day)
+                          .isAtSameMomentAs(normalizeDate(endDate));
+                })) {
+                  isPredictedCycleDay = true;
+                }
                 return Container(
                   width: 50,
                   decoration: BoxDecoration(
                       color: isPeriodDay
                           ? Color.fromARGB(120, 244, 67, 54)
-                          : isPredictedPeriodDay
+                          : isPredictedCycleDay
                               ? Color.fromARGB(245, 0, 255, 157)
                               : null,
                       shape: BoxShape.circle,

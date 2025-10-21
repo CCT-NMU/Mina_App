@@ -332,10 +332,14 @@ class CycleRepository {
       // Map AppCycle to Cycle
       return cycles
           .map((cycle) => Cycle(
-                userId: cycle['user_id'],
-                startDate: DateTime.parse(cycle['start_date']),
-                endDate: DateTime.parse(cycle['end_date']),
-                periodEndDate: DateTime.parse(cycle['period_end_date']),
+                userId: cycle['user_id'] as String,
+                startDate: DateTime.parse(cycle['start_date'] as String),
+                endDate: cycle['end_date'] != null
+                    ? DateTime.parse(cycle['end_date'] as String)
+                    : null,
+                periodEndDate: cycle['period_end_date'] != null
+                    ? DateTime.parse(cycle['period_end_date'] as String)
+                    : null,
               ))
           .toList();
     } catch (e) {

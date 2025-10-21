@@ -16,7 +16,7 @@ class DataExportService {
 
   Future<String> exportToCsv(String userId) async {
     final days = await dbHelper.getCombinedDayAndPeriodDayRecords(userId);
-    final cycles = await cycleRepository.calculateCycleHistory(userId);
+    final cycles = await cycleRepository.getCycles(userId);
 
     // Prepare data for CSV
     List<List<dynamic>> cycleRows = [

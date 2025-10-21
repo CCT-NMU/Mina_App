@@ -13,10 +13,10 @@ class CalendarLoading extends CalendarState {}
 
 class CalendarLoaded extends CalendarState {
   final Map<String, List<Day>> cachedmonths;
-  final Map<String, Cycle> predictedMonths;
+  final Map<String, Cycle> predictedCycles;
 
   const CalendarLoaded(
-      {required this.cachedmonths, required this.predictedMonths});
+      {required this.cachedmonths, required this.predictedCycles});
 
   @override
   List<Object?> get props => [cachedmonths];

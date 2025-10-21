@@ -49,4 +49,14 @@ class Cycle extends Equatable {
     date = Utils().normalizedDate(date);
     return date.isAfter(startDate!) || date.isAtSameMomentAs(startDate!);
   }
+
+  int? getCycleLength() {
+    if (endDate == null || startDate == null) return null;
+    return endDate!.difference(startDate!).inDays + 1;
+  }
+
+  int? getPeriodLength() {
+    if (periodEndDate == null || startDate == null) return null;
+    return periodEndDate!.difference(startDate!).inDays + 1;
+  }
 }

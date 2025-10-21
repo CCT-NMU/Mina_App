@@ -555,32 +555,32 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
 dynamicFontSize(BuildContext context) {
   double screenWidth = MediaQuery.of(context).size.width;
   if (screenWidth < 400) {
-    return 8.0; // Small phones
+    return 5.0; // Small phones
   } else if (screenWidth < 600) {
-    return 10.0; // Medium phones
+    return 8.0; // Medium phones
   } else if (screenWidth < 800) {
-    return 12.0; // Tablets or large phones
+    return 10.0; // Tablets or large phones
   } else {
-    return 16.0; // Desktop or large tablets
+    return 12.0; // Desktop or large tablets
   }
 }
 
 double dynamicIconSize(BuildContext context) {
   double screenWidth = MediaQuery.of(context).size.width;
   if (screenWidth < 400) {
-    return 6.0; // Extra small phones
+    return 5.0; // Extra small phones
   } else if (screenWidth < 600) {
-    return 10.0;
+    return 8.0;
   } else if (screenWidth < 800) {
-    return 15.0;
+    return 10.0;
   } else {
-    return 18.0;
+    return 12.0;
   }
 }
 
 double buttonHorizontalPadding(BuildContext context) {
   double width = MediaQuery.of(context).size.width;
-  if (width < 400) return 16.0;
+  if (width < 400) return 6.0;
   if (width < 800) return 32.0;
   return 42.0;
 }
