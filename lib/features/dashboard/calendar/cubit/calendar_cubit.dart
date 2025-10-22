@@ -32,7 +32,7 @@ class CalendarCubit extends Cubit<CalendarState> {
     emit(CalendarLoading());
     try {
       //calculate predicted cycles
-      populateCyclePredictionCache(initialFocusedDay, false);
+      await populateCyclePredictionCache(initialFocusedDay, false, true);
 
       final days = await _loadEventsFromDatabase(initialFocusedDay);
       if (days != null) {
@@ -57,7 +57,8 @@ class CalendarCubit extends Cubit<CalendarState> {
 //Dynamically updates the _predictedCycles map with cycles
 //based on the length of a cycle and the position of the calendar view
 //['focusedDay']
-  void populateCyclePredictionCache(DateTime focusedDay, bool tail) async {
+  Future<void> populateCyclePredictionCache(
+      DateTime focusedDay, bool tail, bool initial) async {
     // things that need to happen here:
     //1- maintain a prediction range of 24 months worth of predicted cycles
     //   12 in the past and 12 in the future from the last recorded cycle
@@ -71,25 +72,30 @@ class CalendarCubit extends Cubit<CalendarState> {
     //the last recorded cycle can be either a completed cycle or an ongoing one
     //to simplify we take the start date of the last recorded cycle regardless of whether it's completed or ongoing
     //UI will be responsible for displaying predicted days that are part of ongoing cycle.
-
-    //retrieve last recorded cycle
+    var numberOfCyclesFromLastCycle = 0;
     final lastCycle = await CycleRepository().findLatestRecordedCycle(userId);
-    if (lastCycle != null) {
-      var startDate = lastCycle.startDate;
-      //Use start date of last recorded cycle to base predictions on
-      var rawNumberOfCyclesFromLastCycle =
-          (DateTime(focusedDay.year, focusedDay.month + 1, 1)
-                  .difference(DateTime(startDate!.year, startDate.month, 1))
-                  .inDays) /
-              30 /
-              cycleStats['averageCycleLength'];
-      var numberOfCyclesFromLastCycle = rawNumberOfCyclesFromLastCycle.ceil();
+    var startDate = DateTime(focusedDay.year, focusedDay.month, 1);
+    if (initial) {
+      //retrieve last recorded cycle
 
-      if (numberOfCyclesFromLastCycle < 24) {
-        numberOfCyclesFromLastCycle = 24;
+      if (lastCycle != null) {
+        startDate = lastCycle.startDate!;
+        //Use start date of last recorded cycle to base predictions on
+        var daysFromLastCycle =
+            (DateTime(focusedDay.year, focusedDay.month + 1, 1)
+                .difference(DateTime(startDate!.year, startDate.month, 1))
+                .inDays);
+        var rawNumberOfCyclesFromLastCycle =
+            (daysFromLastCycle + Duration(days: 365).inDays) /
+                cycleStats['averageCycleLength']; //Add 12 months buffer
+        numberOfCyclesFromLastCycle = rawNumberOfCyclesFromLastCycle.ceil();
+      } else {
+        var rawNumberOfCyclesFromLastCycle = (Duration(days: 365).inDays) /
+            cycleStats['averageCycleLength']; //Add 12 months buffer
+        numberOfCyclesFromLastCycle = rawNumberOfCyclesFromLastCycle.ceil();
       }
-
       for (int i = 0; i < numberOfCyclesFromLastCycle; i++) {
+        var startDate = lastCycle!.startDate!;
         var predictedCycleStart = startDate
             .add(Duration(days: cycleStats['averageCycleLength'] * (i + 1)));
         var predictedCycle = Cycle(
@@ -98,23 +104,52 @@ class CalendarCubit extends Cubit<CalendarState> {
             endDate: predictedCycleStart
                 .add(Duration(days: cycleStats['averageCycleLength'] - 1)),
             periodEndDate: predictedCycleStart
-                .add(Duration(days: cycleStats['averagePeriodLength'] - 1)));
+                .add(Duration(days: cycleStats['averagePeriodLength'])));
         var key = predictedCycle.startDate!.toIso8601String().substring(0, 10);
         _predictedCycles[key] = predictedCycle;
       }
+    } else {
+      //check the current focusedDay in relation to prediciton cache
+      bool sufficientFutureCache = _predictedCycles.keys.any((key) =>
+          key.startsWith(focusedDay
+              .add(Duration(days: 365))
+              .toIso8601String()
+              .substring(0, 7)));
 
-      //add a tail condition to monitor which months to delete
-      if (_predictedCycles.length > 24) {
-        //clear existing predictions if they exceed the new calculation
-        if (tail) {
-          _predictedCycles.removeWhere((key, value) => value.startDate!
-              .isBefore(focusedDay.subtract(Duration(days: 365))));
-        } else {
-          _predictedCycles.removeWhere((key, value) =>
-              value.startDate!.isAfter(focusedDay.add(Duration(days: 365))));
+      if (!sufficientFutureCache) {
+        print("Loading more future predicted cycles");
+        var daysFromLastCycle = 365;
+        var rawNumberOfCyclesFromLastCycle =
+            (daysFromLastCycle) / cycleStats['averageCycleLength'];
+        numberOfCyclesFromLastCycle = rawNumberOfCyclesFromLastCycle.ceil();
+        for (int i = 0; i < numberOfCyclesFromLastCycle; i++) {
+          var startDate = _predictedCycles.keys.toList().last;
+          var predictedCycleStart = DateTime.parse(startDate)
+              .add(Duration(days: cycleStats['averageCycleLength'] * (i + 1)));
+          var predictedCycle = Cycle(
+              userId: userId,
+              startDate: predictedCycleStart,
+              endDate: predictedCycleStart
+                  .add(Duration(days: cycleStats['averageCycleLength'] - 1)),
+              periodEndDate: predictedCycleStart
+                  .add(Duration(days: cycleStats['averagePeriodLength'])));
+          var key =
+              predictedCycle.startDate!.toIso8601String().substring(0, 10);
+          _predictedCycles[key] = predictedCycle;
         }
       }
     }
+
+    //add a tail condition to monitor which months to delete
+
+    //clear existing predictions if they exceed the new calculation
+    /*   if (tail) {
+      _predictedCycles.removeWhere((key, value) =>
+          value.startDate!.isBefore(focusedDay.subtract(Duration(days: 365))));
+    } else {
+      _predictedCycles.removeWhere((key, value) =>
+          value.startDate!.isAfter(focusedDay.add(Duration(days: 365))));
+    } */
   }
 
   void selectDay(DateTime selectedDay) {
@@ -123,7 +158,7 @@ class CalendarCubit extends Cubit<CalendarState> {
 
 //handle scroll events to load more months dynamically using a threshold
   Future<void> handleScroll(DateTime focusedDay) async {
-    // Determine the range of cached Days and predicted cycles
+    // Determine the range of cached Days
     //cached days
     final List<String> sortedKeys = _cachedDays.keys.toList()..sort();
     final String firstKey = sortedKeys.first;
@@ -144,7 +179,7 @@ class CalendarCubit extends Cubit<CalendarState> {
       // Fetch later months (head)
       await _fetchMoreMonths(tail: false, referenceMonth: lastCachedMonth);
     }
-
+    // Determine the range of cached Days and predicted cycles
     //predicted cycles
     final List<String> sortedPredictedKeys = _predictedCycles.keys.toList()
       ..sort();
@@ -161,18 +196,19 @@ class CalendarCubit extends Cubit<CalendarState> {
     //Scroll event must determine if more predictions should be loaded into cache and
     //needs to the decide on which side of the cache to add more predictions
     //based on the focusedDay position
-    if (focusedDay.isBefore(firstPredictedMonth.add(Duration(days: 180))) &&
-        focusedDay.difference(lastCycleStartDate!) > Duration(days: 180)) {
+    if (focusedDay.isBefore(firstPredictedMonth.add(Duration(days: 365))) &&
+        focusedDay.difference(lastCycleStartDate!) > Duration(days: 365)) {
       // add a check to avoid loading predictions that already exist between the lastCycle and focusedDay
 
-      populateCyclePredictionCache(focusedDay,
-          false); //load more predictions at head since focusedDay is within 6 months of first predicted month
+      populateCyclePredictionCache(focusedDay, false,
+          false); //load more predictions at head since focusedDay is with 6 months of first predicted month cache and focusedDay is greater than 12 months from last recorded cycle.
     } else if (focusedDay
-        .isAfter(lastPredictedMonth.subtract(Duration(days: 180)))) {
-      populateCyclePredictionCache(focusedDay,
-          true); //load more predictions at tail since focusedDay is within 6 months of last predicted month
+        .isAfter(lastPredictedMonth.subtract(Duration(days: 365)))) {
+      populateCyclePredictionCache(focusedDay, true,
+          false); //load more predictions at tail since focusedDay is within 6 months of last predicted month
     }
-    emit(CalendarLoaded(cachedmonths: _cachedDays, predictedCycles: {}));
+    emit(CalendarLoaded(
+        cachedmonths: _cachedDays, predictedCycles: _predictedCycles));
     print(state);
   }
 

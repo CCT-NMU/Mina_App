@@ -31,11 +31,11 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView> {
   late DateTime currentFocusedDay;
   DateTime? _selectedDay;
+  String periodDayStatus = '6';
   PredictionService predictionService =
       PredictionService(cycleRepository: CycleRepository());
   // Get current user ID from AuthService
   String get currentUserId => SupabaseAuthService().currentUserId!;
-
   @override
   void initState() {
     super.initState();
@@ -134,9 +134,7 @@ class _DashboardViewState extends State<DashboardView> {
                                 child: Text(
                                   softWrap: true,
                                   overflow: TextOverflow.visible,
-                                  "${() => predictionService.getPredictionStats(userId).then((value) {
-                                        return value['averageCycleLength'];
-                                      })} days until your next period.",
+                                  "$periodDayStatus days until your next period.",
                                   style: TextStyle(
                                     fontSize:
                                         MediaQuery.sizeOf(context).height *
